@@ -1,0 +1,174 @@
+:root {
+  color-scheme: dark;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  background: radial-gradient(circle at top, #1b2233 0%, #0d1018 60%);
+  color: #e6e8ee;
+  min-height: 100vh;
+}
+
+.app {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 2.5rem 1.25rem 4rem;
+}
+
+.app-header {
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+.app-header h1 {
+  margin: 0;
+  font-size: clamp(1.8rem, 4vw, 2.6rem);
+  letter-spacing: 0.02em;
+  background: linear-gradient(90deg, #7cc4ff, #b89bff);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.subtitle {
+  margin: 0.5rem 0 0;
+  color: #9aa3b5;
+  font-size: 0.95rem;
+}
+
+.message {
+  text-align: center;
+  color: #9aa3b5;
+}
+
+.message.error {
+  color: #ff8585;
+}
+
+.hunt-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 1.25rem;
+}
+
+.hunt-card {
+  background: rgba(26, 32, 48, 0.85);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 14px;
+  padding: 1.25rem;
+  transition: border-color 0.2s, transform 0.1s;
+}
+
+.hunt-card:hover {
+  border-color: rgba(124, 196, 255, 0.4);
+}
+
+.hunt-card.status-done {
+  opacity: 0.6;
+}
+
+.hunt-card.status-done .hunt-title h2 {
+  text-decoration: line-through;
+}
+
+.hunt-card__top {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+}
+
+.rank {
+  flex-shrink: 0;
+  width: 2rem;
+  height: 2rem;
+  display: grid;
+  place-items: center;
+  border-radius: 8px;
+  font-weight: 700;
+  background: #313a52;
+}
+
+.rank-A { background: #5a3d6b; }
+.rank-B { background: #2f5a4a; }
+.rank-S { background: #6b3d3d; }
+
+.hunt-title {
+  flex: 1;
+  min-width: 0;
+}
+
+.hunt-title h2 {
+  margin: 0;
+  font-size: 1.2rem;
+}
+
+.hunt-type {
+  font-size: 0.78rem;
+  color: #9aa3b5;
+}
+
+.status-toggle {
+  flex-shrink: 0;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  background: #232c40;
+  color: #e6e8ee;
+  border-radius: 999px;
+  padding: 0.35rem 0.8rem;
+  font-size: 0.78rem;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.status-toggle:hover {
+  background: #2c3650;
+}
+
+.status-todo .status-toggle { color: #9aa3b5; }
+.status-in-progress .status-toggle { color: #ffce6b; border-color: #ffce6b66; }
+.status-done .status-toggle { color: #6bff9e; border-color: #6bff9e66; }
+
+.hunt-meta {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.6rem 1rem;
+  margin: 1rem 0 0;
+}
+
+.hunt-meta div {
+  min-width: 0;
+}
+
+.hunt-meta dt {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #6f7891;
+  margin-bottom: 0.15rem;
+}
+
+.hunt-meta dd {
+  margin: 0;
+  font-size: 0.9rem;
+}
+
+.note {
+  color: #9aa3b5;
+  font-size: 0.82rem;
+}
+
+.hunt-tips {
+  margin: 1rem 0 0;
+  padding-left: 1.1rem;
+  display: grid;
+  gap: 0.35rem;
+}
+
+.hunt-tips li {
+  font-size: 0.85rem;
+  color: #c2c8d6;
+}

@@ -1,0 +1,44 @@
+{
+  "hunts": [
+    {
+      "id": 1,
+      "name": "Balyaborr",
+      "rank": "B",
+      "type": "Intermediate Dawn Hunt",
+      "billNumber": "3/5",
+      "zone": "Yak T'el",
+      "area": "The Ut'ohmu Horizon",
+      "coords": "~X:31, Y:11",
+      "coordsNote": "Roams — NE of map",
+      "targets": 1,
+      "reward": "1,000 Gil · 4 Sacks of Nuts · 471,744 EXP",
+      "authority": "Dawn Hunt",
+      "tips": [
+        "B ranks roam continuously — no fixed spawn timer.",
+        "Teleport to Dirigible Landing aetheryte, sweep open ground north.",
+        "Single-target kill, soloable."
+      ],
+      "status": "todo"
+    },
+    {
+      "id": 2,
+      "name": "Aspis",
+      "rank": "B",
+      "type": "Intermediate Dawn Hunt",
+      "billNumber": "4/5",
+      "zone": "Shaaloani",
+      "area": "Eshceyaani Wilds",
+      "coords": "~X:26, Y:10",
+      "coordsNote": "Roams the wilds — snake-heavy area",
+      "targets": 3,
+      "reward": "1,000 Gil · 4 Sacks of Nuts · 471,744 EXP",
+      "authority": "Dawn Hunt",
+      "tips": [
+        "3 targets — kill all 3 Aspis to complete.",
+        "Common open-world snakes, easy to spot in the wilds.",
+        "Roam around X:26, Y:10 — plentiful so shouldn't take long."
+      ],
+      "status": "todo"
+    }
+  ]
+}
