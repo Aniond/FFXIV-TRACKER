@@ -1,9 +1,12 @@
 name: Sync hunts from Google Sheet
 
 on:
-  schedule:
-    # Every 30 minutes (UTC). GitHub may delay scheduled runs under load.
-    - cron: '*/30 * * * *'
+  # Scheduled sync is DISABLED — the /api/update-hunts endpoint is now the
+  # single source of truth for public/data.json. Re-enable the cron below to
+  # restore automatic Google Sheet syncing.
+  #
+  # schedule:
+  #   - cron: '*/30 * * * *'
   workflow_dispatch:
 
 permissions:
