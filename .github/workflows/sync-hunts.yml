@@ -1,0 +1,44 @@
+name: Sync hunts from Google Sheet
+
+on:
+  schedule:
+    # Every 30 minutes (UTC). GitHub may delay scheduled runs under load.
+    - cron: '*/30 * * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: sync-hunts
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Fetch sheet and regenerate data.json
+        env:
+          SHEET_CSV_URL: ${{ secrets.SHEET_CSV_URL }}
+        run: node scripts/sync-hunts.mjs
+
+      - name: Commit and push if changed
+        run: |
+          if [ -n "$(git status --porcelain public/data.json)" ]; then
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git add public/data.json
+            git commit -m "chore: sync hunt data from Google Sheet"
+            git push
+            echo "Committed updated hunt data."
+          else
+            echo "No changes to commit."
+          fi
