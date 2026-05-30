@@ -13,11 +13,7 @@
       "targets": 1,
       "reward": "1,000 Gil · 4 Sacks of Nuts · 471,744 EXP",
       "authority": "Dawn Hunt",
-      "tips": [
-        "B ranks roam continuously — no fixed spawn timer.",
-        "Teleport to Dirigible Landing aetheryte, sweep open ground north.",
-        "Single-target kill, soloable."
-      ],
+      "tips": ["B ranks roam continuously — no fixed spawn timer.", "Teleport to Dirigible Landing aetheryte, sweep open ground north.", "Single-target kill, soloable."],
       "status": "todo"
     },
     {
@@ -33,11 +29,23 @@
       "targets": 3,
       "reward": "1,000 Gil · 4 Sacks of Nuts · 471,744 EXP",
       "authority": "Dawn Hunt",
-      "tips": [
-        "3 targets — kill all 3 Aspis to complete.",
-        "Common open-world snakes, easy to spot in the wilds.",
-        "Roam around X:26, Y:10 — plentiful so shouldn't take long."
-      ],
+      "tips": ["3 targets — kill all 3 Aspis to complete.", "Common open-world snakes, easy to spot in the wilds.", "Roam around X:26, Y:10 — plentiful so shouldn't take long."],
+      "status": "todo"
+    },
+    {
+      "id": 3,
+      "name": "Horned Lizard",
+      "rank": "B",
+      "type": "Intermediate Dawn Hunt",
+      "billNumber": "5/5",
+      "zone": "Shaaloani",
+      "area": "Eshceyaani Wilds",
+      "coords": "X:11.7, Y:13.7",
+      "coordsNote": "Roams — same area as Aspis",
+      "targets": 2,
+      "reward": "1,000 Gil · 4 Sacks of Nuts · 471,744 EXP",
+      "authority": "Dawn Hunt",
+      "tips": ["2 targets — kill both to complete.", "Same general area as Aspis — efficient to do both in one run.", "Aggressive scalekin, will attack on sight."],
       "status": "todo"
     }
   ]
