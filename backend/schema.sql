@@ -26,3 +26,22 @@ CREATE TABLE IF NOT EXISTS submissions (
   status      VARCHAR(50) NOT NULL DEFAULT 'pending',
   created_at  TIMESTAMPTZ DEFAULT NOW()
 );
+
+CREATE TABLE IF NOT EXISTS hunts (
+  id           SERIAL PRIMARY KEY,
+  name         VARCHAR(255) NOT NULL,
+  rank         VARCHAR(5),
+  type         VARCHAR(100),
+  bill_number  VARCHAR(10),
+  zone         VARCHAR(100),
+  area         VARCHAR(100),
+  coords       VARCHAR(50),
+  coords_note  VARCHAR(255),
+  targets      INTEGER DEFAULT 1,
+  reward       VARCHAR(255),
+  authority    VARCHAR(100),
+  tips         TEXT[],
+  status       VARCHAR(20) DEFAULT 'todo',
+  created_at   TIMESTAMPTZ DEFAULT NOW(),
+  updated_at   TIMESTAMPTZ DEFAULT NOW()
+);

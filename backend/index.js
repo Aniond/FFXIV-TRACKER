@@ -4,8 +4,6 @@ const cors = require('cors');
 const passport = require('passport');
 const DiscordStrategy = require('passport-discord').Strategy;
 const jwt = require('jsonwebtoken');
-const path = require('path');
-const fs = require('fs');
 const pool = require('./db');
 
 const app = express();
@@ -49,6 +47,14 @@ function authenticate(req, res, next) {
   } catch {
     res.status(401).json({ error: 'Invalid token' });
   }
+}
+
+function adminAuth(req, res, next) {
+  const authHeader = req.headers.authorization;
+  if (!authHeader?.startsWith('Bearer ')) return res.status(401).json({ error: 'Unauthorized' });
+  const token = authHeader.split(' ')[1];
+  if (token !== process.env.API_SECRET) return res.status(401).json({ error: 'Unauthorized' });
+  next();
 }
 
 // Health
@@ -115,15 +121,74 @@ app.patch('/api/user/preferences', authenticate, async (req, res) => {
   }
 });
 
-// Hunts — serve from public/data.json relative to repo root
-const dataPath = path.join(__dirname, '..', 'public', 'data.json');
+// Hunts — PostgreSQL as source of truth
+const HUNT_SELECT = `
+  SELECT id, name, rank, type,
+    bill_number   AS "billNumber",
+    zone, area, coords,
+    coords_note   AS "coordsNote",
+    targets, reward, authority, tips, status
+  FROM hunts ORDER BY id
+`;
 
-app.get('/api/hunts', (req, res) => {
+app.get('/api/hunts', async (req, res) => {
   try {
-    const data = JSON.parse(fs.readFileSync(dataPath, 'utf8'));
-    res.json(data);
+    const result = await pool.query(HUNT_SELECT);
+    res.json(result.rows);
   } catch {
     res.status(500).json({ error: 'Failed to load hunt data' });
+  }
+});
+
+app.post('/api/hunts', adminAuth, async (req, res) => {
+  const { name, rank, type, billNumber, zone, area, coords, coordsNote, targets, reward, authority, tips, status } = req.body;
+  if (!name) return res.status(400).json({ error: 'name is required' });
+  try {
+    const result = await pool.query(
+      `INSERT INTO hunts (name, rank, type, bill_number, zone, area, coords, coords_note, targets, reward, authority, tips, status)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13)
+       RETURNING id, name, rank, type, bill_number AS "billNumber", zone, area, coords,
+                 coords_note AS "coordsNote", targets, reward, authority, tips, status`,
+      [name, rank, type, billNumber, zone, area, coords, coordsNote, targets ?? 1, reward, authority, tips ?? [], status ?? 'todo']
+    );
+    res.status(201).json(result.rows[0]);
+  } catch {
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+app.patch('/api/hunts/:id', adminAuth, async (req, res) => {
+  const { id } = req.params;
+  const fields = { name: req.body.name, rank: req.body.rank, type: req.body.type,
+    bill_number: req.body.billNumber, zone: req.body.zone, area: req.body.area,
+    coords: req.body.coords, coords_note: req.body.coordsNote, targets: req.body.targets,
+    reward: req.body.reward, authority: req.body.authority, tips: req.body.tips,
+    status: req.body.status };
+  const entries = Object.entries(fields).filter(([, v]) => v !== undefined);
+  if (!entries.length) return res.status(400).json({ error: 'No fields to update' });
+  const sets = entries.map(([k], i) => `${k} = $${i + 2}`).join(', ');
+  const values = entries.map(([, v]) => v);
+  try {
+    const result = await pool.query(
+      `UPDATE hunts SET ${sets}, updated_at = NOW() WHERE id = $1
+       RETURNING id, name, rank, type, bill_number AS "billNumber", zone, area, coords,
+                 coords_note AS "coordsNote", targets, reward, authority, tips, status`,
+      [id, ...values]
+    );
+    if (!result.rows[0]) return res.status(404).json({ error: 'Hunt not found' });
+    res.json(result.rows[0]);
+  } catch {
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+app.delete('/api/hunts/:id', adminAuth, async (req, res) => {
+  try {
+    const result = await pool.query('DELETE FROM hunts WHERE id = $1 RETURNING id', [req.params.id]);
+    if (!result.rows[0]) return res.status(404).json({ error: 'Hunt not found' });
+    res.json({ ok: true });
+  } catch {
+    res.status(500).json({ error: 'Server error' });
   }
 });
 

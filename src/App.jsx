@@ -96,12 +96,12 @@ function App() {
 
   // Fetch hunt data, then overlay API progress if authenticated
   useEffect(() => {
-    fetch('/data.json')
+    fetch('https://api.ffxivlog.com/api/hunts')
       .then((r) => r.ok ? r.json() : null)
       .then(async (d) => {
-        if (!d || !Array.isArray(d.hunts) || !d.hunts.length) return
-        setHunts(d.hunts)
-        const base = seedDoneMap(d.hunts)
+        if (!d || !Array.isArray(d) || !d.length) return
+        setHunts(d)
+        const base = seedDoneMap(d)
         if (getToken()) {
           const apiMap = await loadProgress().catch(() => null)
           setDoneMap(apiMap ? { ...base, ...apiMap } : base)
