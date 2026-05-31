@@ -60,6 +60,27 @@ function adminAuth(req, res, next) {
 // Health
 app.get('/health', (req, res) => res.json({ status: 'ok' }));
 
+// Public profile — no auth required
+app.get('/api/profile/:slug', async (req, res) => {
+  const slug = req.params.slug.toLowerCase();
+  try {
+    const u = await pool.query(
+      `SELECT id, username, slug, world, dc, lodestone_id, xivapi_cache
+       FROM users WHERE slug = $1 OR LOWER(username) = $1 LIMIT 1`,
+      [slug]
+    );
+    if (!u.rows.length) return res.status(404).json({ error: 'not found' });
+    const user = u.rows[0];
+    const [huntsRes, progressRes] = await Promise.all([
+      pool.query('SELECT id, name, rank, zone, reward FROM hunts ORDER BY id'),
+      pool.query('SELECT hunt_id, status, updated_at FROM progress WHERE user_id = $1', [user.id]),
+    ]);
+    res.json({ user, hunts: huntsRes.rows, progress: progressRes.rows, xivapi: user.xivapi_cache || null });
+  } catch {
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
 // Discord OAuth
 app.get('/auth/discord', passport.authenticate('discord'));
 
