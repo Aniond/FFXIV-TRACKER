@@ -127,13 +127,19 @@ export default function Dashboard({ hunts, doneMap, user, onOpenBoard }) {
   }, [user])
 
   function openNutsEdit() { setDraft(String(nutsBase)); setEditingNuts(true) }
-  function saveNuts() {
+  async function saveNuts() {
     const v = parseInt(draft, 10)
     const clean = Number.isNaN(v) ? 0 : Math.max(0, v)
     setNutsBase(clean)
     localStorage.setItem(NUTS_KEY, String(clean))
-    if (user) saveStash(clean).catch(() => {})
     setEditingNuts(false)
+    if (user) {
+      try {
+        await saveStash(clean)
+      } catch (e) {
+        console.error('[stash save]', e.message)
+      }
+    }
   }
 
   return (

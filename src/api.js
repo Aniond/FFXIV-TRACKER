@@ -51,10 +51,15 @@ async function resetProgress() {
 }
 
 async function saveStash(nuts) {
-  return apiFetch('/api/user/stash', {
+  const r = await apiFetch('/api/user/stash', {
     method: 'PATCH',
     body: JSON.stringify({ nuts }),
   })
+  if (!r.ok) {
+    const body = await r.json().catch(() => ({}))
+    throw new Error(`saveStash ${r.status}: ${body.error || 'unknown'}`)
+  }
+  return r
 }
 
 async function savePreferences({ view, accent, density }) {
