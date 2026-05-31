@@ -32,7 +32,7 @@ const ACCENTS = {
 
 const TWEAK_DEFAULTS = {
   "view": "cards",
-  "accent": "#c9a35b",
+  "accent": "#8fb6d6",
   "density": "regular"
 }
 

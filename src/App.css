@@ -12,10 +12,10 @@
   --bill-edge:    #2e2719;
 
   /* Gold (Centurio) accent — overridable by tweak */
-  --gold:         #c9a35b;
-  --gold-bright:  #ecca82;
-  --gold-dim:     #8a7038;
-  --gold-faint:   rgba(201,163,91,0.14);
+  --gold:         #8fb6d6;
+  --gold-bright:  #bcd8ef;
+  --gold-dim:     #5a7894;
+  --gold-faint:   rgba(143,182,214,0.14);
 
   /* Ink / text on dark */
   --parchment:    #efe6d0;
