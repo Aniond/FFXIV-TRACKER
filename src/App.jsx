@@ -96,7 +96,7 @@ function App() {
       }
       return true
     })
-  }, [hunts, doneMap, rank, status, q])
+  }, [hunts, doneMap, rank, type, status, q])
 
   const typesPresent = useMemo(
     () => [...new Set(hunts.map((h) => h.type).filter(Boolean))],
@@ -214,7 +214,7 @@ function App() {
             <div className="empty">
               <div className="empty__crest"><Icon.search /></div>
               <h3>No marks found</h3>
-              <p>No hunts match "{q}" with the current filters. Try a different term or reset the rank filter.</p>
+              <p>No hunts match the current filters. Try adjusting the rank, status, or type selection.</p>
             </div>
           ) : t.view === 'table' ? (
             <HuntTable hunts={filtered} doneMap={doneMap} onToggle={toggle} onCopy={copyCoords} q={q} />
