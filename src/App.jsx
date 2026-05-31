@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo, useRef } from 'react'
 import './App.css'
 import { Icon, RankSeal, BillCard, HuntTable, Highlight, rankVars } from './components'
 import { useTweaks, TweaksPanel, TweakSection, TweakRadio, TweakColor } from './TweaksPanel'
-import { API, getToken, setToken, clearToken, fetchMe, loadProgress, saveProgress, resetProgress } from './api'
+import { API, getToken, setToken, clearToken, fetchMe, loadProgress, saveProgress, resetProgress, savePreferences } from './api'
 import Dashboard, { DIcon } from './Dashboard'
 import Banner from './Banner'
 
@@ -70,6 +70,7 @@ function App() {
   const [user, setUser] = useState(null)
   const [page, setPage] = useState('overview')
   const toastTimer = useRef(null)
+  const prefsSynced = useRef(false)
 
   // Handle OAuth redirect token in URL, then load user profile
   useEffect(() => {
@@ -80,7 +81,16 @@ function App() {
       window.history.replaceState({}, '', window.location.pathname)
     }
     if (getToken()) {
-      fetchMe().then((u) => { if (u) setUser(u) }).catch(() => {})
+      fetchMe().then((u) => {
+        if (!u) return
+        setUser(u)
+        setTweak({
+          ...(u.pref_view    && { view:    u.pref_view }),
+          ...(u.pref_accent  && { accent:  u.pref_accent }),
+          ...(u.pref_density && { density: u.pref_density }),
+        })
+        prefsSynced.current = true
+      }).catch(() => {})
     }
   }, [])
 
@@ -106,6 +116,12 @@ function App() {
   useEffect(() => {
     localStorage.setItem(DONE_KEY, JSON.stringify(doneMap))
   }, [doneMap])
+
+  // Save view/accent/density to backend when logged in and prefs have been loaded
+  useEffect(() => {
+    if (!prefsSynced.current || !user) return
+    savePreferences({ view: t.view, accent: t.accent, density: t.density }).catch(() => {})
+  }, [t])
 
   useEffect(() => {
     const a = ACCENTS[t.accent] || ACCENTS['#c9a35b']

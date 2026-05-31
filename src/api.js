@@ -50,4 +50,18 @@ async function resetProgress() {
   return apiFetch('/api/progress', { method: 'DELETE' })
 }
 
-export { API, getToken, setToken, clearToken, fetchMe, loadProgress, saveProgress, resetProgress }
+async function saveStash(nuts) {
+  return apiFetch('/api/user/stash', {
+    method: 'PATCH',
+    body: JSON.stringify({ nuts }),
+  })
+}
+
+async function savePreferences({ view, accent, density }) {
+  return apiFetch('/api/user/preferences', {
+    method: 'PATCH',
+    body: JSON.stringify({ view, accent, density }),
+  })
+}
+
+export { API, getToken, setToken, clearToken, fetchMe, loadProgress, saveProgress, resetProgress, saveStash, savePreferences }

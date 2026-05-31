@@ -69,14 +69,47 @@ app.get('/auth/discord/callback',
   }
 );
 
+const USER_SELECT = 'SELECT id, discord_id, username, avatar, nuts_stash, pref_view, pref_accent, pref_density, created_at FROM users WHERE id = $1';
+
 app.get('/auth/me', authenticate, async (req, res) => {
   try {
-    const result = await pool.query(
-      'SELECT id, discord_id, username, avatar, created_at FROM users WHERE id = $1',
-      [req.user.id]
-    );
+    const result = await pool.query(USER_SELECT, [req.user.id]);
     if (!result.rows[0]) return res.status(404).json({ error: 'User not found' });
     res.json(result.rows[0]);
+  } catch {
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+app.get('/api/user/profile', authenticate, async (req, res) => {
+  try {
+    const result = await pool.query(USER_SELECT, [req.user.id]);
+    if (!result.rows[0]) return res.status(404).json({ error: 'User not found' });
+    res.json(result.rows[0]);
+  } catch {
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+app.patch('/api/user/stash', authenticate, async (req, res) => {
+  const { nuts } = req.body;
+  if (nuts == null || !Number.isInteger(nuts) || nuts < 0) return res.status(400).json({ error: 'nuts must be a non-negative integer' });
+  try {
+    await pool.query('UPDATE users SET nuts_stash = $2 WHERE id = $1', [req.user.id, nuts]);
+    res.json({ ok: true });
+  } catch {
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+app.patch('/api/user/preferences', authenticate, async (req, res) => {
+  const { view, accent, density } = req.body;
+  try {
+    await pool.query(
+      'UPDATE users SET pref_view = COALESCE($2, pref_view), pref_accent = COALESCE($3, pref_accent), pref_density = COALESCE($4, pref_density) WHERE id = $1',
+      [req.user.id, view || null, accent || null, density || null]
+    );
+    res.json({ ok: true });
   } catch {
     res.status(500).json({ error: 'Server error' });
   }

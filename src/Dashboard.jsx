@@ -1,5 +1,6 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { Icon, rankVars } from './components'
+import { saveStash } from './api'
 import './Dashboard.css'
 
 /* ============================================================
@@ -120,12 +121,18 @@ export default function Dashboard({ hunts, doneMap, user, onOpenBoard }) {
   const [draft, setDraft] = useState('')
   const nutsTotal = nutsBase + s.nuts
 
+  // Seed from backend when user loads (overrides localStorage)
+  useEffect(() => {
+    if (user?.nuts_stash != null) setNutsBase(user.nuts_stash)
+  }, [user])
+
   function openNutsEdit() { setDraft(String(nutsBase)); setEditingNuts(true) }
   function saveNuts() {
     const v = parseInt(draft, 10)
     const clean = Number.isNaN(v) ? 0 : Math.max(0, v)
     setNutsBase(clean)
     localStorage.setItem(NUTS_KEY, String(clean))
+    if (user) saveStash(clean).catch(() => {})
     setEditingNuts(false)
   }
 
