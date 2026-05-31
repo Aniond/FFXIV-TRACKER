@@ -3,6 +3,7 @@ import './App.css'
 import { Icon, RankSeal, BillCard, HuntTable, Highlight, rankVars } from './components'
 import { useTweaks, TweaksPanel, TweakSection, TweakRadio, TweakColor } from './TweaksPanel'
 import { API, getToken, setToken, clearToken, fetchMe, loadProgress, saveProgress, resetProgress } from './api'
+import Dashboard, { DIcon } from './Dashboard'
 
 const DONE_KEY = 'ffxiv-hunt-done'
 
@@ -66,6 +67,7 @@ function App() {
   const [type, setType] = useState('all')
   const [toast, setToast] = useState(null)
   const [user, setUser] = useState(null)
+  const [page, setPage] = useState('overview')
   const toastTimer = useRef(null)
 
   // Handle OAuth redirect token in URL, then load user profile
@@ -194,6 +196,19 @@ function App() {
         )}
       </header>
 
+      <div className="pagenav">
+        <button className={page === 'overview' ? 'is-active' : ''} onClick={() => setPage('overview')}>
+          <DIcon.trophy /> Overview
+        </button>
+        <button className={page === 'board' ? 'is-active' : ''} onClick={() => setPage('board')}>
+          <Icon.crest /> Hunt Board
+        </button>
+      </div>
+
+      {page === 'overview' ? (
+        <Dashboard hunts={hunts} doneMap={doneMap} user={user} onOpenBoard={() => setPage('board')} />
+      ) : (
+      <>
       <div className="controls">
         <div className="search">
           <Icon.search className="search__icon" />
@@ -299,6 +314,9 @@ function App() {
         </>
       ) : (
         <ComingSoon cat={CATEGORIES.find((c) => c.id === cat)} />
+      )}
+
+      </>
       )}
 
       <div className={`toast${toast ? ' is-show' : ''}`}>
