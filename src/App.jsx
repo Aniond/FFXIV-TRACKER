@@ -166,7 +166,7 @@ function App() {
             <select
               className="type-select"
               value={rank}
-              onChange={(e) => setRank(e.target.value)}
+              onChange={(e) => setRank(e.target.value.replace('-rank', ''))}
               aria-label="Filter by rank"
             >
               <option value="all">All ranks</option>
