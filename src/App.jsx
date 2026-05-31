@@ -3,8 +3,6 @@ import './App.css'
 import { Icon, RankSeal, BillCard, HuntTable, Highlight, rankVars, RANK_COLOR } from './components'
 import { useTweaks, TweaksPanel, TweakSection, TweakRadio, TweakColor } from './TweaksPanel'
 
-const DONE_KEY = 'ffxiv-hunt-done'
-
 const SEED = {
   hunts: [
     { id:1, name:"Mourner", rank:"B", type:"Intermediate Dawn Hunt", billNumber:"1/5", zone:"Yak T'el", area:"The Ja Tiika Heartland", coords:"~X:22, Y:28", coordsNote:"Roams central forest area", targets:2, reward:"1,000 Gil · 4 Sacks of Nuts · 471,744 EXP", authority:"Dawn Hunt", tips:["2 targets — kill both to complete.","Found in the lower Ja Tiika Heartland jungle.","Roaming mob — patrol until you find both."], status:"done" },
@@ -36,9 +34,10 @@ const TWEAK_DEFAULTS = {
   "density": "regular"
 }
 
-function loadDone() {
-  try { return JSON.parse(localStorage.getItem(DONE_KEY)) || {} }
-  catch { return {} }
+function seedDoneMap(hunts) {
+  const m = {}
+  hunts.forEach((h) => { if (h.status === 'done') m[h.id] = true })
+  return m
 }
 
 function searchText(h) {
@@ -51,7 +50,7 @@ function searchText(h) {
 function App() {
   const [t, setTweak] = useTweaks(TWEAK_DEFAULTS)
   const [hunts, setHunts] = useState(SEED.hunts)
-  const [doneMap, setDoneMap] = useState(loadDone)
+  const [doneMap, setDoneMap] = useState(() => seedDoneMap(SEED.hunts))
   const [query, setQuery] = useState('')
   const [cat, setCat] = useState('hunts')
   const [rank, setRank] = useState('all')
@@ -60,24 +59,16 @@ function App() {
   const toastTimer = useRef(null)
 
   useEffect(() => {
-    setDoneMap((prev) => {
-      if (Object.keys(prev).length) return prev
-      const m = {}
-      SEED.hunts.forEach((h) => { if (h.status === 'done') m[h.id] = true })
-      return m
-    })
-  }, [])
-
-  useEffect(() => {
     fetch('/data.json')
       .then((r) => r.ok ? r.json() : null)
-      .then((d) => { if (d && Array.isArray(d.hunts) && d.hunts.length) setHunts(d.hunts) })
+      .then((d) => {
+        if (d && Array.isArray(d.hunts) && d.hunts.length) {
+          setHunts(d.hunts)
+          setDoneMap(seedDoneMap(d.hunts))
+        }
+      })
       .catch(() => {})
   }, [])
-
-  useEffect(() => {
-    localStorage.setItem(DONE_KEY, JSON.stringify(doneMap))
-  }, [doneMap])
 
   useEffect(() => {
     const a = ACCENTS[t.accent] || ACCENTS['#c9a35b']
@@ -123,12 +114,6 @@ function App() {
     setToast(msg)
     clearTimeout(toastTimer.current)
     toastTimer.current = setTimeout(() => setToast(null), 1600)
-  }
-  function resetAll() {
-    if (!window.confirm('Reset all hunt progress?')) return
-    const defaults = {}
-    hunts.forEach((h) => { if (h.status === 'done') defaults[h.id] = true })
-    setDoneMap(defaults)
   }
 
   const counts = { hunts: hunts.length }
@@ -196,12 +181,9 @@ function App() {
             <div className="metarow__count">
               <b>{filtered.length}</b> of {hunts.length} marks
             </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <button className="chip chip--reset" onClick={resetAll}>Reset all</button>
             <div className="viewtoggle" role="group" aria-label="View">
               <button className={t.view === 'cards' ? 'is-active' : ''} onClick={() => setTweak('view', 'cards')} aria-label="Card view"><Icon.cards /></button>
               <button className={t.view === 'table' ? 'is-active' : ''} onClick={() => setTweak('view', 'table')} aria-label="Table view"><Icon.table /></button>
-            </div>
             </div>
           </div>
 

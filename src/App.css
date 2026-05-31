@@ -266,9 +266,6 @@ mark {
 }
 .chip__dot { width: 8px; height: 8px; border-radius: 50%; }
 .chip-sep { flex: 0 0 auto; width: 1px; height: 18px; background: var(--bill-edge); margin: 0 2px; }
-.chip--reset { padding: 4px 10px; font-size: 11px; opacity: 0.6; }
-.chip--reset:hover { opacity: 1; color: var(--rank-s); border-color: var(--rank-s); }
-
 /* ---------- Meta row: count + view toggle ---------- */
 .metarow {
   display: flex;
