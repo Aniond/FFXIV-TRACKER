@@ -1,246 +1,253 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useState, useEffect, useMemo, useRef } from 'react'
 import './App.css'
+import { Icon, RankSeal, BillCard, HuntTable, Highlight, rankVars, RANK_COLOR } from './components'
+import { useTweaks, TweaksPanel, TweakSection, TweakRadio, TweakColor } from './TweaksPanel'
 
-const STORAGE_KEY = 'ffxiv-hunt-status'
+const DONE_KEY = 'ffxiv-hunt-done'
 
-const STATUS_CYCLE = {
-  todo: 'in-progress',
-  'in-progress': 'done',
-  done: 'todo',
+const SEED = {
+  hunts: [
+    { id:1, name:"Mourner", rank:"B", type:"Intermediate Dawn Hunt", billNumber:"1/5", zone:"Yak T'el", area:"The Ja Tiika Heartland", coords:"~X:22, Y:28", coordsNote:"Roams central forest area", targets:2, reward:"1,000 Gil · 4 Sacks of Nuts · 471,744 EXP", authority:"Dawn Hunt", tips:["2 targets — kill both to complete.","Found in the lower Ja Tiika Heartland jungle.","Roaming mob — patrol until you find both."], status:"done" },
+    { id:2, name:"Blue Morpho", rank:"B", type:"Intermediate Dawn Hunt", billNumber:"2/5", zone:"Yak T'el", area:"The Cerulean Cexudross", coords:"~X:18, Y:32", coordsNote:"Roams lower forest area", targets:3, reward:"1,000 Gil · 4 Sacks of Nuts · 471,744 EXP", authority:"Dawn Hunt", tips:["3 targets — kill all 3 to complete.","Large blue butterflies in the lower Yak T'el forest.","Same lower forest tier as Mourner — do both together."], status:"done" },
+    { id:3, name:"Balyaborr", rank:"B", type:"Intermediate Dawn Hunt", billNumber:"3/5", zone:"Yak T'el", area:"The Ut'ohmu Horizon", coords:"~X:31, Y:11", coordsNote:"Roams — NE of map", targets:1, reward:"1,000 Gil · 4 Sacks of Nuts · 471,744 EXP", authority:"Dawn Hunt", tips:["B ranks roam continuously — no fixed spawn timer.","Teleport to Dirigible Landing aetheryte and sweep open ground north.","Single-target kill — soloable."], status:"todo" },
+    { id:4, name:"Aspis", rank:"B", type:"Intermediate Dawn Hunt", billNumber:"4/5", zone:"Shaaloani", area:"Eshceyaani Wilds", coords:"~X:26, Y:10", coordsNote:"Roams the wilds — snake-heavy area", targets:3, reward:"1,000 Gil · 4 Sacks of Nuts · 471,744 EXP", authority:"Dawn Hunt", tips:["3 targets — kill all 3 Aspis to complete.","Common open-world snakes — easy to spot.","Plentiful in the area — shouldn't take long."], status:"todo" },
+    { id:5, name:"Horned Lizard", rank:"B", type:"Intermediate Dawn Hunt", billNumber:"5/5", zone:"Shaaloani", area:"Eshceyaani Wilds", coords:"X:11.7, Y:13.7", coordsNote:"Roams — same area as Aspis", targets:2, reward:"1,000 Gil · 4 Sacks of Nuts · 471,744 EXP", authority:"Dawn Hunt", tips:["2 targets — kill both to complete.","Same area as Aspis — do both in one run.","Aggressive — will attack on sight."], status:"todo" },
+  ],
 }
 
-const STATUS_LABEL = {
-  todo: 'To do',
-  'in-progress': 'In progress',
-  done: 'Done',
+const CATEGORIES = [
+  { id:'hunts',     label:'Hunts',     icon:'crest',    soon:false },
+  { id:'fates',     label:'FATEs',     icon:'fate',     soon:true  },
+  { id:'gathering', label:'Gathering', icon:'gather',   soon:true  },
+  { id:'crafting',  label:'Crafting',  icon:'craft',    soon:true  },
+  { id:'treasure',  label:'Treasure',  icon:'treasure', soon:true  },
+]
+
+const ACCENTS = {
+  '#c9a35b': { bright:'#ecca82', dim:'#8a7038' },
+  '#8fb6d6': { bright:'#bcd8ef', dim:'#5a7894' },
+  '#cf6b4b': { bright:'#e89875', dim:'#92452d' },
+  '#7bbf9e': { bright:'#a9e0c5', dim:'#4a7d63' },
 }
 
-const STATUS_ORDER = ['todo', 'in-progress', 'done']
-
-const DEFAULT_FILTERS = { rank: 'all', status: 'all', type: 'all' }
-
-function loadStatusOverrides() {
-  try {
-    return JSON.parse(localStorage.getItem(STORAGE_KEY)) || {}
-  } catch {
-    return {}
-  }
+const TWEAK_DEFAULTS = {
+  "view": "cards",
+  "accent": "#c9a35b",
+  "density": "regular"
 }
 
-function FilterRow({ label, options, value, onChange }) {
-  return (
-    <div className="filter-row">
-      <span className="filter-row__label">{label}</span>
-      <div className="filter-row__options">
-        {options.map((opt) => (
-          <button
-            key={opt.value}
-            type="button"
-            className={`filter-pill${value === opt.value ? ' is-active' : ''}`}
-            aria-pressed={value === opt.value}
-            onClick={() => onChange(opt.value)}
-          >
-            {opt.label}
-          </button>
-        ))}
-      </div>
-    </div>
-  )
+function loadDone() {
+  try { return JSON.parse(localStorage.getItem(DONE_KEY)) || {} }
+  catch { return {} }
 }
 
-export default function App() {
-  const [hunts, setHunts] = useState([])
-  const [overrides, setOverrides] = useState(loadStatusOverrides)
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState(null)
-  const [filters, setFilters] = useState(DEFAULT_FILTERS)
+function searchText(h) {
+  return [
+    h.name, h.rank, `${h.rank}-rank`, h.type, h.billNumber, h.zone, h.area,
+    h.coords, h.coordsNote, h.reward, h.authority, ...(h.tips || []),
+  ].join(' ').toLowerCase()
+}
+
+function App() {
+  const [t, setTweak] = useTweaks(TWEAK_DEFAULTS)
+  const [hunts, setHunts] = useState(SEED.hunts)
+  const [doneMap, setDoneMap] = useState(loadDone)
+  const [query, setQuery] = useState('')
+  const [cat, setCat] = useState('hunts')
+  const [rank, setRank] = useState('all')
+  const [status, setStatus] = useState('all')
+  const [toast, setToast] = useState(null)
+  const toastTimer = useRef(null)
 
   useEffect(() => {
-    fetch('/data.json')
-      .then((res) => {
-        if (!res.ok) throw new Error(`Failed to load data.json (${res.status})`)
-        return res.json()
-      })
-      .then((data) => setHunts(data.hunts ?? []))
-      .catch((err) => setError(err.message))
-      .finally(() => setLoading(false))
+    setDoneMap((prev) => {
+      if (Object.keys(prev).length) return prev
+      const m = {}
+      SEED.hunts.forEach((h) => { if (h.status === 'done') m[h.id] = true })
+      return m
+    })
   }, [])
 
   useEffect(() => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(overrides))
-  }, [overrides])
+    fetch('/data.json')
+      .then((r) => r.ok ? r.json() : null)
+      .then((d) => { if (d && Array.isArray(d.hunts) && d.hunts.length) setHunts(d.hunts) })
+      .catch(() => {})
+  }, [])
 
-  const huntsWithStatus = useMemo(
-    () =>
-      hunts.map((hunt) => ({
-        ...hunt,
-        status: overrides[hunt.id] ?? hunt.status ?? 'todo',
-      })),
-    [hunts, overrides]
+  useEffect(() => {
+    localStorage.setItem(DONE_KEY, JSON.stringify(doneMap))
+  }, [doneMap])
+
+  useEffect(() => {
+    const a = ACCENTS[t.accent] || ACCENTS['#c9a35b']
+    const r = document.documentElement
+    r.style.setProperty('--gold', t.accent)
+    r.style.setProperty('--gold-bright', a.bright)
+    r.style.setProperty('--gold-dim', a.dim)
+    r.style.setProperty('--gold-faint', `${t.accent}24`)
+  }, [t.accent])
+
+  const q = query.trim()
+
+  const filtered = useMemo(() => {
+    const tokens = q.toLowerCase().split(/\s+/).filter(Boolean)
+    return hunts.filter((h) => {
+      const done = !!doneMap[h.id]
+      if (rank !== 'all' && h.rank !== rank) return false
+      if (status === 'open' && done) return false
+      if (status === 'done' && !done) return false
+      if (tokens.length) {
+        const txt = searchText(h)
+        if (!tokens.every((tok) => txt.includes(tok))) return false
+      }
+      return true
+    })
+  }, [hunts, doneMap, rank, status, q])
+
+  const ranksPresent = useMemo(
+    () => ['S','A','B'].filter((r) => hunts.some((h) => h.rank === r)),
+    [hunts]
   )
+  const doneCount = hunts.filter((h) => doneMap[h.id]).length
 
-  // Filter options are generated dynamically from whatever exists in the data.
-  const rankOptions = useMemo(() => {
-    const ranks = [...new Set(hunts.map((h) => h.rank).filter(Boolean))].sort()
-    return [{ value: 'all', label: 'All' }, ...ranks.map((r) => ({ value: r, label: r }))]
-  }, [hunts])
-
-  const typeOptions = useMemo(() => {
-    const types = [...new Set(hunts.map((h) => h.type).filter(Boolean))].sort()
-    return [{ value: 'all', label: 'All' }, ...types.map((t) => ({ value: t, label: t }))]
-  }, [hunts])
-
-  // Status options follow a fixed lifecycle order, not data order.
-  const statusOptions = useMemo(() => {
-    const present = new Set(huntsWithStatus.map((h) => h.status))
-    return [
-      { value: 'all', label: 'All' },
-      ...STATUS_ORDER.filter((s) => present.has(s)).map((s) => ({
-        value: s,
-        label: STATUS_LABEL[s],
-      })),
-    ]
-  }, [huntsWithStatus])
-
-  const filteredHunts = useMemo(
-    () =>
-      huntsWithStatus.filter(
-        (h) =>
-          (filters.rank === 'all' || h.rank === filters.rank) &&
-          (filters.status === 'all' || h.status === filters.status) &&
-          (filters.type === 'all' || h.type === filters.type)
-      ),
-    [huntsWithStatus, filters]
-  )
-
-  const doneCount = huntsWithStatus.filter((h) => h.status === 'done').length
-  const filtersActive =
-    filters.rank !== 'all' || filters.status !== 'all' || filters.type !== 'all'
-
-  function setFilter(key, value) {
-    setFilters((prev) => ({ ...prev, [key]: value }))
+  function toggle(id) {
+    setDoneMap((m) => ({ ...m, [id]: !m[id] }))
+  }
+  function copyCoords(text) {
+    const clean = String(text).replace(/^~/, '')
+    navigator.clipboard?.writeText(clean).catch(() => {})
+    showToast(`Copied ${clean}`)
+  }
+  function showToast(msg) {
+    setToast(msg)
+    clearTimeout(toastTimer.current)
+    toastTimer.current = setTimeout(() => setToast(null), 1600)
   }
 
-  function cycleStatus(id, current) {
-    setOverrides((prev) => ({ ...prev, [id]: STATUS_CYCLE[current] ?? 'todo' }))
-  }
+  const counts = { hunts: hunts.length }
+  const huntsActive = cat === 'hunts'
 
   return (
-    <div className="app">
-      <header className="app-header">
-        <h1>FFXIV Hunt Tracker</h1>
-        <p className="subtitle">
-          {huntsWithStatus.length > 0
-            ? `${doneCount} / ${huntsWithStatus.length} hunts complete`
-            : 'Track your hunt marks'}
-        </p>
+    <div className={`ledger${t.density === 'compact' ? ' is-compact' : ''}`}>
+      <header className="brand">
+        <div className="brand__crest"><Icon.crest /></div>
+        <div>
+          <h1 className="brand__title">CENTURIO LEDGER</h1>
+          <div className="brand__sub">Hunt Board · {doneCount}/{hunts.length} cleared</div>
+        </div>
       </header>
 
-      {loading && <p className="message">Loading hunts…</p>}
-      {error && <p className="message error">⚠ {error}</p>}
+      <div className="controls">
+        <div className="search">
+          <Icon.search className="search__icon" />
+          <input
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Search marks, zones, coords, notes…"
+            aria-label="Search the ledger"
+          />
+          {query && <button className="search__clear" onClick={() => setQuery('')} aria-label="Clear">×</button>}
+        </div>
 
-      {huntsWithStatus.length > 0 && (
-        <section className="filters" aria-label="Filter hunts">
-          <FilterRow
-            label="Rank"
-            options={rankOptions}
-            value={filters.rank}
-            onChange={(v) => setFilter('rank', v)}
-          />
-          <FilterRow
-            label="Status"
-            options={statusOptions}
-            value={filters.status}
-            onChange={(v) => setFilter('status', v)}
-          />
-          <FilterRow
-            label="Type"
-            options={typeOptions}
-            value={filters.type}
-            onChange={(v) => setFilter('type', v)}
-          />
-          <div className="filters__footer">
-            <span className="filters__count">
-              Showing {filteredHunts.length} of {huntsWithStatus.length}
-            </span>
-            {filtersActive && (
+        <nav className="tabs" aria-label="Content types">
+          {CATEGORIES.map((c) => {
+            const I = Icon[c.icon]
+            return (
               <button
-                type="button"
-                className="filters__reset"
-                onClick={() => setFilters(DEFAULT_FILTERS)}
+                key={c.id}
+                className={`tab${cat === c.id ? ' is-active' : ''}${c.soon ? ' is-soon' : ''}`}
+                onClick={() => !c.soon && setCat(c.id)}
+                disabled={c.soon}
               >
-                Reset filters
+                <I className="tab__ico" />
+                {c.label}
+                <span className="tab__count">{c.soon ? '·' : counts[c.id] ?? 0}</span>
               </button>
-            )}
+            )
+          })}
+        </nav>
+
+        {huntsActive && (
+          <div className="filters">
+            <button className={`chip${rank === 'all' ? ' is-active' : ''}`} onClick={() => setRank('all')}>All ranks</button>
+            {ranksPresent.map((r) => (
+              <button key={r} className={`chip${rank === r ? ' is-active' : ''}`} onClick={() => setRank(r)}>
+                <span className="chip__dot" style={{ background: RANK_COLOR[r] }} />{r}-rank
+              </button>
+            ))}
+            <span className="chip-sep" />
+            <button className={`chip${status === 'all' ? ' is-active' : ''}`} onClick={() => setStatus('all')}>All</button>
+            <button className={`chip${status === 'open' ? ' is-active' : ''}`} onClick={() => setStatus('open')}>Open</button>
+            <button className={`chip${status === 'done' ? ' is-active' : ''}`} onClick={() => setStatus('done')}>Cleared</button>
           </div>
-        </section>
-      )}
+        )}
+      </div>
 
-      <main className="hunt-grid">
-        {filteredHunts.map((hunt) => (
-          <article key={hunt.id} className={`hunt-card status-${hunt.status}`}>
-            <div className="hunt-card__top">
-              <span className={`rank rank-${hunt.rank}`}>{hunt.rank}</span>
-              <div className="hunt-title">
-                <h2>{hunt.name}</h2>
-                <span className="hunt-type">{hunt.type}</span>
-              </div>
-              <button
-                type="button"
-                className="status-toggle"
-                onClick={() => cycleStatus(hunt.id, hunt.status)}
-              >
-                {STATUS_LABEL[hunt.status]}
-              </button>
+      {huntsActive ? (
+        <>
+          <div className="metarow">
+            <div className="metarow__count">
+              <b>{filtered.length}</b> of {hunts.length} marks
             </div>
+            <div className="viewtoggle" role="group" aria-label="View">
+              <button className={t.view === 'cards' ? 'is-active' : ''} onClick={() => setTweak('view', 'cards')} aria-label="Card view"><Icon.cards /></button>
+              <button className={t.view === 'table' ? 'is-active' : ''} onClick={() => setTweak('view', 'table')} aria-label="Table view"><Icon.table /></button>
+            </div>
+          </div>
 
-            <dl className="hunt-meta">
-              <div>
-                <dt>Zone</dt>
-                <dd>{hunt.zone}</dd>
-              </div>
-              <div>
-                <dt>Area</dt>
-                <dd>{hunt.area}</dd>
-              </div>
-              <div>
-                <dt>Coords</dt>
-                <dd>
-                  {hunt.coords}
-                  {hunt.coordsNote && <span className="note"> · {hunt.coordsNote}</span>}
-                </dd>
-              </div>
-              <div>
-                <dt>Targets</dt>
-                <dd>{hunt.targets}</dd>
-              </div>
-              <div>
-                <dt>Bill</dt>
-                <dd>{hunt.billNumber} · {hunt.authority}</dd>
-              </div>
-              <div>
-                <dt>Reward</dt>
-                <dd>{hunt.reward}</dd>
-              </div>
-            </dl>
-
-            {hunt.tips?.length > 0 && (
-              <ul className="hunt-tips">
-                {hunt.tips.map((tip, i) => (
-                  <li key={i}>{tip}</li>
-                ))}
-              </ul>
-            )}
-          </article>
-        ))}
-      </main>
-
-      {!loading && !error && huntsWithStatus.length === 0 && (
-        <p className="message">No hunts found in data.json.</p>
+          {filtered.length === 0 ? (
+            <div className="empty">
+              <div className="empty__crest"><Icon.search /></div>
+              <h3>No marks found</h3>
+              <p>No hunts match "{q}" with the current filters. Try a different term or reset the rank filter.</p>
+            </div>
+          ) : t.view === 'table' ? (
+            <HuntTable hunts={filtered} doneMap={doneMap} onToggle={toggle} onCopy={copyCoords} q={q} />
+          ) : (
+            <div className="bills">
+              {filtered.map((h) => (
+                <BillCard
+                  key={h.id}
+                  hunt={h}
+                  done={!!doneMap[h.id]}
+                  onToggle={() => toggle(h.id)}
+                  onCopy={copyCoords}
+                  q={q}
+                />
+              ))}
+            </div>
+          )}
+        </>
+      ) : (
+        <ComingSoon cat={CATEGORIES.find((c) => c.id === cat)} />
       )}
-      {!loading && !error && huntsWithStatus.length > 0 && filteredHunts.length === 0 && (
-        <p className="message">No hunts match the current filters.</p>
-      )}
+
+      <div className={`toast${toast ? ' is-show' : ''}`}>
+        <Icon.copy />{toast}
+      </div>
+
+      <TweaksPanel>
+        <TweakSection label="View" />
+        <TweakRadio label="Layout" value={t.view} options={['cards', 'table']} onChange={(v) => setTweak('view', v)} />
+        <TweakRadio label="Density" value={t.density} options={['regular', 'compact']} onChange={(v) => setTweak('density', v)} />
+        <TweakSection label="Theme" />
+        <TweakColor label="Accent" value={t.accent} options={Object.keys(ACCENTS)} onChange={(v) => setTweak('accent', v)} />
+      </TweaksPanel>
     </div>
   )
 }
+
+function ComingSoon({ cat }) {
+  const I = Icon[cat.icon]
+  return (
+    <div className="empty">
+      <div className="empty__crest"><I /></div>
+      <h3>{cat.label}</h3>
+      <p>This ledger is built to grow. {cat.label} will live here — same search, same board, one tap away.</p>
+      <span className="empty__soon">Coming soon</span>
+    </div>
+  )
+}
+
+export default App
