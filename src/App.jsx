@@ -272,7 +272,7 @@ function App() {
                 <option value="A">A-rank</option>
                 <option value="B">B-rank</option>
               </select>
-              {typesPresent.length > 1 && (
+              {typesPresent.length > 0 && (
                 <select
                   className="type-select"
                   value={type}
@@ -280,8 +280,8 @@ function App() {
                   aria-label="Filter by type"
                 >
                   <option value="all">All types</option>
-                  {typesPresent.map((t) => (
-                    <option key={t} value={t}>{t}</option>
+                  {typesPresent.map((typeName) => (
+                    <option key={typeName} value={typeName}>{typeName}</option>
                   ))}
                 </select>
               )}
