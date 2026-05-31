@@ -124,6 +124,12 @@ function App() {
     clearTimeout(toastTimer.current)
     toastTimer.current = setTimeout(() => setToast(null), 1600)
   }
+  function resetAll() {
+    if (!window.confirm('Reset all hunt progress?')) return
+    const defaults = {}
+    hunts.forEach((h) => { if (h.status === 'done') defaults[h.id] = true })
+    setDoneMap(defaults)
+  }
 
   const counts = { hunts: hunts.length }
   const huntsActive = cat === 'hunts'
@@ -190,9 +196,12 @@ function App() {
             <div className="metarow__count">
               <b>{filtered.length}</b> of {hunts.length} marks
             </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <button className="chip chip--reset" onClick={resetAll}>Reset all</button>
             <div className="viewtoggle" role="group" aria-label="View">
               <button className={t.view === 'cards' ? 'is-active' : ''} onClick={() => setTweak('view', 'cards')} aria-label="Card view"><Icon.cards /></button>
               <button className={t.view === 'table' ? 'is-active' : ''} onClick={() => setTweak('view', 'table')} aria-label="Table view"><Icon.table /></button>
+            </div>
             </div>
           </div>
 
