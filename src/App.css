@@ -126,6 +126,7 @@ mark {
   white-space: nowrap;
 }
 .brand > div { min-width: 0; }
+.brand__info { flex: 1; min-width: 0; }
 .brand__sub {
   font-size: 10.5px;
   letter-spacing: 0.26em;
@@ -133,6 +134,62 @@ mark {
   color: var(--gold);
   margin-top: 5px;
 }
+
+/* Discord login / user display */
+.discord-btn {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 11px;
+  border-radius: var(--radius-sm);
+  background: #5865F2;
+  color: #fff;
+  font-family: var(--font-body);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  text-decoration: none;
+  white-space: nowrap;
+  transition: background .15s;
+}
+.discord-btn:hover { background: #4752c4; }
+.discord-btn svg { width: 15px; height: 15px; }
+
+.brand__user {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  min-width: 0;
+}
+.brand__avatar {
+  width: 28px; height: 28px;
+  border-radius: 50%;
+  border: 1.5px solid var(--gold-dim);
+  flex: 0 0 28px;
+  object-fit: cover;
+}
+.brand__username {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--parchment);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 72px;
+}
+.brand__logout {
+  font-size: 11px;
+  color: var(--ink-faint);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  font-family: var(--font-body);
+  white-space: nowrap;
+}
+.brand__logout:hover { color: var(--ink-dim); }
 
 /* ---------- Sticky control cluster ---------- */
 .controls {

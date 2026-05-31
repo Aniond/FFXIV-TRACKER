@@ -2,8 +2,8 @@ import { useState, useEffect, useMemo, useRef } from 'react'
 import './App.css'
 import { Icon, RankSeal, BillCard, HuntTable, Highlight, rankVars } from './components'
 import { useTweaks, TweaksPanel, TweakSection, TweakRadio, TweakColor } from './TweaksPanel'
+import { API, getToken, setToken, clearToken, fetchMe, loadProgress, saveProgress } from './api'
 
-// TODO: replace with POST to /api/update-hunts when Claude has write access
 const DONE_KEY = 'ffxiv-hunt-done'
 
 const SEED = {
@@ -42,8 +42,6 @@ function loadDoneOverrides() {
   catch { return {} }
 }
 
-// Start from data.json's status fields, then let localStorage win — per-device
-// completion state is the source of truth until API write-back exists.
 function seedDoneMap(hunts) {
   const m = {}
   hunts.forEach((h) => { if (h.status === 'done') m[h.id] = true })
@@ -67,22 +65,41 @@ function App() {
   const [status, setStatus] = useState('all')
   const [type, setType] = useState('all')
   const [toast, setToast] = useState(null)
+  const [user, setUser] = useState(null)
   const toastTimer = useRef(null)
 
+  // Handle OAuth redirect token in URL, then load user profile
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search)
+    const urlToken = params.get('token')
+    if (urlToken) {
+      setToken(urlToken)
+      window.history.replaceState({}, '', window.location.pathname)
+    }
+    if (getToken()) {
+      fetchMe().then((u) => { if (u) setUser(u) }).catch(() => {})
+    }
+  }, [])
+
+  // Fetch hunt data, then overlay API progress if authenticated
   useEffect(() => {
     fetch('/data.json')
       .then((r) => r.ok ? r.json() : null)
-      .then((d) => {
-        if (d && Array.isArray(d.hunts) && d.hunts.length) {
-          setHunts(d.hunts)
-          setDoneMap(seedDoneMap(d.hunts))
+      .then(async (d) => {
+        if (!d || !Array.isArray(d.hunts) || !d.hunts.length) return
+        setHunts(d.hunts)
+        const base = seedDoneMap(d.hunts)
+        if (getToken()) {
+          const apiMap = await loadProgress().catch(() => null)
+          setDoneMap(apiMap ? { ...base, ...apiMap } : base)
+        } else {
+          setDoneMap(base)
         }
       })
       .catch(() => {})
   }, [])
 
-  // Persist completion state per-device.
-  // TODO: replace with POST to /api/update-hunts when Claude has write access
+  // Persist to localStorage as fallback for unauthenticated users
   useEffect(() => {
     localStorage.setItem(DONE_KEY, JSON.stringify(doneMap))
   }, [doneMap])
@@ -121,7 +138,9 @@ function App() {
   const doneCount = hunts.filter((h) => doneMap[h.id]).length
 
   function toggle(id) {
-    setDoneMap((m) => ({ ...m, [id]: !m[id] }))
+    const newDone = !doneMap[id]
+    setDoneMap((m) => ({ ...m, [id]: newDone }))
+    if (user) saveProgress(id, newDone ? 'done' : 'todo').catch(() => {})
   }
   function copyCoords(text) {
     const clean = String(text).replace(/^~/, '')
@@ -133,6 +152,10 @@ function App() {
     clearTimeout(toastTimer.current)
     toastTimer.current = setTimeout(() => setToast(null), 1600)
   }
+  function signOut() {
+    clearToken()
+    setUser(null)
+  }
 
   const counts = { hunts: hunts.length }
   const huntsActive = cat === 'hunts'
@@ -141,10 +164,28 @@ function App() {
     <div className={`ledger${t.density === 'compact' ? ' is-compact' : ''}`}>
       <header className="brand">
         <div className="brand__crest"><Icon.crest /></div>
-        <div>
+        <div className="brand__info">
           <h1 className="brand__title">CENTURIO LEDGER</h1>
           <div className="brand__sub">Hunt Board · {doneCount}/{hunts.length} cleared</div>
         </div>
+        {user ? (
+          <div className="brand__user">
+            {user.avatar && (
+              <img
+                src={`https://cdn.discordapp.com/avatars/${user.discord_id}/${user.avatar}.png?size=32`}
+                alt={user.username}
+                className="brand__avatar"
+              />
+            )}
+            <span className="brand__username">{user.username}</span>
+            <button className="brand__logout" onClick={signOut}>Sign out</button>
+          </div>
+        ) : (
+          <a href={`${API}/auth/discord`} className="discord-btn">
+            <Icon.discord />
+            Sign in
+          </a>
+        )}
       </header>
 
       <div className="controls">
