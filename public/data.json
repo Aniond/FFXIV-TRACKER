@@ -83,7 +83,7 @@
     {
       "id": 6,
       "name": "Hammerhead Crocodile",
-      "rank": "B",
+      "rank": "A",
       "type": "Advanced Dawn Hunt",
       "billNumber": "1/5",
       "zone": "Kozama'uka",
@@ -99,7 +99,7 @@
     {
       "id": 7,
       "name": "Yak T'el Squib",
-      "rank": "B",
+      "rank": "A",
       "type": "Advanced Dawn Hunt",
       "billNumber": "2/5",
       "zone": "Yak T'el",
@@ -115,7 +115,7 @@
     {
       "id": 8,
       "name": "Turali Hawksbill",
-      "rank": "B",
+      "rank": "A",
       "type": "Advanced Dawn Hunt",
       "billNumber": "3/5",
       "zone": "Shaaloani",
@@ -131,7 +131,7 @@
     {
       "id": 9,
       "name": "Defective Turret",
-      "rank": "B",
+      "rank": "A",
       "type": "Advanced Dawn Hunt",
       "billNumber": "4/5",
       "zone": "Heritage Found",
@@ -147,7 +147,7 @@
     {
       "id": 10,
       "name": "Matchlock Scorpion",
-      "rank": "B",
+      "rank": "A",
       "type": "Advanced Dawn Hunt",
       "billNumber": "5/5",
       "zone": "Living Memory",
@@ -163,7 +163,7 @@
     {
       "id": 11,
       "name": "Chupacabra",
-      "rank": "B",
+      "rank": "S",
       "type": "Elite Dawn Hunt",
       "billNumber": "Weekly",
       "zone": "Urqopacha",
