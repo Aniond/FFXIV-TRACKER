@@ -1,26 +1,51 @@
-# FFXIV Hunt Tracker
+# FFXIV Hunt Tracker — Centurio Ledger
 
-A small React + Vite app for tracking Final Fantasy XIV hunt marks. Hunt data is
-loaded at runtime from [`public/data.json`](public/data.json), and each hunt's
-status (To do → In progress → Done) is toggleable and persisted to
-`localStorage`.
+Track Final Fantasy XIV hunt marks, manage your Sacks of Nuts stash, and sync progress across devices with Discord login.
+
+## Stack
+
+- **Frontend** — React 18 + Vite, deployed on Vercel (`ffxivlog.com`)
+- **Backend** — Express on Railway (`api.ffxivlog.com`)
+- **Database** — PostgreSQL on Railway
+- **Auth** — Discord OAuth2 → JWT
 
 ## Development
 
 ```bash
+# Frontend
 npm install
-npm run dev      # start the dev server
-npm run build    # production build to dist/
-npm run preview  # preview the production build
+npm run dev        # http://localhost:5173
+npm run build
+npm run preview
+
+# Backend
+cd backend
+npm install
+node index.js      # http://localhost:3001
 ```
+
+Copy `backend/.env.example` to `backend/.env` and fill in the required values.
 
 ## Data
 
-Edit `public/data.json` to change the tracked hunts. The app reads it from
-`/data.json` at runtime, so no rebuild is required for data-only changes.
+Hunt data lives in the `hunts` PostgreSQL table and is served by `GET /api/hunts`.
+To add or update hunts, use the admin endpoints (requires `API_SECRET` bearer token):
 
-## Stack
+- `POST /api/hunts` — add a hunt
+- `PATCH /api/hunts/:id` — update a hunt
+- `DELETE /api/hunts/:id` — remove a hunt
 
-- React 18
-- Vite 5
-- Deployed on Vercel
+To reseed the database from scratch: `node backend/seed-hunts.js`
+
+## Database
+
+Schema is in `backend/schema.sql`. To apply it to a new database:
+
+```bash
+railway run node -e "
+const {Pool}=require('pg');
+const p=new Pool({connectionString:process.env.DATABASE_URL,ssl:{rejectUnauthorized:false}});
+const fs=require('fs');
+p.query(fs.readFileSync('backend/schema.sql','utf8')).then(()=>{console.log('ok');p.end()});
+"
+```
