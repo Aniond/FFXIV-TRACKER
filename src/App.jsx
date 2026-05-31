@@ -179,24 +179,19 @@ function App() {
 
         {huntsActive && (
           <div className="filters">
-            <select
-              className="type-select"
-              value={rank}
-              onChange={(e) => setRank(e.target.value.replace('-rank', ''))}
-              aria-label="Filter by rank"
-            >
-              <option value="all">All ranks</option>
-              <option value="S">S-rank</option>
-              <option value="A">A-rank</option>
-              <option value="B">B-rank</option>
-            </select>
-            <span className="chip-sep" />
-            <button className={`chip${status === 'all' ? ' is-active' : ''}`} onClick={() => setStatus('all')}>All</button>
-            <button className={`chip${status === 'open' ? ' is-active' : ''}`} onClick={() => setStatus('open')}>Open</button>
-            <button className={`chip${status === 'done' ? ' is-active' : ''}`} onClick={() => setStatus('done')}>Cleared</button>
-            {typesPresent.length > 1 && (
-              <>
-                <span className="chip-sep" />
+            <div className="filters__row filters__row--top">
+              <select
+                className="type-select"
+                value={rank}
+                onChange={(e) => setRank(e.target.value.replace('-rank', ''))}
+                aria-label="Filter by rank"
+              >
+                <option value="all">All ranks</option>
+                <option value="S">S-rank</option>
+                <option value="A">A-rank</option>
+                <option value="B">B-rank</option>
+              </select>
+              {typesPresent.length > 1 && (
                 <select
                   className="type-select"
                   value={type}
@@ -208,8 +203,13 @@ function App() {
                     <option key={t} value={t}>{t}</option>
                   ))}
                 </select>
-              </>
-            )}
+              )}
+            </div>
+            <div className="filters__row filters__row--bottom">
+              <button className={`chip${status === 'all' ? ' is-active' : ''}`} onClick={() => setStatus('all')}>All</button>
+              <button className={`chip${status === 'open' ? ' is-active' : ''}`} onClick={() => setStatus('open')}>Open</button>
+              <button className={`chip${status === 'done' ? ' is-active' : ''}`} onClick={() => setStatus('done')}>Cleared</button>
+            </div>
           </div>
         )}
       </div>

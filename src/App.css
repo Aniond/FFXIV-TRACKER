@@ -234,15 +234,26 @@ mark {
 /* Filter chip row */
 .filters {
   display: flex;
-  align-items: center;
-  gap: 6px;
+  flex-direction: column;
+  gap: 10px;
   margin-top: 10px;
-  overflow-x: auto;
-  scrollbar-width: none;
+  width: 100%;
 }
-.filters::-webkit-scrollbar { display: none; }
+.filters__row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+}
+.filters__row--top {
+  justify-content: flex-start;
+}
+.filters__row--bottom {
+  justify-content: flex-start;
+}
 .chip {
-  flex: 0 0 auto;
+  flex: 0 1 auto;
   font-family: var(--font-body);
   font-size: 12px;
   font-weight: 600;
@@ -266,9 +277,9 @@ mark {
 }
 .chip__dot { width: 8px; height: 8px; border-radius: 50%; }
 .chip-sep { flex: 0 0 auto; width: 1px; height: 18px; background: var(--bill-edge); margin: 0 2px; }
-
 .type-select {
-  flex: 0 0 auto;
+  flex: 1 1 140px;
+  min-width: 120px;
   font-family: var(--font-body);
   font-size: 12px;
   font-weight: 600;
@@ -287,6 +298,7 @@ mark {
   background-position: right 10px center;
   transition: all .14s;
   outline: none;
+  min-width: 0;
 }
 .type-select:hover { color: var(--parchment); border-color: var(--gold-dim); }
 .type-select:focus { border-color: var(--gold-dim); box-shadow: 0 0 0 3px var(--gold-faint); }
