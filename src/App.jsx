@@ -98,10 +98,6 @@ function App() {
     })
   }, [hunts, doneMap, rank, status, q])
 
-  const ranksPresent = useMemo(
-    () => ['S','A','B'].filter((r) => hunts.some((h) => h.rank === r)),
-    [hunts]
-  )
   const typesPresent = useMemo(
     () => [...new Set(hunts.map((h) => h.type).filter(Boolean))],
     [hunts]
@@ -174,9 +170,9 @@ function App() {
               aria-label="Filter by rank"
             >
               <option value="all">All ranks</option>
-              {ranksPresent.map((r) => (
-                <option key={r} value={r}>{r}-rank</option>
-              ))}
+              <option value="S">S-rank</option>
+              <option value="A">A-rank</option>
+              <option value="B">B-rank</option>
             </select>
             <span className="chip-sep" />
             <button className={`chip${status === 'all' ? ' is-active' : ''}`} onClick={() => setStatus('all')}>All</button>
