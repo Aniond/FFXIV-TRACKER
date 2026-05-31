@@ -71,11 +71,45 @@ app.get('/api/profile/:slug', async (req, res) => {
     );
     if (!u.rows.length) return res.status(404).json({ error: 'not found' });
     const user = u.rows[0];
-    const [huntsRes, progressRes] = await Promise.all([
+    const [huntsRes, progressRes, jobsRes] = await Promise.all([
       pool.query('SELECT id, name, rank, zone, reward FROM hunts ORDER BY id'),
       pool.query('SELECT hunt_id, status, updated_at FROM progress WHERE user_id = $1', [user.id]),
+      pool.query('SELECT job_abbr, level FROM user_jobs WHERE user_id = $1', [user.id]),
     ]);
-    res.json({ user, hunts: huntsRes.rows, progress: progressRes.rows, xivapi: user.xivapi_cache || null });
+    res.json({ user, hunts: huntsRes.rows, progress: progressRes.rows, xivapi: user.xivapi_cache || null, jobs: jobsRes.rows });
+  } catch {
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+// Job levels
+app.get('/api/user/jobs', authenticate, async (req, res) => {
+  try {
+    const result = await pool.query(
+      'SELECT job_abbr, level FROM user_jobs WHERE user_id = $1 ORDER BY job_abbr',
+      [req.user.id]
+    );
+    res.json(result.rows);
+  } catch {
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+app.patch('/api/user/jobs', authenticate, async (req, res) => {
+  const { jobs } = req.body;
+  if (!Array.isArray(jobs)) return res.status(400).json({ error: 'jobs must be an array' });
+  try {
+    for (const { job_abbr, level } of jobs) {
+      if (!job_abbr || typeof level !== 'number') continue;
+      const clean = Math.max(0, Math.min(100, Math.floor(level)));
+      await pool.query(
+        `INSERT INTO user_jobs (user_id, job_abbr, level)
+         VALUES ($1, $2, $3)
+         ON CONFLICT (user_id, job_abbr) DO UPDATE SET level = $3, updated_at = NOW()`,
+        [req.user.id, job_abbr.toUpperCase(), clean]
+      );
+    }
+    res.json({ ok: true });
   } catch {
     res.status(500).json({ error: 'Server error' });
   }

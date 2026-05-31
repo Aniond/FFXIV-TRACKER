@@ -19,11 +19,13 @@ const RANK_META = {
 
 /* role grouping + colors (match Profile.css role vars) */
 const ROLE_DEFS = [
-  { key: 'tank', name: 'Tank', color: 'var(--role-tank)', jobs: ['PLD', 'WAR', 'DRK', 'GNB'] },
-  { key: 'heal', name: 'Healer', color: 'var(--role-heal)', jobs: ['WHM', 'SCH', 'AST', 'SGE'] },
-  { key: 'melee', name: 'Melee DPS', color: 'var(--role-melee)', jobs: ['MNK', 'DRG', 'NIN', 'SAM', 'RPR', 'VPR'] },
+  { key: 'tank',    name: 'Tank',            color: 'var(--role-tank)',    jobs: ['PLD', 'WAR', 'DRK', 'GNB'] },
+  { key: 'heal',    name: 'Healer',          color: 'var(--role-heal)',    jobs: ['WHM', 'SCH', 'AST', 'SGE'] },
+  { key: 'melee',   name: 'Melee DPS',       color: 'var(--role-melee)',   jobs: ['MNK', 'DRG', 'NIN', 'SAM', 'RPR', 'VPR'] },
   { key: 'pranged', name: 'Physical Ranged', color: 'var(--role-pranged)', jobs: ['BRD', 'MCH', 'DNC'] },
-  { key: 'mranged', name: 'Magical Ranged', color: 'var(--role-mranged)', jobs: ['BLM', 'SMN', 'RDM', 'PCT'] },
+  { key: 'mranged', name: 'Magical Ranged',  color: 'var(--role-mranged)', jobs: ['BLM', 'SMN', 'RDM', 'PCT'] },
+  { key: 'craft',   name: 'Crafters',        color: 'var(--role-craft)',   jobs: ['CRP', 'BSM', 'ARM', 'GSM', 'LTW', 'WVR', 'ALC', 'CUL'] },
+  { key: 'gather',  name: 'Gatherers',       color: 'var(--role-gather)',  jobs: ['MIN', 'BTN', 'FSH'] },
 ]
 
 /* relative time for the "Recent Clears" list */
@@ -48,7 +50,7 @@ function relTime(iso) {
  * @param {object[]} args.progress  rows { hunt_id, status, updated_at } for this user
  * @param {object}   [args.xivapi]  XIVAPI character payload (see fetchXivapiCharacter)
  */
-export function buildProfile({ user, hunts, progress, xivapi }) {
+export function buildProfile({ user, hunts, progress, xivapi, jobs = [] }) {
   const doneRows = progress.filter((r) => r.status === 'done')
   const doneIds = new Set(doneRows.map((r) => r.hunt_id))
   const huntById = Object.fromEntries(hunts.map((h) => [h.id, h]))
@@ -82,11 +84,12 @@ export function buildProfile({ user, hunts, progress, xivapi }) {
       return { name: h.name || 'Unknown', rank: h.rank || 'B', zone: h.zone || '—', time: relTime(r.updated_at) }
     })
 
-  // jobs from XIVAPI ClassJobs levels, grouped by role
-  const levels = xivapiJobLevels(xivapi) // { PLD: 100, WAR: 90, ... }
+  // job levels: manual entries override XIVAPI, both fall back to 0
+  const manualLevels = Object.fromEntries((jobs || []).map((j) => [j.job_abbr, j.level]))
+  const xivapiLevels = xivapiJobLevels(xivapi)
   const roles = ROLE_DEFS.map((rd) => ({
     key: rd.key, name: rd.name, color: rd.color,
-    jobs: rd.jobs.map((abbr) => [abbr, levels[abbr] ?? 0]),
+    jobs: rd.jobs.map((abbr) => [abbr, manualLevels[abbr] ?? xivapiLevels[abbr] ?? 0]),
   }))
 
   return {

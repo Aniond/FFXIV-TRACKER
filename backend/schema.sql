@@ -27,6 +27,15 @@ CREATE TABLE IF NOT EXISTS submissions (
   created_at  TIMESTAMPTZ DEFAULT NOW()
 );
 
+CREATE TABLE IF NOT EXISTS user_jobs (
+  id         SERIAL PRIMARY KEY,
+  user_id    INTEGER REFERENCES users(id) ON DELETE CASCADE,
+  job_abbr   VARCHAR(5) NOT NULL,
+  level      INTEGER DEFAULT 0,
+  updated_at TIMESTAMPTZ DEFAULT NOW(),
+  UNIQUE(user_id, job_abbr)
+);
+
 CREATE TABLE IF NOT EXISTS hunts (
   id           SERIAL PRIMARY KEY,
   name         VARCHAR(255) NOT NULL,

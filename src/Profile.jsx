@@ -1,4 +1,5 @@
-import { useMemo } from 'react'
+import { useState, useEffect, useMemo } from 'react'
+import { saveJobs } from './api'
 import './Profile.css'
 
 /* ============================================================
@@ -11,29 +12,30 @@ import './Profile.css'
 
 /* ---------- icons ---------- */
 const I = {
-  crest: (p) => (<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinejoin="round" {...p}><path d="M12 2 4 5v6c0 5 3.4 8.3 8 11 4.6-2.7 8-6 8-11V5l-8-3Z"/><path d="M12 7v8M8.5 10.5 12 7l3.5 3.5"/></svg>),
-  share: (p) => (<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...p}><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="m8.6 13.5 6.8 4M15.4 6.5 8.6 10.5"/></svg>),
-  coin: (p) => (<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" {...p}><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5.5"/><path d="M12 9.2v5.6M10.4 10.4h2.4a1.2 1.2 0 0 1 0 2.4h-1.6a1.2 1.2 0 0 0 0 2.4h2.4" strokeWidth="1.4"/></svg>),
-  sack: (p) => (<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round" {...p}><path d="M9 6h6l-1.2 2.2c3 1.1 5.2 3.9 5.2 7.3 0 1.6-1.3 2.5-3 2.5H8c-1.7 0-3-.9-3-2.5 0-3.4 2.2-6.2 5.2-7.3L9 6Z"/><path d="M8.5 6 8 4h8l-.5 2"/></svg>),
-  spark: (p) => (<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" {...p}><path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9L12 3Z"/></svg>),
-  trophy: (p) => (<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" {...p}><path d="M7 4h10v4a5 5 0 0 1-10 0V4ZM7 6H4v1a3 3 0 0 0 3 3M17 6h3v1a3 3 0 0 1-3 3M9 17h6M10 17l-.5 3h5l-.5-3"/></svg>),
-  map: (p) => (<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" {...p}><path d="M9 4 3 6v14l6-2 6 2 6-2V4l-6 2-6-2Z"/><path d="M9 4v14M15 6v14"/></svg>),
-  swords: (p) => (<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" {...p}><path d="M14.5 4H20v5.5L8.5 21 3 15.5 14.5 4ZM4 4h5.5L21 15.5 15.5 21"/></svg>),
-  check: (p) => (<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round" {...p}><path d="M20 6 9 17l-5-5"/></svg>),
-  banner: (p) => (<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" {...p}><path d="M6 3h12v15l-6-3-6 3V3Z"/></svg>),
-  world: (p) => (<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" {...p}><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.5 2.5 2.5 15 0 18M12 3c-2.5 2.5-2.5 15 0 18"/></svg>),
+  crest:   (p) => (<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinejoin="round" {...p}><path d="M12 2 4 5v6c0 5 3.4 8.3 8 11 4.6-2.7 8-6 8-11V5l-8-3Z"/><path d="M12 7v8M8.5 10.5 12 7l3.5 3.5"/></svg>),
+  share:   (p) => (<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...p}><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="m8.6 13.5 6.8 4M15.4 6.5 8.6 10.5"/></svg>),
+  coin:    (p) => (<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" {...p}><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5.5"/><path d="M12 9.2v5.6M10.4 10.4h2.4a1.2 1.2 0 0 1 0 2.4h-1.6a1.2 1.2 0 0 0 0 2.4h2.4" strokeWidth="1.4"/></svg>),
+  sack:    (p) => (<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round" {...p}><path d="M9 6h6l-1.2 2.2c3 1.1 5.2 3.9 5.2 7.3 0 1.6-1.3 2.5-3 2.5H8c-1.7 0-3-.9-3-2.5 0-3.4 2.2-6.2 5.2-7.3L9 6Z"/><path d="M8.5 6 8 4h8l-.5 2"/></svg>),
+  spark:   (p) => (<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" {...p}><path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9L12 3Z"/></svg>),
+  trophy:  (p) => (<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" {...p}><path d="M7 4h10v4a5 5 0 0 1-10 0V4ZM7 6H4v1a3 3 0 0 0 3 3M17 6h3v1a3 3 0 0 1-3 3M9 17h6M10 17l-.5 3h5l-.5-3"/></svg>),
+  map:     (p) => (<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" {...p}><path d="M9 4 3 6v14l6-2 6 2 6-2V4l-6 2-6-2Z"/><path d="M9 4v14M15 6v14"/></svg>),
+  swords:  (p) => (<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" {...p}><path d="M14.5 4H20v5.5L8.5 21 3 15.5 14.5 4ZM4 4h5.5L21 15.5 15.5 21"/></svg>),
+  check:   (p) => (<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round" {...p}><path d="M20 6 9 17l-5-5"/></svg>),
+  banner:  (p) => (<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" {...p}><path d="M6 3h12v15l-6-3-6 3V3Z"/></svg>),
+  world:   (p) => (<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" {...p}><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.5 2.5 2.5 15 0 18M12 3c-2.5 2.5-2.5 15 0 18"/></svg>),
+  pencil:  (p) => (<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" {...p}><path d="M14 5.5 18.5 10 8 20.5 3.5 21l.5-4.5L14 5.5ZM13 7l4 4"/></svg>),
 }
 
-const fmt = (n) => Number(n || 0).toLocaleString('en-US')
+const fmt    = (n) => Number(n || 0).toLocaleString('en-US')
 const fmtExp = (n) => (n >= 1e6 ? (n / 1e6).toFixed(1) + 'M' : fmt(n))
 
 /* ---------- Hunter rank progression (by lifetime marks cleared) ---------- */
 export const HUNTER_TIERS = [
   { name: 'Wandering Hunter', at: 0 },
-  { name: 'Sworn Hunter', at: 25 },
-  { name: 'Veteran Hunter', at: 75 },
-  { name: 'Elite Hunter', at: 150 },
-  { name: 'Centurio', at: 300 },
+  { name: 'Sworn Hunter',     at: 25 },
+  { name: 'Veteran Hunter',   at: 75 },
+  { name: 'Elite Hunter',     at: 150 },
+  { name: 'Centurio',         at: 300 },
 ]
 export function hunterRank(cleared) {
   let idx = 0
@@ -62,30 +64,97 @@ function Ring({ pct, size = 40, stroke = 4, color = 'var(--gold)' }) {
   )
 }
 
-function Panel({ title, icon: Ico, count, children, className = '' }) {
+function Panel({ title, icon: Ico, count, badge, action, children, className = '' }) {
+  const hasRight = count != null || action
   return (
     <section className={`panel ${className}`}>
-      <h3 className="panel__title">{Ico && <Ico />}{title}{count != null && <span className="ct">{count}</span>}</h3>
+      <h3 className="panel__title">
+        {Ico && <Ico />}
+        {title}
+        {badge && <span className="panel__badge">{badge}</span>}
+        {hasRight && <span className="panel__spacer" />}
+        {count != null && <span className="ct">{count}</span>}
+        {action && <span className="panel__action">{action}</span>}
+      </h3>
       {children}
     </section>
   )
 }
 
-export default function Profile({ profile = SAMPLE_PROFILE }) {
+export default function Profile({ profile = SAMPLE_PROFILE, isOwner = false }) {
   const p = profile
 
   const totals = useMemo(() => {
-    const done = p.byRank.S.done + p.byRank.A.done + p.byRank.B.done
+    const done  = p.byRank.S.done  + p.byRank.A.done  + p.byRank.B.done
     const total = p.byRank.S.total + p.byRank.A.total + p.byRank.B.total
     return { done, total, pct: total ? Math.round((done / total) * 100) : 0 }
   }, [p])
   const hr = hunterRank(totals.done)
+
+  /* ---- Job levels local state ---- */
+  const [localRoles, setLocalRoles] = useState(p.roles)
+  useEffect(() => { setLocalRoles(p.roles) }, [p])
+
+  const [editingJobs, setEditingJobs]   = useState(false)
+  const [draftLevels, setDraftLevels]   = useState({})
+  const [savingJobs,  setSavingJobs]    = useState(false)
+
+  function startEdit() {
+    const flat = {}
+    for (const role of localRoles)
+      for (const [abbr, lvl] of role.jobs) flat[abbr] = String(lvl)
+    setDraftLevels(flat)
+    setEditingJobs(true)
+  }
+
+  function cancelEdit() {
+    setEditingJobs(false)
+    setDraftLevels({})
+  }
+
+  async function commitSave() {
+    setSavingJobs(true)
+    const clean = Object.fromEntries(
+      Object.entries(draftLevels).map(([k, v]) => [k, Math.max(0, Math.min(100, parseInt(v, 10) || 0))])
+    )
+    try {
+      await saveJobs(Object.entries(clean).map(([job_abbr, level]) => ({ job_abbr, level })))
+      setLocalRoles((prev) =>
+        prev.map((role) => ({ ...role, jobs: role.jobs.map(([abbr]) => [abbr, clean[abbr] ?? 0]) }))
+      )
+      setEditingJobs(false)
+    } catch (e) {
+      console.error('[jobs save]', e.message)
+    } finally {
+      setSavingJobs(false)
+    }
+  }
+
+  const at100 = useMemo(
+    () => localRoles.reduce((n, r) => n + r.jobs.filter(([, lvl]) => lvl === 100).length, 0),
+    [localRoles]
+  )
 
   function share() {
     const url = typeof window !== 'undefined' ? window.location.href : `https://ffxivlog.com/profile/${p.slug || ''}`
     if (navigator.share) navigator.share({ title: `${p.name} · Centurio Ledger`, url }).catch(() => {})
     else navigator.clipboard?.writeText(url).catch(() => {})
   }
+
+  const jobsAction = isOwner && (
+    editingJobs ? (
+      <>
+        <button className="jobs-btn jobs-btn--save" onClick={commitSave} disabled={savingJobs}>
+          {savingJobs ? 'Saving…' : 'Save'}
+        </button>
+        <button className="jobs-btn jobs-btn--cancel" onClick={cancelEdit} disabled={savingJobs}>Cancel</button>
+      </>
+    ) : (
+      <button className="jobs-btn jobs-btn--edit" onClick={startEdit}>
+        <I.pencil style={{ width: 11, height: 11 }} /> Edit
+      </button>
+    )
+  )
 
   return (
     <div className="wrap">
@@ -114,7 +183,7 @@ export default function Profile({ profile = SAMPLE_PROFILE }) {
           </div>
           <div className="hero__body">
             <h1 className="hero__name">{p.name}</h1>
-            {p.title && <div className="hero__title">“{p.title}”</div>}
+            {p.title && <div className="hero__title">"{p.title}"</div>}
             <div className="hero__meta">
               <span className="metachip"><I.world /><b>{p.world}</b>{p.dc ? ` · ${p.dc}` : ''}</span>
               {p.gc && <span className="metachip"><I.banner className="gc-crest" /><b>{p.gc.name}</b> · {p.gc.rank}</span>}
@@ -132,10 +201,10 @@ export default function Profile({ profile = SAMPLE_PROFILE }) {
           </div>
           <div className="hunter__bar"><span style={{ width: hr.pct + '%' }} /></div>
           <div className="ladder">
-            {HUNTER_TIERS.map((t, i) => (
-              <div key={t.name} className={`ladder__node${i < hr.idx ? ' done' : ''}${i === hr.idx ? ' now' : ''}`}>
+            {HUNTER_TIERS.map((tier, i) => (
+              <div key={tier.name} className={`ladder__node${i < hr.idx ? ' done' : ''}${i === hr.idx ? ' now' : ''}`}>
                 <span className="ladder__dot" />
-                <span className="ladder__lbl">{t.name.replace(' Hunter', '')}</span>
+                <span className="ladder__lbl">{tier.name.replace(' Hunter', '')}</span>
               </div>
             ))}
           </div>
@@ -192,9 +261,15 @@ export default function Profile({ profile = SAMPLE_PROFILE }) {
         </Panel>
 
         {/* Job levels */}
-        <Panel title="Job Levels" icon={I.swords} className="col-span"
-          count={`${p.roles.reduce((a, r) => a + r.jobs.filter((j) => j[1] === 100).length, 0)} at 100`}>
-          {p.roles.map((role) => (
+        <Panel
+          title="Job Levels"
+          icon={I.swords}
+          className="col-span"
+          badge="Auto-import from Lodestone · Coming Soon"
+          count={editingJobs ? undefined : `${at100} at 100`}
+          action={jobsAction}
+        >
+          {localRoles.map((role) => (
             <div className="rolegroup" key={role.key} style={{ '--rcol': role.color }}>
               <div className="rolegroup__head">
                 <span className="rolegroup__dot" />
@@ -202,12 +277,26 @@ export default function Profile({ profile = SAMPLE_PROFILE }) {
                 <span className="rolegroup__line" />
               </div>
               <div className="jobs">
-                {role.jobs.map(([abbr, lvl]) => (
-                  <div className={`job${lvl === 100 ? ' max' : ''}`} key={abbr}>
-                    <span className="job__ring"><span className="job__abbr">{abbr}</span></span>
-                    <span className="job__lvl"><small>Lv</small>{lvl}</span>
-                  </div>
-                ))}
+                {role.jobs.map(([abbr, lvl]) => {
+                  const isMax = !editingJobs && lvl === 100
+                  return (
+                    <div className={`job${isMax ? ' max' : ''}${editingJobs ? ' is-editing' : ''}`} key={abbr}>
+                      <span className="job__ring"><span className="job__abbr">{abbr}</span></span>
+                      {editingJobs ? (
+                        <input
+                          className="job__input"
+                          type="number"
+                          min="0"
+                          max="100"
+                          value={draftLevels[abbr] ?? String(lvl)}
+                          onChange={(e) => setDraftLevels((d) => ({ ...d, [abbr]: e.target.value }))}
+                        />
+                      ) : (
+                        <span className="job__lvl"><small>Lv</small>{lvl}</span>
+                      )}
+                    </div>
+                  )
+                })}
               </div>
             </div>
           ))}
@@ -216,7 +305,7 @@ export default function Profile({ profile = SAMPLE_PROFILE }) {
         {/* Recent clears */}
         <Panel title="Recent Clears" icon={I.check} className="col-span">
           {p.recent.map((c, i) => (
-            <div className="clear" key={i} style={RANK_VARS[c.rank]}>
+            <div className="clear" key={i} style={RANK_VARS[c.rank] || RANK_VARS.B}>
               <span className="clear__seal">{c.rank}</span>
               <span className="clear__body">
                 <span className="clear__name">{c.name}</span>
@@ -245,36 +334,38 @@ export const SAMPLE_PROFILE = {
   title: 'Warrior of Light',
   world: 'Gilgamesh',
   dc: 'Aether',
-  portrait: null, // XIVAPI portrait URL in production
+  portrait: null,
   gc: { name: 'Maelstrom', rank: 'Storm Captain' },
   gil: 153000,
   nuts: 1558,
   exp: 49061376,
   byRank: {
-    S: { done: 8, total: 12, word: 'Elite', sub: 'Notorious Monster' },
-    A: { done: 34, total: 40, word: 'Notorious', sub: 'Clan Mark' },
-    B: { done: 62, total: 70, word: 'Wanted', sub: 'Bounty Bill' },
+    S: { done: 8,  total: 12, word: 'Elite',      sub: 'Notorious Monster' },
+    A: { done: 34, total: 40, word: 'Notorious',  sub: 'Clan Mark' },
+    B: { done: 62, total: 70, word: 'Wanted',     sub: 'Bounty Bill' },
   },
   zones: [
-    { name: 'Urqopacha', done: 18, total: 22 },
-    { name: "Kozama'uka", done: 20, total: 22 },
-    { name: "Yak T'el", done: 24, total: 24 },
-    { name: 'Shaaloani', done: 16, total: 20 },
+    { name: 'Urqopacha',      done: 18, total: 22 },
+    { name: "Kozama'uka",     done: 20, total: 22 },
+    { name: "Yak T'el",       done: 24, total: 24 },
+    { name: 'Shaaloani',      done: 16, total: 20 },
     { name: 'Heritage Found', done: 14, total: 18 },
-    { name: 'Living Memory', done: 12, total: 16 },
+    { name: 'Living Memory',  done: 12, total: 16 },
   ],
   roles: [
-    { key: 'tank', name: 'Tank', color: 'var(--role-tank)', jobs: [['PLD', 100], ['WAR', 90], ['DRK', 100], ['GNB', 82]] },
-    { key: 'heal', name: 'Healer', color: 'var(--role-heal)', jobs: [['WHM', 100], ['SCH', 100], ['AST', 74], ['SGE', 90]] },
-    { key: 'melee', name: 'Melee DPS', color: 'var(--role-melee)', jobs: [['MNK', 88], ['DRG', 100], ['NIN', 70], ['SAM', 100], ['RPR', 90], ['VPR', 100]] },
+    { key: 'tank',    name: 'Tank',            color: 'var(--role-tank)',    jobs: [['PLD', 100], ['WAR', 90], ['DRK', 100], ['GNB', 82]] },
+    { key: 'heal',    name: 'Healer',          color: 'var(--role-heal)',    jobs: [['WHM', 100], ['SCH', 100], ['AST', 74], ['SGE', 90]] },
+    { key: 'melee',   name: 'Melee DPS',       color: 'var(--role-melee)',   jobs: [['MNK', 88], ['DRG', 100], ['NIN', 70], ['SAM', 100], ['RPR', 90], ['VPR', 100]] },
     { key: 'pranged', name: 'Physical Ranged', color: 'var(--role-pranged)', jobs: [['BRD', 100], ['MCH', 85], ['DNC', 100]] },
-    { key: 'mranged', name: 'Magical Ranged', color: 'var(--role-mranged)', jobs: [['BLM', 100], ['SMN', 92], ['RDM', 100], ['PCT', 100]] },
+    { key: 'mranged', name: 'Magical Ranged',  color: 'var(--role-mranged)', jobs: [['BLM', 100], ['SMN', 92], ['RDM', 100], ['PCT', 100]] },
+    { key: 'craft',   name: 'Crafters',        color: 'var(--role-craft)',   jobs: [['CRP', 90], ['BSM', 90], ['ARM', 90], ['GSM', 90], ['LTW', 90], ['WVR', 90], ['ALC', 90], ['CUL', 90]] },
+    { key: 'gather',  name: 'Gatherers',       color: 'var(--role-gather)',  jobs: [['MIN', 100], ['BTN', 100], ['FSH', 82]] },
   ],
   recent: [
-    { name: 'Chupacabra', rank: 'S', zone: 'Urqopacha', time: '2h ago' },
-    { name: "Yak T'el Squib", rank: 'A', zone: "Yak T'el", time: '6h ago' },
-    { name: 'Hammerhead Crocodile', rank: 'A', zone: "Kozama'uka", time: 'Yesterday' },
-    { name: 'Mourner', rank: 'B', zone: "Yak T'el", time: 'Yesterday' },
-    { name: 'Matchlock Scorpion', rank: 'A', zone: 'Living Memory', time: '2 days ago' },
+    { name: 'Chupacabra',           rank: 'S', zone: 'Urqopacha',      time: '2h ago' },
+    { name: "Yak T'el Squib",       rank: 'A', zone: "Yak T'el",       time: '6h ago' },
+    { name: 'Hammerhead Crocodile', rank: 'A', zone: "Kozama'uka",     time: 'Yesterday' },
+    { name: 'Mourner',              rank: 'B', zone: "Yak T'el",       time: 'Yesterday' },
+    { name: 'Matchlock Scorpion',   rank: 'A', zone: 'Living Memory',  time: '2 days ago' },
   ],
 }

@@ -69,4 +69,22 @@ async function savePreferences({ view, accent, density }) {
   })
 }
 
-export { API, getToken, setToken, clearToken, fetchMe, loadProgress, saveProgress, resetProgress, saveStash, savePreferences }
+async function fetchJobs() {
+  const r = await apiFetch('/api/user/jobs')
+  if (!r.ok) return []
+  return r.json()
+}
+
+async function saveJobs(jobs) {
+  const r = await apiFetch('/api/user/jobs', {
+    method: 'PATCH',
+    body: JSON.stringify({ jobs }),
+  })
+  if (!r.ok) {
+    const body = await r.json().catch(() => ({}))
+    throw new Error(`saveJobs ${r.status}: ${body.error || 'unknown'}`)
+  }
+  return r.json()
+}
+
+export { API, getToken, setToken, clearToken, fetchMe, loadProgress, saveProgress, resetProgress, saveStash, savePreferences, fetchJobs, saveJobs }

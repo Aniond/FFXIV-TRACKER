@@ -16,6 +16,7 @@
   --rank-b:#54b98a; --rank-b-glow:rgba(84,185,138,.42);
   /* role colors */
   --role-tank:#5b8fd6; --role-heal:#54b98a; --role-melee:#d6483a; --role-pranged:#d99a4e; --role-mranged:#b07ce0;
+  --role-craft:#c9975b; --role-gather:#5ba882;
   --fd:'Cinzel',Georgia,serif; --fb:'Manrope',system-ui,sans-serif;
   color-scheme: dark;
 }
@@ -87,7 +88,26 @@ a { color: inherit; text-decoration: none; }
   margin: 0 0 16px;
 }
 .panel__title svg { width: 16px; height: 16px; color: var(--gold); }
-.panel__title .ct { margin-left: auto; font:700 11px var(--fb); letter-spacing:.04em; color: var(--ink-faint); text-transform:none; }
+.panel__spacer { flex: 1; }
+.panel__title .ct { font:700 11px var(--fb); letter-spacing:.04em; color: var(--ink-faint); text-transform:none; }
+.panel__badge {
+  font:600 9px var(--fb); letter-spacing:.08em; text-transform:uppercase;
+  color: var(--ink-faint); background: rgba(255,255,255,.03);
+  border: 1px solid var(--bill-edge); border-radius: 10px; padding: 2px 7px; white-space: nowrap;
+}
+.panel__action { display: flex; align-items: center; gap: 6px; text-transform: none; letter-spacing: 0; font-weight: normal; }
+
+/* Job edit buttons */
+.jobs-btn {
+  display: inline-flex; align-items: center; gap: 5px;
+  font:700 10px var(--fb); letter-spacing:.06em; border-radius: 8px;
+  padding: 5px 10px; border: 0; cursor: pointer; white-space: nowrap; transition: opacity .15s;
+}
+.jobs-btn:disabled { opacity: .5; cursor: default; }
+.jobs-btn--edit   { background: rgba(255,255,255,.06); border: 1px solid var(--bill-edge); color: var(--ink-dim); }
+.jobs-btn--edit:hover:not(:disabled) { background: rgba(255,255,255,.1); color: var(--parchment); }
+.jobs-btn--save   { background: linear-gradient(180deg, var(--gold-bright), var(--gold)); color: var(--board); }
+.jobs-btn--cancel { background: transparent; border: 1px solid var(--bill-edge); color: var(--ink-dim); }
 
 /* ---------- Hero ---------- */
 .hero {
@@ -231,6 +251,15 @@ a { color: inherit; text-decoration: none; }
 .job.max .job__lvl { color: var(--au-bright); }
 .job.max .job__ring { box-shadow: 0 0 9px var(--au-faint); border-color: var(--au); }
 .job__lvl small { font-size: 8px; color: var(--ink-faint); font-weight: 700; letter-spacing:.06em; }
+.job.is-editing { background: rgba(0,0,0,.28); border-color: var(--gold-dim); }
+.job__input {
+  width: 100%; background: rgba(0,0,0,.4); border: 1px solid var(--gold-dim);
+  border-radius: 6px; color: var(--parchment); font:800 13px var(--fd);
+  text-align: center; padding: 3px 2px; -moz-appearance: textfield;
+}
+.job__input:focus { outline: none; border-color: var(--gold-bright); box-shadow: 0 0 6px var(--gold-faint); }
+.job__input::-webkit-outer-spin-button,
+.job__input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
 
 /* Recent clears */
 .clear { display: flex; align-items: center; gap: 11px; padding: 9px 0; }
