@@ -55,6 +55,7 @@ function App() {
   const [cat, setCat] = useState('hunts')
   const [rank, setRank] = useState('all')
   const [status, setStatus] = useState('all')
+  const [type, setType] = useState('all')
   const [toast, setToast] = useState(null)
   const toastTimer = useRef(null)
 
@@ -86,6 +87,7 @@ function App() {
     return hunts.filter((h) => {
       const done = !!doneMap[h.id]
       if (rank !== 'all' && h.rank !== rank) return false
+      if (type !== 'all' && h.type !== type) return false
       if (status === 'open' && done) return false
       if (status === 'done' && !done) return false
       if (tokens.length) {
@@ -98,6 +100,10 @@ function App() {
 
   const ranksPresent = useMemo(
     () => ['S','A','B'].filter((r) => hunts.some((h) => h.rank === r)),
+    [hunts]
+  )
+  const typesPresent = useMemo(
+    () => [...new Set(hunts.map((h) => h.type).filter(Boolean))],
     [hunts]
   )
   const doneCount = hunts.filter((h) => doneMap[h.id]).length
@@ -171,6 +177,22 @@ function App() {
             <button className={`chip${status === 'all' ? ' is-active' : ''}`} onClick={() => setStatus('all')}>All</button>
             <button className={`chip${status === 'open' ? ' is-active' : ''}`} onClick={() => setStatus('open')}>Open</button>
             <button className={`chip${status === 'done' ? ' is-active' : ''}`} onClick={() => setStatus('done')}>Cleared</button>
+            {typesPresent.length > 1 && (
+              <>
+                <span className="chip-sep" />
+                <select
+                  className="type-select"
+                  value={type}
+                  onChange={(e) => setType(e.target.value)}
+                  aria-label="Filter by type"
+                >
+                  <option value="all">All types</option>
+                  {typesPresent.map((t) => (
+                    <option key={t} value={t}>{t}</option>
+                  ))}
+                </select>
+              </>
+            )}
           </div>
         )}
       </div>

@@ -266,6 +266,30 @@ mark {
 }
 .chip__dot { width: 8px; height: 8px; border-radius: 50%; }
 .chip-sep { flex: 0 0 auto; width: 1px; height: 18px; background: var(--bill-edge); margin: 0 2px; }
+
+.type-select {
+  flex: 0 0 auto;
+  font-family: var(--font-body);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  color: var(--ink-dim);
+  background: var(--bill);
+  border: 1px solid var(--bill-edge);
+  border-radius: 20px;
+  padding: 6px 28px 6px 12px;
+  cursor: pointer;
+  white-space: nowrap;
+  appearance: none;
+  -webkit-appearance: none;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'><path fill='%238f846a' d='M0 0h10L5 6z'/></svg>");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+  transition: all .14s;
+  outline: none;
+}
+.type-select:hover { color: var(--parchment); border-color: var(--gold-dim); }
+.type-select:focus { border-color: var(--gold-dim); box-shadow: 0 0 0 3px var(--gold-faint); }
 /* ---------- Meta row: count + view toggle ---------- */
 .metarow {
   display: flex;
