@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo, useRef } from 'react'
 import './App.css'
-import { Icon, RankSeal, BillCard, HuntTable, Highlight, rankVars, RANK_COLOR } from './components'
+import { Icon, RankSeal, BillCard, HuntTable, Highlight, rankVars } from './components'
 import { useTweaks, TweaksPanel, TweakSection, TweakRadio, TweakColor } from './TweaksPanel'
 
 const SEED = {
@@ -167,12 +167,17 @@ function App() {
 
         {huntsActive && (
           <div className="filters">
-            <button className={`chip${rank === 'all' ? ' is-active' : ''}`} onClick={() => setRank('all')}>All ranks</button>
-            {ranksPresent.map((r) => (
-              <button key={r} className={`chip${rank === r ? ' is-active' : ''}`} onClick={() => setRank(r)}>
-                <span className="chip__dot" style={{ background: RANK_COLOR[r] }} />{r}-rank
-              </button>
-            ))}
+            <select
+              className="type-select"
+              value={rank}
+              onChange={(e) => setRank(e.target.value)}
+              aria-label="Filter by rank"
+            >
+              <option value="all">All ranks</option>
+              {ranksPresent.map((r) => (
+                <option key={r} value={r}>{r}-rank</option>
+              ))}
+            </select>
             <span className="chip-sep" />
             <button className={`chip${status === 'all' ? ' is-active' : ''}`} onClick={() => setStatus('all')}>All</button>
             <button className={`chip${status === 'open' ? ' is-active' : ''}`} onClick={() => setStatus('open')}>Open</button>
