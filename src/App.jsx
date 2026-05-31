@@ -3,6 +3,9 @@ import './App.css'
 import { Icon, RankSeal, BillCard, HuntTable, Highlight, rankVars } from './components'
 import { useTweaks, TweaksPanel, TweakSection, TweakRadio, TweakColor } from './TweaksPanel'
 
+// TODO: replace with POST to /api/update-hunts when Claude has write access
+const DONE_KEY = 'ffxiv-hunt-done'
+
 const SEED = {
   hunts: [
     { id:1, name:"Mourner", rank:"B", type:"Intermediate Dawn Hunt", billNumber:"1/5", zone:"Yak T'el", area:"The Ja Tiika Heartland", coords:"~X:22, Y:28", coordsNote:"Roams central forest area", targets:2, reward:"1,000 Gil · 4 Sacks of Nuts · 471,744 EXP", authority:"Dawn Hunt", tips:["2 targets — kill both to complete.","Found in the lower Ja Tiika Heartland jungle.","Roaming mob — patrol until you find both."], status:"done" },
@@ -34,10 +37,17 @@ const TWEAK_DEFAULTS = {
   "density": "regular"
 }
 
+function loadDoneOverrides() {
+  try { return JSON.parse(localStorage.getItem(DONE_KEY)) || {} }
+  catch { return {} }
+}
+
+// Start from data.json's status fields, then let localStorage win — per-device
+// completion state is the source of truth until API write-back exists.
 function seedDoneMap(hunts) {
   const m = {}
   hunts.forEach((h) => { if (h.status === 'done') m[h.id] = true })
-  return m
+  return { ...m, ...loadDoneOverrides() }
 }
 
 function searchText(h) {
@@ -70,6 +80,12 @@ function App() {
       })
       .catch(() => {})
   }, [])
+
+  // Persist completion state per-device.
+  // TODO: replace with POST to /api/update-hunts when Claude has write access
+  useEffect(() => {
+    localStorage.setItem(DONE_KEY, JSON.stringify(doneMap))
+  }, [doneMap])
 
   useEffect(() => {
     const a = ACCENTS[t.accent] || ACCENTS['#c9a35b']
