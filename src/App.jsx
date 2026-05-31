@@ -4,6 +4,7 @@ import { Icon, RankSeal, BillCard, HuntTable, Highlight, rankVars } from './comp
 import { useTweaks, TweaksPanel, TweakSection, TweakRadio, TweakColor } from './TweaksPanel'
 import { API, getToken, setToken, clearToken, fetchMe, loadProgress, saveProgress, resetProgress } from './api'
 import Dashboard, { DIcon } from './Dashboard'
+import Banner from './Banner'
 
 const DONE_KEY = 'ffxiv-hunt-done'
 
@@ -169,6 +170,8 @@ function App() {
   const huntsActive = cat === 'hunts'
 
   return (
+    <>
+    <Banner />
     <div className={`ledger${t.density === 'compact' ? ' is-compact' : ''}`}>
       <header className="brand">
         <div className="brand__crest"><Icon.crest /></div>
@@ -331,6 +334,7 @@ function App() {
         <TweakColor label="Accent" value={t.accent} options={Object.keys(ACCENTS)} onChange={(v) => setTweak('accent', v)} />
       </TweaksPanel>
     </div>
+    </>
   )
 }
 
