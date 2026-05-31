@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect } from 'react'
 import { Icon, rankVars } from './components'
-import { saveStash } from './api'
+import { saveStash, getToken } from './api'
 import './Dashboard.css'
 
 /* ============================================================
@@ -114,6 +114,7 @@ export default function Dashboard({ hunts, doneMap, user, onOpenBoard }) {
   const ranks = ['S', 'A', 'B'].filter((r) => s.byRank[r] && s.byRank[r].total)
 
   const [nutsBase, setNutsBase] = useState(() => {
+    if (getToken()) return 0  // logged in — backend value will arrive via useEffect
     const v = parseInt(localStorage.getItem(NUTS_KEY), 10)
     return Number.isNaN(v) ? 0 : v
   })
@@ -131,7 +132,7 @@ export default function Dashboard({ hunts, doneMap, user, onOpenBoard }) {
     const v = parseInt(draft, 10)
     const clean = Number.isNaN(v) ? 0 : Math.max(0, v)
     setNutsBase(clean)
-    localStorage.setItem(NUTS_KEY, String(clean))
+    if (!user) localStorage.setItem(NUTS_KEY, String(clean))
     setEditingNuts(false)
     if (user) {
       try {
