@@ -376,6 +376,21 @@ mark {
   color: var(--ink-dim);
 }
 .metarow__count b { color: var(--gold); font-weight: 700; }
+.reset-btn {
+  font-family: var(--font-body);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+  background: none;
+  border: 1px solid var(--bill-edge);
+  border-radius: 20px;
+  padding: 4px 10px;
+  cursor: pointer;
+  transition: color .14s, border-color .14s;
+}
+.reset-btn:hover { color: var(--rank-s); border-color: var(--rank-s); }
 .viewtoggle { display: flex; gap: 2px; background: var(--bill); border: 1px solid var(--bill-edge); border-radius: 9px; padding: 2px; }
 .viewtoggle button {
   border: 0; background: transparent; cursor: pointer;

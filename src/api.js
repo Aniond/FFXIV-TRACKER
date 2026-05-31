@@ -46,4 +46,8 @@ async function saveProgress(hunt_id, status) {
   })
 }
 
-export { API, getToken, setToken, clearToken, fetchMe, loadProgress, saveProgress }
+async function resetProgress() {
+  return apiFetch('/api/progress', { method: 'DELETE' })
+}
+
+export { API, getToken, setToken, clearToken, fetchMe, loadProgress, saveProgress, resetProgress }

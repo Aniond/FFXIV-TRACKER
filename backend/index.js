@@ -124,6 +124,15 @@ app.get('/api/progress', authenticate, async (req, res) => {
   }
 });
 
+app.delete('/api/progress', authenticate, async (req, res) => {
+  try {
+    await pool.query('DELETE FROM progress WHERE user_id = $1', [req.user.id]);
+    res.json({ ok: true });
+  } catch {
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
 // Community hunt submissions
 app.post('/api/submit-hunt', authenticate, async (req, res) => {
   const { hunt_data } = req.body;

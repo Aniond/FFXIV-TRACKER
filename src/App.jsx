@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo, useRef } from 'react'
 import './App.css'
 import { Icon, RankSeal, BillCard, HuntTable, Highlight, rankVars } from './components'
 import { useTweaks, TweaksPanel, TweakSection, TweakRadio, TweakColor } from './TweaksPanel'
-import { API, getToken, setToken, clearToken, fetchMe, loadProgress, saveProgress } from './api'
+import { API, getToken, setToken, clearToken, fetchMe, loadProgress, saveProgress, resetProgress } from './api'
 
 const DONE_KEY = 'ffxiv-hunt-done'
 
@@ -156,6 +156,12 @@ function App() {
     clearToken()
     setUser(null)
   }
+  function resetAll() {
+    if (!window.confirm('Reset all hunt progress? This cannot be undone.')) return
+    setDoneMap({})
+    localStorage.removeItem(DONE_KEY)
+    if (user) resetProgress().catch(() => {})
+  }
 
   const counts = { hunts: hunts.length }
   const huntsActive = cat === 'hunts'
@@ -261,6 +267,7 @@ function App() {
             <div className="metarow__count">
               <b>{filtered.length}</b> of {hunts.length} marks
             </div>
+            <button className="reset-btn" onClick={resetAll} title="Reset all progress">Reset all</button>
             <div className="viewtoggle" role="group" aria-label="View">
               <button className={t.view === 'cards' ? 'is-active' : ''} onClick={() => setTweak('view', 'cards')} aria-label="Card view"><Icon.cards /></button>
               <button className={t.view === 'table' ? 'is-active' : ''} onClick={() => setTweak('view', 'table')} aria-label="Table view"><Icon.table /></button>
