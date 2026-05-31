@@ -1,9 +1,13 @@
 CREATE TABLE IF NOT EXISTS users (
-  id          SERIAL PRIMARY KEY,
-  discord_id  VARCHAR(32) UNIQUE NOT NULL,
-  username    VARCHAR(255) NOT NULL,
-  avatar      VARCHAR(255),
-  created_at  TIMESTAMPTZ DEFAULT NOW()
+  id           SERIAL PRIMARY KEY,
+  discord_id   VARCHAR(32) UNIQUE NOT NULL,
+  username     VARCHAR(255) NOT NULL,
+  avatar       VARCHAR(255),
+  nuts_stash   INTEGER NOT NULL DEFAULT 0,
+  pref_view    VARCHAR(10) NOT NULL DEFAULT 'cards',
+  pref_accent  VARCHAR(10) NOT NULL DEFAULT '#8fb6d6',
+  pref_density VARCHAR(10) NOT NULL DEFAULT 'regular',
+  created_at   TIMESTAMPTZ DEFAULT NOW()
 );
 
 CREATE TABLE IF NOT EXISTS progress (
