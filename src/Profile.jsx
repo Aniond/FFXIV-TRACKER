@@ -93,7 +93,7 @@ export default function Profile({ profile = SAMPLE_PROFILE, isOwner = false }) {
     const total = p.byRank.S.total + p.byRank.A.total + p.byRank.B.total
     return { done, total, pct: total ? Math.round((done / total) * 100) : 0 }
   }, [p])
-  const lc = p.lifetimeCleared || 0
+  const lc = Math.max(p.lifetimeCleared || 0, totals.done)
   const hr = hunterRank(lc)
 
   /* ---- Portrait local state (updates after linking) ---- */
