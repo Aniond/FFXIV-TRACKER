@@ -28,16 +28,14 @@ const ACTIVITIES = [
     ),
   },
   {
-    id: 'gathering',
-    label: 'Gathering',
-    href: '/gathering',
-    soon: true,
+    id: 'mining',
+    label: 'Mining',
+    href: '/mining',
+    soon: false,
     icon: (p) => (
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" {...p}>
-        <path d="M12 22V12M12 12 7 7M12 12l5-5"/>
-        <path d="M3 7c0-2.2 4-4 9-4s9 1.8 9 4-4 4-9 4-9-1.8-9-4Z"/>
-        <path d="M3 12c0 2.2 4 4 9 4s9-1.8 9-4"/>
-        <path d="M3 17c0 2.2 4 4 9 4s9-1.8 9-4"/>
+        <path d="M3 21 13 11M4 9c4-4 12-5 16-2-3-1-7 0-9 2 3-1 6 0 7 2-4-3-11-2-14-2Z"/>
+        <path d="m12.5 11.5 2 2"/>
       </svg>
     ),
   },
