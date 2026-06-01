@@ -80,7 +80,7 @@ app.get('/api/profile/:slug', async (req, res) => {
   const slug = req.params.slug.toLowerCase();
   try {
     const u = await pool.query(
-      `SELECT id, username, slug, world, dc, lodestone_id, xivapi_cache, portrait_url
+      `SELECT id, username, slug, world, dc, lodestone_id, xivapi_cache, portrait_url, lifetime_cleared
        FROM users WHERE slug = $1 OR LOWER(username) = $1 LIMIT 1`,
       [slug]
     );
@@ -377,6 +377,13 @@ app.post('/api/progress', authenticate, async (req, res) => {
   const { hunt_id, status } = req.body;
   if (!hunt_id || !status) return res.status(400).json({ error: 'hunt_id and status are required' });
   try {
+    // Check previous status so we only increment lifetime_cleared on a new done
+    const prev = await pool.query(
+      'SELECT status FROM progress WHERE user_id = $1 AND hunt_id = $2',
+      [req.user.id, hunt_id]
+    );
+    const wasAlreadyDone = prev.rows[0]?.status === 'done';
+
     const result = await pool.query(
       `INSERT INTO progress (user_id, hunt_id, status)
        VALUES ($1, $2, $3)
@@ -384,6 +391,15 @@ app.post('/api/progress', authenticate, async (req, res) => {
        RETURNING *`,
       [req.user.id, hunt_id, status]
     );
+
+    // Lifetime counter only goes up — increment when newly marking done
+    if (status === 'done' && !wasAlreadyDone) {
+      await pool.query(
+        'UPDATE users SET lifetime_cleared = lifetime_cleared + 1 WHERE id = $1',
+        [req.user.id]
+      );
+    }
+
     res.json(result.rows[0]);
   } catch {
     res.status(500).json({ error: 'Server error' });

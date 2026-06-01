@@ -93,7 +93,8 @@ export default function Profile({ profile = SAMPLE_PROFILE, isOwner = false }) {
     const total = p.byRank.S.total + p.byRank.A.total + p.byRank.B.total
     return { done, total, pct: total ? Math.round((done / total) * 100) : 0 }
   }, [p])
-  const hr = hunterRank(totals.done)
+  const lc = p.lifetimeCleared || 0
+  const hr = hunterRank(lc)
 
   /* ---- Portrait local state (updates after linking) ---- */
   const [localPortrait, setLocalPortrait] = useState(p.portrait)
@@ -344,7 +345,7 @@ export default function Profile({ profile = SAMPLE_PROFILE, isOwner = false }) {
           <div className="hunter__head">
             <span className="hunter__now">{hr.cur.name}</span>
             {hr.next
-              ? <span className="hunter__next"><b>{hr.next.at - totals.done}</b> marks to <b>{hr.next.name}</b></span>
+              ? <span className="hunter__next"><b>{hr.next.at - lc}</b> marks to <b>{hr.next.name}</b></span>
               : <span className="hunter__next">Highest rank attained</span>}
           </div>
           <div className="hunter__bar"><span style={{ width: hr.pct + '%' }} /></div>

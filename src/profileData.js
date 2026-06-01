@@ -118,6 +118,7 @@ export function buildProfile({ user, hunts, progress, xivapi, jobs = [] }) {
     gil, nuts, exp, byRank,
     zones: ZONE_ORDER.map((z) => zoneMap[z]),
     roles, recent,
+    lifetimeCleared: user.lifetime_cleared || 0,
   }
 }
 
