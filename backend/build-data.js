@@ -199,11 +199,12 @@ async function buildMining() {
 
     const levelStr = level ? `${level}${rareId > 0 ? '★' : ''}` : '?';
     nodes.push({
-      id:        slugify(`${typeName}-${zone}-${items[0].name}`),
-      name:      `${zone} ${typeName}`,
+      id:         slugify(`${typeName}-${zone}-${items[0].name}`),
+      name:       zone,
+      gatherType: typeName,  // 'Mining' | 'Quarrying'
       zone,
       expansion,
-      type:      nodeType,
+      type:       nodeType,
       coords,
       level:     levelStr,
       time:      timeLabel,
@@ -309,7 +310,7 @@ function renderMiningJS(nodes) {
     const win = n.window
       ? `{ open: [${n.window.open}], close: [${n.window.close}] }`
       : 'null';
-    return `  { id: '${esc(n.id)}', name: '${esc(n.name)}', zone: '${esc(n.zone)}', expansion: '${n.expansion}',
+    return `  { id: '${esc(n.id)}', name: '${esc(n.name)}', gatherType: '${esc(n.gatherType||'')}', zone: '${esc(n.zone)}', expansion: '${n.expansion}',
     type: '${n.type}', coords: '${esc(n.coords)}', level: '${esc(n.level)}', time: '${esc(n.time)}', window: ${win},
     items: [\n${items},\n    ] }`;
   });

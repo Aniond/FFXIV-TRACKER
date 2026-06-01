@@ -105,6 +105,21 @@ body.mining-page {
 .tchip.is-active { color: var(--parchment); border-color: var(--gc, var(--gem-dim)); background: color-mix(in srgb, var(--gc, var(--gem)) 14%, transparent); }
 .tchip.is-active .tchip__gem { box-shadow: 0 0 8px var(--gc, var(--gem)); }
 
+/* gather-class filter chips (Mining / Quarrying) */
+.gtseg { display: flex; gap: 6px; margin-bottom: 10px; }
+.gtchip {
+  flex: 1; display: inline-flex; align-items: center; justify-content: center; gap: 7px;
+  font:600 12px var(--fb); letter-spacing:.02em; color: var(--ink-dim);
+  background: transparent; border: 0; border-radius: 8px; padding: 8px 10px; cursor: pointer; transition: all .14s;
+}
+.gtchip__dot {
+  width: 8px; height: 8px; flex: 0 0 8px; border-radius: 50%;
+  background: color-mix(in srgb, var(--gc, var(--gem)) 70%, #0a0705);
+  box-shadow: 0 0 4px color-mix(in srgb, var(--gc, var(--gem)) 50%, transparent);
+}
+.gtchip.is-active { color: var(--board); background: linear-gradient(180deg, color-mix(in srgb, var(--gc, var(--gem-bright)) 90%, #fff), var(--gc, var(--gem))); box-shadow: 0 1px 8px color-mix(in srgb, var(--gc, var(--gem)) 40%, transparent); }
+.gtchip.is-active .gtchip__dot { background: var(--board); box-shadow: none; }
+
 /* zone dropdown row */
 .zonebar { display: flex; align-items: center; gap: 8px; margin-top: 10px; }
 .selwrap { position: relative; flex: 1; }

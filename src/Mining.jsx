@@ -103,6 +103,7 @@ export default function Mining({ nodes = MINING_NODES }) {
   })
   const [q, setQ] = useState('')
   const [type, setType] = useState('All')
+  const [gatherType, setGatherType] = useState('All')
   const [zone, setZone] = useState('All zones')
   const [toast, setToast] = useState(null)
   const [, setTick] = useState(0)
@@ -119,23 +120,27 @@ export default function Mining({ nodes = MINING_NODES }) {
   useEffect(() => { const id = setInterval(() => setTick((t) => t + 1), 1000); return () => clearInterval(id) }, [])
 
   const zones = useMemo(() => {
-    const list = nodes.filter((n) => type === 'All' || n.type === type).map((n) => n.zone)
+    const list = nodes
+      .filter((n) => type === 'All' || n.type === type)
+      .filter((n) => gatherType === 'All' || n.gatherType === gatherType)
+      .map((n) => n.zone)
     return ['All zones', ...Array.from(new Set(list))]
-  }, [type, nodes])
+  }, [type, gatherType, nodes])
   useEffect(() => { if (!zones.includes(zone)) setZone('All zones') }, [zones]) // eslint-disable-line
 
   const filtered = useMemo(() => {
     const query = q.trim().toLowerCase()
     return nodes.filter((n) => {
       if (type !== 'All' && n.type !== type) return false
+      if (gatherType !== 'All' && n.gatherType !== gatherType) return false
       if (zone !== 'All zones' && n.zone !== zone) return false
       if (query) {
-        const hay = [n.name, n.zone, n.expansion, n.type, n.time, ...n.items.map((i) => i.name)].join(' ').toLowerCase()
+        const hay = [n.name, n.zone, n.expansion, n.type, n.gatherType, n.time, ...n.items.map((i) => i.name)].join(' ').toLowerCase()
         if (!hay.includes(query)) return false
       }
       return true
     })
-  }, [q, type, zone, nodes])
+  }, [q, type, gatherType, zone, nodes])
 
   const totalItems = nodes.reduce((a, n) => a + n.items.length, 0)
   const gotItems = Object.values(collected).filter(Boolean).length
@@ -168,6 +173,18 @@ export default function Mining({ nodes = MINING_NODES }) {
         <div className="search">
           <I.search className="search__icon" />
           <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search nodes, ore, gems…" aria-label="Search" />
+        </div>
+
+        <div className="gtseg" role="group" aria-label="Gather class">
+          {[
+            { key: 'Mining',    color: 'var(--topaz)',    label: 'Mining' },
+            { key: 'Quarrying', color: 'var(--amethyst)', label: 'Quarrying' },
+          ].map(({ key, color, label }) => (
+            <button key={key} className={`gtchip${gatherType === key ? ' is-active' : ''}`} style={{ '--gc': color }}
+              onClick={() => setGatherType(g => g === key ? 'All' : key)}>
+              <span className="gtchip__dot" style={{ '--gc': color }} />{label}
+            </button>
+          ))}
         </div>
 
         <div className="types" role="group" aria-label="Node type">
