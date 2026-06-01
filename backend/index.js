@@ -5,6 +5,7 @@ const passport = require('passport');
 const DiscordStrategy = require('passport-discord').Strategy;
 const jwt = require('jsonwebtoken');
 const pool = require('./db');
+const { searchCharacter, fetchCharacter } = require('./lodestone');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -79,6 +80,64 @@ app.get('/api/profile/:slug', async (req, res) => {
     res.json({ user, hunts: huntsRes.rows, progress: progressRes.rows, xivapi: user.xivapi_cache || null, jobs: jobsRes.rows });
   } catch {
     res.status(500).json({ error: 'Server error' });
+  }
+});
+
+// Lodestone character search — unauthenticated, cached 24 h
+app.post('/api/character/search', async (req, res) => {
+  const name   = (req.body.name   || '').trim();
+  const server = (req.body.server || '').trim();
+  if (!name) return res.status(400).json({ error: 'name is required' });
+
+  const cacheKey = `search:${name.toLowerCase()}:${server.toLowerCase()}`;
+  try {
+    const cached = await pool.query(
+      'SELECT data FROM lodestone_cache WHERE cache_key = $1 AND expires_at > NOW()',
+      [cacheKey]
+    );
+    if (cached.rows[0]) return res.json({ ...cached.rows[0].data, cached: true });
+
+    const data = await searchCharacter(name, server || undefined);
+
+    await pool.query(
+      `INSERT INTO lodestone_cache (cache_key, data, expires_at)
+       VALUES ($1, $2, NOW() + INTERVAL '24 hours')
+       ON CONFLICT (cache_key) DO UPDATE SET data = $2, expires_at = NOW() + INTERVAL '24 hours'`,
+      [cacheKey, JSON.stringify(data)]
+    );
+    res.json(data);
+  } catch (err) {
+    console.error('[lodestone search]', err.message);
+    res.status(503).json({ error: 'Lodestone unreachable', detail: err.message });
+  }
+});
+
+// Lodestone character detail — unauthenticated, cached 1 h
+app.get('/api/character/:id', async (req, res) => {
+  const { id } = req.params;
+  if (!/^\d+$/.test(id)) return res.status(400).json({ error: 'Invalid character ID' });
+
+  const cacheKey = `char:${id}`;
+  try {
+    const cached = await pool.query(
+      'SELECT data FROM lodestone_cache WHERE cache_key = $1 AND expires_at > NOW()',
+      [cacheKey]
+    );
+    if (cached.rows[0]) return res.json({ ...cached.rows[0].data, cached: true });
+
+    const data = await fetchCharacter(id);
+    if (!data) return res.status(404).json({ error: 'Character not found' });
+
+    await pool.query(
+      `INSERT INTO lodestone_cache (cache_key, data, expires_at)
+       VALUES ($1, $2, NOW() + INTERVAL '1 hour')
+       ON CONFLICT (cache_key) DO UPDATE SET data = $2, expires_at = NOW() + INTERVAL '1 hour'`,
+      [cacheKey, JSON.stringify(data)]
+    );
+    res.json(data);
+  } catch (err) {
+    console.error('[lodestone char]', err.message);
+    res.status(503).json({ error: 'Lodestone unreachable', detail: err.message });
   }
 });
 

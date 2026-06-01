@@ -27,6 +27,13 @@ CREATE TABLE IF NOT EXISTS submissions (
   created_at  TIMESTAMPTZ DEFAULT NOW()
 );
 
+CREATE TABLE IF NOT EXISTS lodestone_cache (
+  cache_key  VARCHAR(255) PRIMARY KEY,
+  data       JSONB        NOT NULL,
+  expires_at TIMESTAMPTZ  NOT NULL,
+  created_at TIMESTAMPTZ  DEFAULT NOW()
+);
+
 CREATE TABLE IF NOT EXISTS user_jobs (
   id         SERIAL PRIMARY KEY,
   user_id    INTEGER REFERENCES users(id) ON DELETE CASCADE,
