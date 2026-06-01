@@ -51,8 +51,21 @@ function relTime(iso) {
  * @param {object}   [args.xivapi]  XIVAPI character payload (see fetchXivapiCharacter)
  */
 export function buildProfile({ user, hunts, progress, xivapi, jobs = [] }) {
+  // Explicit per-user progress entries
+  const progressById = Object.fromEntries(progress.map((r) => [r.hunt_id, r.status]))
+  // Only explicitly-toggled done rows carry a timestamp (used for Recent Clears)
   const doneRows = progress.filter((r) => r.status === 'done')
-  const doneIds = new Set(doneRows.map((r) => r.hunt_id))
+
+  // A hunt counts as cleared if:
+  //   – user explicitly marked it done in their progress table, OR
+  //   – hunt's default status is 'done' and user hasn't overridden it
+  const doneIds = new Set(
+    hunts
+      .filter((h) => Object.prototype.hasOwnProperty.call(progressById, h.id)
+        ? progressById[h.id] === 'done'
+        : h.status === 'done')
+      .map((h) => h.id)
+  )
   const huntById = Object.fromEntries(hunts.map((h) => [h.id, h]))
 
   // tallies

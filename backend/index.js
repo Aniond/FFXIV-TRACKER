@@ -87,7 +87,7 @@ app.get('/api/profile/:slug', async (req, res) => {
     if (!u.rows.length) return res.status(404).json({ error: 'not found' });
     const user = u.rows[0];
     const [huntsRes, progressRes, jobsRes] = await Promise.all([
-      pool.query('SELECT id, name, rank, zone, reward FROM hunts ORDER BY id'),
+      pool.query('SELECT id, name, rank, zone, reward, status FROM hunts ORDER BY id'),
       pool.query('SELECT hunt_id, status, updated_at FROM progress WHERE user_id = $1', [user.id]),
       pool.query('SELECT job_abbr, level FROM user_jobs WHERE user_id = $1', [user.id]),
     ]);
