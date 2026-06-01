@@ -4,8 +4,10 @@ const cors = require('cors');
 const passport = require('passport');
 const DiscordStrategy = require('passport-discord').Strategy;
 const jwt = require('jsonwebtoken');
+const cron = require('node-cron');
 const pool = require('./db');
 const { searchCharacter, fetchCharacter } = require('./lodestone');
+const { refreshUserJobs } = require('./refresh');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -80,6 +82,44 @@ app.get('/api/profile/:slug', async (req, res) => {
     res.json({ user, hunts: huntsRes.rows, progress: progressRes.rows, xivapi: user.xivapi_cache || null, jobs: jobsRes.rows });
   } catch {
     res.status(500).json({ error: 'Server error' });
+  }
+});
+
+// Manual Lodestone refresh — pulls fresh data for the logged-in user right now
+app.post('/api/user/refresh-jobs', authenticate, async (req, res) => {
+  try {
+    const u = await pool.query('SELECT lodestone_id FROM users WHERE id = $1', [req.user.id]);
+    if (!u.rows[0]?.lodestone_id) {
+      return res.status(400).json({ error: 'No Lodestone character linked — use Link Character first' });
+    }
+    const result = await refreshUserJobs(pool, req.user.id, u.rows[0].lodestone_id);
+    res.json({ ok: true, ...result });
+  } catch (err) {
+    console.error('[refresh-jobs manual]', err.message);
+    res.status(503).json({ error: err.message });
+  }
+});
+
+// Daily Lodestone refresh — 04:00 UTC every day
+cron.schedule('0 4 * * *', async () => {
+  console.log('[cron] Lodestone daily refresh started');
+  try {
+    const users = await pool.query(
+      'SELECT id, username, lodestone_id FROM users WHERE lodestone_id IS NOT NULL'
+    );
+    for (const user of users.rows) {
+      try {
+        const result = await refreshUserJobs(pool, user.id, user.lodestone_id);
+        console.log(`[cron] ${user.username}: ${result.jobCount} jobs refreshed`);
+      } catch (err) {
+        console.error(`[cron] ${user.username} failed:`, err.message);
+      }
+      // Brief pause between users to be polite to Lodestone
+      await new Promise((r) => setTimeout(r, 2000));
+    }
+    console.log('[cron] Lodestone daily refresh complete');
+  } catch (err) {
+    console.error('[cron] Fatal error:', err.message);
   }
 });
 

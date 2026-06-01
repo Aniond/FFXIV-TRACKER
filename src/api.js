@@ -69,6 +69,15 @@ async function savePreferences({ view, accent, density }) {
   })
 }
 
+async function refreshJobsFromLodestone() {
+  const r = await apiFetch('/api/user/refresh-jobs', { method: 'POST' })
+  if (!r.ok) {
+    const body = await r.json().catch(() => ({}))
+    throw new Error(body.error || `Refresh failed (${r.status})`)
+  }
+  return r.json()
+}
+
 async function saveCharacterLink({ lodestone_id, world, dc, portrait_url }) {
   const r = await apiFetch('/api/user/character', {
     method: 'PATCH',
@@ -96,4 +105,4 @@ async function saveJobs(jobs) {
   return r.json()
 }
 
-export { API, getToken, setToken, clearToken, fetchMe, loadProgress, saveProgress, resetProgress, saveStash, savePreferences, fetchJobs, saveJobs, saveCharacterLink }
+export { API, getToken, setToken, clearToken, fetchMe, loadProgress, saveProgress, resetProgress, saveStash, savePreferences, fetchJobs, saveJobs, saveCharacterLink, refreshJobsFromLodestone }

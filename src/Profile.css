@@ -108,6 +108,8 @@ a { color: inherit; text-decoration: none; }
 .jobs-btn--edit:hover:not(:disabled) { background: rgba(255,255,255,.1); color: var(--parchment); }
 .jobs-btn--save   { background: linear-gradient(180deg, var(--gold-bright), var(--gold)); color: var(--board); }
 .jobs-btn--cancel { background: transparent; border: 1px solid var(--bill-edge); color: var(--ink-dim); }
+.jobs-btn--sync   { background: rgba(255,255,255,.05); border: 1px solid var(--bill-edge); color: var(--ink-dim); min-width: 62px; }
+.jobs-btn--sync:hover:not(:disabled) { color: var(--gold); border-color: var(--gold-dim); }
 
 /* ---------- Hero ---------- */
 .hero {

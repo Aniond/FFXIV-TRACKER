@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react'
-import { saveJobs, saveCharacterLink, API } from './api'
+import { saveJobs, saveCharacterLink, refreshJobsFromLodestone, fetchJobs, API } from './api'
 import './Profile.css'
 
 /* ============================================================
@@ -27,6 +27,7 @@ const I = {
   search:  (p) => (<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" {...p}><circle cx="11" cy="11" r="7"/><path d="m20 20-3.2-3.2"/></svg>),
   link:    (p) => (<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...p}><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>),
   x:       (p) => (<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" {...p}><path d="M18 6 6 18M6 6l12 12"/></svg>),
+  refresh: (p) => (<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...p}><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/></svg>),
 }
 
 const fmt    = (n) => Number(n || 0).toLocaleString('en-US')
@@ -159,6 +160,8 @@ export default function Profile({ profile = SAMPLE_PROFILE, isOwner = false }) {
   const [editingJobs, setEditingJobs]   = useState(false)
   const [draftLevels, setDraftLevels]   = useState({})
   const [savingJobs,  setSavingJobs]    = useState(false)
+  const [syncing,     setSyncing]       = useState(false)
+  const [syncMsg,     setSyncMsg]       = useState(null)
 
   function startEdit() {
     const flat = {}
@@ -191,6 +194,25 @@ export default function Profile({ profile = SAMPLE_PROFILE, isOwner = false }) {
     }
   }
 
+  async function syncFromLodestone() {
+    setSyncing(true); setSyncMsg(null)
+    try {
+      await refreshJobsFromLodestone()
+      const updated = await fetchJobs()
+      const lvls = Object.fromEntries(updated.map((j) => [j.job_abbr, j.level]))
+      setLocalRoles((prev) =>
+        prev.map((role) => ({ ...role, jobs: role.jobs.map(([abbr]) => [abbr, lvls[abbr] ?? 0]) }))
+      )
+      setSyncMsg('Synced')
+      setTimeout(() => setSyncMsg(null), 2500)
+    } catch (err) {
+      setSyncMsg(err.message)
+      setTimeout(() => setSyncMsg(null), 4000)
+    } finally {
+      setSyncing(false)
+    }
+  }
+
   const at100 = useMemo(
     () => localRoles.reduce((n, r) => n + r.jobs.filter(([, lvl]) => lvl === 100).length, 0),
     [localRoles]
@@ -211,9 +233,15 @@ export default function Profile({ profile = SAMPLE_PROFILE, isOwner = false }) {
         <button className="jobs-btn jobs-btn--cancel" onClick={cancelEdit} disabled={savingJobs}>Cancel</button>
       </>
     ) : (
-      <button className="jobs-btn jobs-btn--edit" onClick={startEdit}>
-        <I.pencil style={{ width: 11, height: 11 }} /> Edit
-      </button>
+      <>
+        <button className="jobs-btn jobs-btn--sync" onClick={syncFromLodestone} disabled={syncing} title="Pull latest levels from Lodestone">
+          <I.refresh style={{ width: 11, height: 11 }} />
+          {syncing ? 'Syncing…' : syncMsg ?? 'Sync'}
+        </button>
+        <button className="jobs-btn jobs-btn--edit" onClick={startEdit}>
+          <I.pencil style={{ width: 11, height: 11 }} /> Edit
+        </button>
+      </>
     )
   )
 
