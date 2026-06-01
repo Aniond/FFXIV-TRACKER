@@ -7,8 +7,8 @@ import Mining from './Mining'
 
 const path = window.location.pathname
 const profileMatch = path.match(/^\/profile\/([^/]+)/)
-const isFishing = path === '/fishing'
-const isMining  = path === '/mining'
+const isFishing = path === '/gathering/fishing'
+const isMining  = path === '/gathering/mining'
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>

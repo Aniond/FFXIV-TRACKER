@@ -91,3 +91,53 @@
   font-size: 9px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase;
   color: #6a6a6a; border: 1px solid #333; border-radius: 20px; padding: 1px 6px;
 }
+
+/* ---- Gathering group (accordion) ---- */
+.act-nav__group { border-top: 1px solid #2a2a2a; }
+.act-nav__group:first-child { border-top: none; }
+
+.act-nav__group-hd {
+  display: flex; align-items: center; gap: 11px;
+  width: 100%; padding: 11px 14px;
+  background: none; border: none; cursor: pointer;
+  color: #a0998c;
+  font-family: 'Manrope', system-ui, sans-serif;
+  font-size: 13px; font-weight: 600;
+  text-align: left;
+  transition: background .12s, color .12s;
+}
+.act-nav__group-hd:hover { background: rgba(255,255,255,.04); color: #d4cfc4; }
+.act-nav__group-hd.is-active { color: #d4cfc4; background: rgba(255,255,255,.03); }
+.act-nav__group-hd.is-active .act-nav__item-ico { color: #c9a35b; }
+
+.act-nav__group-chevron {
+  width: 14px; height: 14px; flex: 0 0 14px; color: #4a4a4a; margin-left: auto;
+  transition: transform .18s;
+}
+.act-nav__group-chevron.is-open { transform: rotate(180deg); }
+
+/* ---- Child items (indented under group) ---- */
+.act-nav__children {
+  background: rgba(0,0,0,.15);
+  border-top: 1px solid #222;
+  border-bottom: 1px solid #222;
+}
+
+.act-nav__child {
+  display: flex; align-items: center; gap: 11px;
+  padding: 10px 14px 10px 32px;
+  text-decoration: none;
+  color: #8a8278;
+  font-family: 'Manrope', system-ui, sans-serif;
+  font-size: 12.5px; font-weight: 600;
+  transition: background .12s, color .12s;
+  cursor: pointer; position: relative;
+  border-top: 1px solid #1e1e1e;
+}
+.act-nav__child:first-child { border-top: none; }
+.act-nav__child:hover:not(.is-soon) { background: rgba(255,255,255,.04); color: #d4cfc4; }
+.act-nav__child .act-nav__item-ico { width: 15px; height: 15px; flex: 0 0 15px; color: #505050; transition: color .12s; }
+.act-nav__child:hover:not(.is-soon) .act-nav__item-ico { color: #8a8378; }
+.act-nav__child.is-active { color: #d4cfc4; background: rgba(255,255,255,.03); }
+.act-nav__child.is-active .act-nav__item-ico { color: #c9a35b; }
+.act-nav__child.is-soon { opacity: .45; cursor: default; }
