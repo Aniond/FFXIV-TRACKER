@@ -413,7 +413,7 @@ export default function Profile({ profile = SAMPLE_PROFILE, isOwner = false }) {
           title="Job Levels"
           icon={I.swords}
           className="col-span"
-          badge="Auto-import from Lodestone · Coming Soon"
+
           count={editingJobs ? undefined : `${at100} at 100`}
           action={jobsAction}
         >

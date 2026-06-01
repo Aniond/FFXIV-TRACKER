@@ -101,6 +101,7 @@ function App() {
       .then(async (d) => {
         if (!d || !Array.isArray(d) || !d.length) return
         setHunts(d)
+        setType('all') // reset filter when fresh data loads so no stale selection
         const base = seedDoneMap(d)
         if (getToken()) {
           const apiMap = await loadProgress().catch(() => null)
@@ -139,7 +140,7 @@ function App() {
     return hunts.filter((h) => {
       const done = !!doneMap[h.id]
       if (rank !== 'all' && h.rank !== rank) return false
-      if (type !== 'all' && h.type !== type) return false
+      if (type !== 'all' && (h.type ?? '').trim() !== type) return false
       if (status === 'open' && done) return false
       if (status === 'done' && !done) return false
       if (tokens.length) {
@@ -151,7 +152,7 @@ function App() {
   }, [hunts, doneMap, rank, type, status, q])
 
   const typesPresent = useMemo(
-    () => [...new Set(hunts.map((h) => h.type).filter(Boolean))],
+    () => [...new Set(hunts.map((h) => h.type?.trim()).filter(Boolean))],
     [hunts]
   )
   const doneCount = hunts.filter((h) => doneMap[h.id]).length
@@ -281,7 +282,7 @@ function App() {
                 <select
                   className="type-select"
                   value={type}
-                  onChange={(e) => setType(e.target.value)}
+                  onChange={(e) => setType(e.target.value.trim())}
                   aria-label="Filter by type"
                 >
                   <option value="all">All types</option>
