@@ -1,0 +1,319 @@
+/* ============================================================
+   Fishing.css — Centurio Ledger Fishing Log (Gathering tab)
+   Teal-themed variant of the hunt board. Self-contained: defines
+   its own tokens, scoped under body.fishing-page to avoid
+   colliding with the hunt board's :root variables.
+   ============================================================ */
+
+/* Scoped to body.fishing-page so these don't override the hunt board's :root tokens */
+body.fishing-page {
+  /* cool-shifted board surfaces (vs the warm hunt board) */
+  --board:#070b0c; --board-2:#0c1416; --bill:#101b1d; --bill-raised:#15252a; --bill-edge:#1f343a;
+
+  /* TEAL accent (fishing) — replaces gold here */
+  --teal:#3fb6b0; --teal-bright:#74e3dc; --teal-dim:#2a6f6c; --teal-faint:rgba(63,182,176,0.14);
+  /* heritage gold kept as a thin secondary glint (frames/hairlines) */
+  --au:#c9a35b; --au-dim:#8a7038; --au-faint:rgba(201,163,91,0.10);
+
+  --parchment:#e7f0ef; --ink:#a9c2c1; --ink-dim:#6f8b8a; --ink-faint:#516867;
+
+  /* requirement badge colors */
+  --weather:#5ea8e0; --weather-bg:rgba(94,168,224,.13);
+  --time:#d6a94e;    --time-bg:rgba(214,169,78,.13);
+
+  /* fish rarity (echoes hunt rank seals) */
+  --r-common:#6fae8f; --r-common-glow:rgba(111,174,143,.4);
+  --r-rare:#5ea8e0;   --r-rare-glow:rgba(94,168,224,.42);
+  --r-legend:#c98ee0; --r-legend-glow:rgba(201,142,224,.45);
+
+  --fd:'Cinzel',Georgia,serif; --fb:'Manrope',system-ui,sans-serif;
+  color-scheme: dark;
+
+  min-height: 100vh;
+  margin: 0;
+  padding: 0;
+  color: var(--ink);
+  font-family: var(--fb);
+  -webkit-font-smoothing: antialiased;
+  /* water backdrop: cool radial depth + faint ripple bands */
+  background:
+    radial-gradient(120% 70% at 50% -8%, #123034 0%, var(--board-2) 42%, var(--board) 100%),
+    repeating-linear-gradient(100deg, rgba(116,227,220,0.02) 0 1px, transparent 1px 9px),
+    repeating-linear-gradient(170deg, rgba(94,168,224,0.018) 0 2px, transparent 2px 14px);
+  background-attachment: fixed;
+}
+
+.ledger {
+  width: 100%; max-width: 460px; margin: 0 auto; min-height: 100vh;
+  position: relative;
+  background: linear-gradient(180deg, rgba(0,0,0,.18), transparent 200px), var(--board-2);
+  border-left: 1px solid rgba(63,182,176,.10);
+  border-right: 1px solid rgba(63,182,176,.10);
+  box-shadow: 0 0 60px rgba(0,0,0,.6);
+  padding-bottom: 60px;
+}
+@media (max-width: 480px) { .ledger { border-left: 0; border-right: 0; } }
+
+/* ---------- Brand header ---------- */
+.brand { display: flex; align-items: center; gap: 12px; padding: 16px 16px 12px; }
+.brand__crest {
+  width: 42px; height: 42px; flex: 0 0 42px; border-radius: 50%;
+  display: grid; place-items: center; position: relative;
+  background: radial-gradient(circle at 50% 38%, #16302f, #0c1416 72%);
+  border: 1.5px solid var(--teal-dim);
+  box-shadow: inset 0 0 10px rgba(0,0,0,.7), 0 0 0 3px rgba(63,182,176,.06);
+}
+.brand__crest::after { content:""; position:absolute; inset:5px; border-radius:50%; border:1px solid rgba(63,182,176,.35); }
+.brand__crest svg { width: 22px; height: 22px; position: relative; color: var(--teal-bright); }
+.brand__title { font:800 18px var(--fd); letter-spacing:.14em; color: var(--parchment); margin: 0; line-height: 1; }
+.brand__sub { font:700 10px var(--fb); letter-spacing:.24em; text-transform:uppercase; color: var(--teal); margin-top: 5px; }
+
+/* ---------- Eorzea clock ---------- */
+.eclock {
+  display: flex; align-items: center; gap: 12px;
+  margin: 0 16px 12px;
+  background: linear-gradient(180deg, var(--bill-raised), var(--bill));
+  border: 1px solid var(--bill-edge); border-radius: 13px; padding: 12px 15px;
+  position: relative; overflow: hidden;
+}
+.eclock::before { content:""; position:absolute; left:0; right:0; top:0; height:2px; background: linear-gradient(90deg, transparent, var(--teal-dim), transparent); opacity:.7; }
+.eclock__dial { position: relative; width: 44px; height: 44px; flex: 0 0 44px; }
+.eclock__face {
+  position: absolute; inset: 0; border-radius: 50%;
+  background: radial-gradient(circle at 50% 35%, #16302f, #0a1213 75%);
+  border: 1.5px solid var(--teal-dim);
+}
+.eclock__hand { position: absolute; left: 50%; top: 50%; transform-origin: bottom center; background: var(--teal-bright); border-radius: 2px; }
+.eclock__hand--h { width: 2.5px; height: 12px; margin-left: -1.25px; margin-top: -12px; }
+.eclock__hand--m { width: 2px; height: 16px; margin-left: -1px; margin-top: -16px; opacity: .7; }
+.eclock__pivot { position: absolute; left: 50%; top: 50%; width: 5px; height: 5px; background: var(--teal-bright); border-radius: 50%; transform: translate(-50%,-50%); }
+.eclock__body { flex: 1; min-width: 0; }
+.eclock__lbl { font:700 9px var(--fb); letter-spacing:.16em; text-transform:uppercase; color: var(--ink-dim); }
+.eclock__time { font:800 26px var(--fd); color: var(--parchment); line-height: 1; margin-top: 3px; font-variant-numeric: tabular-nums; letter-spacing:.02em; }
+.eclock__period { display: inline-flex; align-items: center; gap: 6px; margin-top: 5px; font:600 11px var(--fb); color: var(--time); }
+.eclock__period svg { width: 13px; height: 13px; }
+.eclock__period.is-day { color: var(--time); }
+.eclock__period.is-night { color: var(--weather); }
+
+/* ---------- Controls ---------- */
+.controls { position: sticky; top: 0; z-index: 30; padding: 6px 16px 12px; background: linear-gradient(180deg, var(--board-2) 80%, transparent); backdrop-filter: blur(6px); }
+
+.search { position: relative; display: flex; align-items: center; margin-bottom: 10px; }
+.search__icon { position: absolute; left: 13px; width: 17px; height: 17px; color: var(--teal); pointer-events: none; }
+.search input {
+  width: 100%; font:500 15px var(--fb); color: var(--parchment);
+  background: linear-gradient(180deg,#0a1213,#10191b); border: 1px solid var(--bill-edge);
+  border-radius: 11px; padding: 12px 14px 12px 40px; outline: none; transition: border-color .15s, box-shadow .15s;
+}
+.search input::placeholder { color: var(--ink-faint); }
+.search input:focus { border-color: var(--teal-dim); box-shadow: 0 0 0 3px var(--teal-faint); }
+
+/* segmented expansion filter */
+.seg { display: flex; gap: 3px; background: var(--bill); border: 1px solid var(--bill-edge); border-radius: 11px; padding: 3px; }
+.seg button {
+  flex: 1; font:700 12.5px var(--fb); letter-spacing:.02em; color: var(--ink-dim);
+  background: transparent; border: 0; border-radius: 8px; padding: 9px 8px; cursor: pointer; transition: all .15s;
+  display: flex; align-items: center; justify-content: center; gap: 6px;
+}
+.seg button .dot { width: 7px; height: 7px; border-radius: 50%; }
+.seg button.is-active { color: var(--board); background: linear-gradient(180deg, var(--teal-bright), var(--teal)); box-shadow: 0 1px 8px rgba(63,182,176,.3); }
+
+/* zone dropdown */
+.zonebar { display: flex; align-items: center; gap: 8px; margin-top: 10px; }
+.selwrap { position: relative; flex: 1; }
+.selwrap svg { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); width: 15px; height: 15px; color: var(--teal); pointer-events: none; }
+.selwrap select {
+  width: 100%; appearance: none; -webkit-appearance: none;
+  font:600 13px var(--fb); color: var(--parchment);
+  background: var(--bill); border: 1px solid var(--bill-edge); border-radius: 9px;
+  padding: 10px 36px 10px 13px; cursor: pointer; outline: none;
+}
+.selwrap select:focus { border-color: var(--teal-dim); }
+.zonebar__count { font:700 11px var(--fb); letter-spacing:.06em; text-transform:uppercase; color: var(--ink-dim); white-space: nowrap; }
+.zonebar__count b { color: var(--teal); }
+
+/* ---------- Spot cards ---------- */
+.spots { display: flex; flex-direction: column; gap: 13px; padding: 4px 16px 0; }
+
+.spot {
+  position: relative; background: linear-gradient(180deg, var(--bill-raised), var(--bill));
+  border: 1px solid var(--bill-edge); border-radius: 15px; padding: 15px; overflow: hidden;
+  transition: border-color .18s;
+}
+.spot::before { content:""; position:absolute; left:0; right:0; top:0; height:2px; background: linear-gradient(90deg, transparent, var(--teal-dim), transparent); opacity:.55; }
+.spot::after { content:""; position:absolute; left:0; top:0; bottom:0; width:3px; background: var(--teal); opacity:.7; }
+.spot.is-done { opacity: .6; }
+.spot.is-done .spot__name { color: var(--ink-dim); }
+
+.spot__head { display: flex; align-items: flex-start; gap: 11px; }
+.spot__head-main { flex: 1; min-width: 0; }
+.spot__name { font:700 18px var(--fd); color: var(--parchment); margin: 0; line-height: 1.1; }
+.spot__zone { display: flex; align-items: center; gap: 7px; margin-top: 5px; font:600 11.5px var(--fb); color: var(--ink-dim); }
+.spot__zone .exp { font:700 9px var(--fb); letter-spacing:.1em; text-transform:uppercase; color: var(--teal); border: 1px solid var(--teal-dim); border-radius: 20px; padding: 1px 7px; }
+
+/* wax-seal catch toggle (same mechanic as hunts) */
+.catch-btn {
+  flex: 0 0 36px; width: 36px; height: 36px; border: 0; cursor: pointer; border-radius: 50%;
+  background: radial-gradient(circle at 50% 35%, #16242a, #0e171a);
+  border: 1.5px dashed var(--ink-faint); color: var(--ink-faint);
+  display: grid; place-items: center; transition: all .15s;
+}
+.catch-btn svg { width: 18px; height: 18px; }
+.catch-btn:hover { border-color: var(--teal); color: var(--teal); }
+.catch-btn.is-done {
+  border: 1.5px solid var(--teal-bright); background: radial-gradient(circle at 50% 35%, var(--teal-bright), var(--teal-dim) 75%);
+  color: var(--board); box-shadow: 0 0 12px rgba(63,182,176,.5);
+}
+
+/* requirement badge row */
+.reqs { display: flex; flex-wrap: wrap; gap: 7px; margin-top: 12px; }
+.req {
+  display: inline-flex; align-items: center; gap: 6px;
+  font:600 11.5px var(--fb); border-radius: 8px; padding: 5px 10px; border: 1px solid transparent;
+}
+.req svg { width: 13px; height: 13px; }
+.req--weather { color: var(--weather); background: var(--weather-bg); border-color: rgba(94,168,224,.3); }
+.req--time { color: var(--time); background: var(--time-bg); border-color: rgba(214,169,78,.3); }
+.req--coords {
+  color: var(--parchment); background: rgba(255,255,255,.03); border-color: var(--bill-edge); cursor: pointer;
+  font-variant-numeric: tabular-nums;
+}
+.req--coords svg { color: var(--teal); }
+.req--coords:hover { border-color: var(--teal-dim); background: var(--teal-faint); }
+
+/* bait chips */
+.field-lbl { font:700 9px var(--fb); letter-spacing:.13em; text-transform:uppercase; color: var(--ink-faint); margin: 14px 0 7px; }
+.baits { display: flex; flex-wrap: wrap; gap: 6px; }
+.bait {
+  display: inline-flex; align-items: center; gap: 7px;
+  font:600 12px var(--fb); color: var(--ink); background: rgba(63,182,176,.07);
+  border: 1px solid var(--teal-dim); border-radius: 20px; padding: 5px 11px 5px 7px;
+}
+.bait__dot {
+  width: 16px; height: 16px; border-radius: 50%; flex: 0 0 16px;
+  background: radial-gradient(circle at 40% 35%, var(--bc, var(--teal-bright)), color-mix(in srgb, var(--bc, var(--teal)) 55%, #0a1213));
+  border: 1px solid rgba(255,255,255,.18);
+}
+
+/* fish list */
+.fish-list { display: flex; flex-direction: column; gap: 6px; margin-top: 7px; }
+.fish {
+  display: flex; align-items: center; gap: 11px;
+  background: rgba(0,0,0,.2); border: 1px solid var(--bill-edge); border-radius: 10px; padding: 8px 11px;
+}
+.fish__icon {
+  flex: 0 0 30px; width: 30px; height: 30px; border-radius: 8px; display: grid; place-items: center;
+  background: radial-gradient(circle at 50% 35%, color-mix(in srgb, var(--rc) 30%, #101b1d), #0a1213);
+  border: 1.5px solid var(--rc); color: var(--rc);
+}
+.fish__icon svg { width: 17px; height: 17px; }
+.fish__body { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.fish__name { font:700 13.5px var(--fb); color: var(--parchment); line-height: 1.1; }
+.fish__meta { font:600 10.5px var(--fb); color: var(--ink-dim); margin-top: 2px; }
+.fish__rarity { font:700 8.5px var(--fb); letter-spacing:.1em; text-transform:uppercase; color: var(--rc); border: 1px solid color-mix(in srgb, var(--rc) 50%, transparent); border-radius: 20px; padding: 2px 8px; white-space: nowrap; }
+
+/* mini catch check per fish */
+.fish__check {
+  flex: 0 0 24px; width: 24px; height: 24px; border-radius: 7px; cursor: pointer;
+  border: 1.5px dashed var(--ink-faint); background: transparent; display: grid; place-items: center; color: transparent; transition: all .14s;
+}
+.fish__check svg { width: 13px; height: 13px; }
+.fish__check:hover { border-color: var(--teal); }
+.fish__check.is-done { border-style: solid; border-color: var(--teal-bright); background: var(--teal); color: var(--board); }
+
+/* progress pill in head */
+.spot__prog { font:700 10.5px var(--fb); color: var(--ink-dim); letter-spacing:.04em; white-space: nowrap; margin-top: 6px; display: inline-flex; align-items: center; gap: 5px; }
+.spot__prog b { color: var(--teal-bright); }
+.spot__prog.full b { color: var(--teal-bright); }
+
+/* ---------- empty ---------- */
+.empty { text-align: center; padding: 56px 28px; color: var(--ink-dim); }
+.empty__ico { width: 60px; height: 60px; margin: 0 auto 16px; border-radius: 50%; border: 1.5px dashed var(--teal-dim); display: grid; place-items: center; color: var(--teal-dim); }
+.empty__ico svg { width: 28px; height: 28px; }
+.empty h3 { font:700 17px var(--fd); color: var(--parchment); margin: 0 0 6px; }
+.empty p { font: 500 13px var(--fb); margin: 0 auto; max-width: 260px; line-height: 1.5; }
+
+/* ---------- toast ---------- */
+.toast {
+  position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%) translateY(12px);
+  background: var(--bill-raised); border: 1px solid var(--teal-dim); color: var(--parchment);
+  font:600 12.5px var(--fb); padding: 9px 16px; border-radius: 22px; box-shadow: 0 8px 24px rgba(0,0,0,.5);
+  opacity: 0; pointer-events: none; transition: opacity .2s, transform .2s; z-index: 200; display: flex; align-items: center; gap: 8px;
+}
+.toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+.toast svg { width: 15px; height: 15px; color: var(--teal-bright); }
+
+/* meta count row */
+.metarow { padding: 12px 16px 6px; }
+.metarow__count { font:700 11px var(--fb); letter-spacing:.08em; text-transform:uppercase; color: var(--ink-dim); }
+.metarow__count b { color: var(--teal); }
+
+/* ============================================================
+   OCEAN FISHING — timed ferry card
+   ============================================================ */
+.ocean {
+  position: relative; margin: 0 16px 14px; padding: 16px; overflow: hidden;
+  background: linear-gradient(180deg, #103138 0%, #0a2026 60%, #081a1f 100%);
+  border: 1px solid var(--teal-dim); border-radius: 16px;
+  box-shadow: 0 0 26px rgba(63,182,176,.10), inset 0 0 40px rgba(0,0,0,.3);
+}
+.ocean::before { content:""; position:absolute; left:0; right:0; top:0; height:2px; background: linear-gradient(90deg, transparent, var(--teal-bright), transparent); opacity:.7; }
+.ocean__waves {
+  position: absolute; left: 0; right: 0; bottom: 0; height: 70px; pointer-events: none; opacity: .5;
+  background:
+    radial-gradient(120% 100% at 20% 120%, rgba(116,227,220,.14), transparent 60%),
+    repeating-linear-gradient(95deg, rgba(116,227,220,.05) 0 2px, transparent 2px 12px);
+}
+.ocean__head { display: flex; align-items: center; gap: 12px; position: relative; }
+.ocean__crest {
+  width: 46px; height: 46px; flex: 0 0 46px; border-radius: 13px; display: grid; place-items: center;
+  color: var(--teal-bright);
+  background: radial-gradient(circle at 50% 35%, #1a4a48, #0a2026 75%);
+  border: 1.5px solid var(--teal-dim); box-shadow: inset 0 0 10px rgba(0,0,0,.5);
+}
+.ocean__crest svg { width: 25px; height: 25px; }
+.ocean__title { font:800 19px var(--fd); color: var(--parchment); margin: 0; line-height: 1; letter-spacing:.02em; }
+.ocean__sub { display: flex; align-items: center; gap: 6px; font:600 11px var(--fb); color: var(--ink-dim); margin-top: 5px; }
+.ocean__sub svg { color: var(--teal); }
+
+.ocean__timer { text-align: center; margin: 16px 0 12px; position: relative; }
+.ocean__timer-lbl { font:700 9.5px var(--fb); letter-spacing:.18em; text-transform:uppercase; color: var(--teal); }
+.ocean__time { font:900 44px var(--fd); color: var(--parchment); line-height: 1; margin-top: 6px; font-variant-numeric: tabular-nums; letter-spacing:.03em; text-shadow: 0 2px 14px rgba(63,182,176,.3); }
+
+.ocean__status {
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  font:700 12px var(--fb); letter-spacing:.02em; color: var(--ink-dim);
+  background: rgba(0,0,0,.25); border: 1px solid var(--bill-edge); border-radius: 10px; padding: 9px; position: relative;
+}
+.ocean__status svg { width: 14px; height: 14px; }
+.ocean__status.open {
+  color: var(--board); background: linear-gradient(180deg, var(--teal-bright), var(--teal));
+  border-color: var(--teal-bright); box-shadow: 0 0 16px rgba(63,182,176,.45);
+  animation: oceanpulse 2.2s ease-in-out infinite;
+}
+@keyframes oceanpulse { 0%,100% { box-shadow: 0 0 14px rgba(63,182,176,.35); } 50% { box-shadow: 0 0 22px rgba(63,182,176,.6); } }
+
+.ocean__next {
+  display: flex; align-items: center; gap: 10px; margin-top: 12px; padding: 11px 12px;
+  background: rgba(116,227,220,.05); border: 1px solid var(--teal-dim); border-radius: 11px; position: relative;
+}
+.ocean__next-time { font:800 14px var(--fd); color: var(--teal-bright); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.ocean__next-route { flex: 1; min-width: 0; font:700 13px var(--fb); color: var(--parchment); }
+
+/* time-of-day badge */
+.tod { display: inline-flex; align-items: center; gap: 5px; font:700 10px var(--fb); letter-spacing:.06em; text-transform:uppercase; white-space: nowrap; }
+.tod svg { width: 12px; height: 12px; }
+.tod--day { color: var(--time); }
+.tod--sunset { color: #e8945e; }
+.tod--night { color: var(--weather); }
+
+/* schedule list */
+.sched { display: flex; flex-direction: column; gap: 5px; position: relative; }
+.sched__row {
+  display: grid; grid-template-columns: 52px 1fr auto; align-items: center; gap: 11px;
+  padding: 9px 11px; border-radius: 9px; background: rgba(0,0,0,.18); border: 1px solid transparent;
+}
+.sched__row.is-next { background: rgba(116,227,220,.06); border-color: var(--teal-dim); }
+.sched__time { font:700 12.5px var(--fd); color: var(--parchment); font-variant-numeric: tabular-nums; }
+.sched__row.is-next .sched__time { color: var(--teal-bright); }
+.sched__route { font:600 12px var(--fb); color: var(--ink); min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
