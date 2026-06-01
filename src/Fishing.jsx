@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo, useRef } from 'react'
 import EorzeaClock from './EorzeaClock'
 import OceanFishing, { OCEAN_ROUTES } from './OceanFishing'
 import { FISHING_SPOTS, EXPANSIONS } from './fishingData'
+import ActivityNav from './ActivityNav'
 import './Fishing.css'
 
 /* ============================================================
@@ -163,6 +164,7 @@ export default function Fishing({ spots = FISHING_SPOTS }) {
 
   return (
     <div className="ledger">
+      <ActivityNav />
       <header className="brand">
         <span className="brand__crest"><I.hook /></span>
         <div>

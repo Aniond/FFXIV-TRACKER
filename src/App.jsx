@@ -5,6 +5,7 @@ import { useTweaks, TweaksPanel, TweakSection, TweakRadio, TweakColor } from './
 import { API, getToken, setToken, clearToken, fetchMe, loadProgress, saveProgress, resetProgress, savePreferences } from './api'
 import Dashboard, { DIcon } from './Dashboard'
 import Banner from './Banner'
+import ActivityNav from './ActivityNav'
 
 const DONE_KEY = 'ffxiv-hunt-done'
 
@@ -190,6 +191,7 @@ function App() {
     <>
     <Banner />
     <div className={`ledger${t.density === 'compact' ? ' is-compact' : ''}`}>
+      <ActivityNav />
       <header className="brand">
         <div className="brand__crest"><Icon.crest /></div>
         <div className="brand__info">
