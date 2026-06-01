@@ -98,7 +98,7 @@ export function buildProfile({ user, hunts, progress, xivapi, jobs = [] }) {
     title: xivapi?.Character?.Title?.Name || null,
     world: xivapi?.Character?.Server || user.world || '—',
     dc: xivapi?.Character?.DC || user.dc || null,
-    portrait: xivapi?.Character?.Portrait || null,
+    portrait: user.portrait_url || xivapi?.Character?.Portrait || null,
     gc: xivapi?.Character?.GrandCompany
       ? { name: xivapi.Character.GrandCompany.Company?.Name, rank: xivapi.Character.GrandCompany.Rank?.Name }
       : null,

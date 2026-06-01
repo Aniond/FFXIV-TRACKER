@@ -141,6 +141,20 @@ app.get('/api/character/:id', async (req, res) => {
   }
 });
 
+// Link Lodestone character (saves lodestone_id, world, dc, portrait_url)
+app.patch('/api/user/character', authenticate, async (req, res) => {
+  const { lodestone_id, world, dc, portrait_url } = req.body;
+  try {
+    await pool.query(
+      `UPDATE users SET lodestone_id = $2, world = $3, dc = $4, portrait_url = $5 WHERE id = $1`,
+      [req.user.id, lodestone_id || null, world || null, dc || null, portrait_url || null]
+    );
+    res.json({ ok: true });
+  } catch {
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
 // Job levels
 app.get('/api/user/jobs', authenticate, async (req, res) => {
   try {

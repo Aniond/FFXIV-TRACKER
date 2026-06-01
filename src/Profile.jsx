@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react'
-import { saveJobs } from './api'
+import { saveJobs, saveCharacterLink, API } from './api'
 import './Profile.css'
 
 /* ============================================================
@@ -24,6 +24,9 @@ const I = {
   banner:  (p) => (<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" {...p}><path d="M6 3h12v15l-6-3-6 3V3Z"/></svg>),
   world:   (p) => (<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" {...p}><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.5 2.5 2.5 15 0 18M12 3c-2.5 2.5-2.5 15 0 18"/></svg>),
   pencil:  (p) => (<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" {...p}><path d="M14 5.5 18.5 10 8 20.5 3.5 21l.5-4.5L14 5.5ZM13 7l4 4"/></svg>),
+  search:  (p) => (<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" {...p}><circle cx="11" cy="11" r="7"/><path d="m20 20-3.2-3.2"/></svg>),
+  link:    (p) => (<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...p}><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>),
+  x:       (p) => (<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" {...p}><path d="M18 6 6 18M6 6l12 12"/></svg>),
 }
 
 const fmt    = (n) => Number(n || 0).toLocaleString('en-US')
@@ -90,6 +93,64 @@ export default function Profile({ profile = SAMPLE_PROFILE, isOwner = false }) {
     return { done, total, pct: total ? Math.round((done / total) * 100) : 0 }
   }, [p])
   const hr = hunterRank(totals.done)
+
+  /* ---- Portrait local state (updates after linking) ---- */
+  const [localPortrait, setLocalPortrait] = useState(p.portrait)
+  useEffect(() => setLocalPortrait(p.portrait), [p])
+
+  /* ---- Link-character state ---- */
+  const [linkOpen, setLinkOpen]           = useState(false)
+  const [searchName, setSearchName]       = useState('')
+  const [searchServer, setSearchServer]   = useState('')
+  const [searchResults, setSearchResults] = useState([])
+  const [searching, setSearching]         = useState(false)
+  const [linkError, setLinkError]         = useState(null)
+  const [importing, setImporting]         = useState(false)
+
+  function openLink() { setLinkOpen(true); setSearchResults([]); setLinkError(null) }
+  function closeLink() { setLinkOpen(false); setSearchName(''); setSearchServer(''); setSearchResults([]); setLinkError(null) }
+
+  async function doSearch(e) {
+    e.preventDefault()
+    if (!searchName.trim()) return
+    setSearching(true); setLinkError(null); setSearchResults([])
+    try {
+      const r = await fetch(`${API}/api/character/search`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: searchName.trim(), server: searchServer.trim() || undefined }),
+      })
+      const data = await r.json()
+      if (!r.ok) throw new Error(data.error || 'Search failed')
+      if (!data.results?.length) setLinkError('No characters found — try a different name or server.')
+      else setSearchResults(data.results)
+    } catch (err) { setLinkError(err.message) }
+    finally { setSearching(false) }
+  }
+
+  async function importCharacter(char) {
+    setImporting(true); setLinkError(null)
+    try {
+      const r = await fetch(`${API}/api/character/${char.id}`)
+      const data = await r.json()
+      if (!r.ok) throw new Error(data.error || 'Failed to fetch character')
+
+      // Save character link + portrait to DB
+      await saveCharacterLink({ lodestone_id: char.id, world: data.server, dc: data.dc, portrait_url: data.portrait })
+
+      // Import job levels if available
+      if (Object.keys(data.jobs || {}).length) {
+        await saveJobs(Object.entries(data.jobs).map(([job_abbr, level]) => ({ job_abbr, level })))
+        setLocalRoles((prev) =>
+          prev.map((role) => ({ ...role, jobs: role.jobs.map(([abbr]) => [abbr, data.jobs[abbr] ?? 0]) }))
+        )
+      }
+
+      setLocalPortrait(data.portrait)
+      closeLink()
+    } catch (err) { setLinkError(err.message) }
+    finally { setImporting(false) }
+  }
 
   /* ---- Job levels local state ---- */
   const [localRoles, setLocalRoles] = useState(p.roles)
@@ -176,8 +237,8 @@ export default function Profile({ profile = SAMPLE_PROFILE, isOwner = false }) {
       <section className="panel" style={{ marginBottom: 14 }}>
         <div className="hero">
           <div className="portrait-frame">
-            {p.portrait
-              ? <img className="portrait-img" src={p.portrait} alt={`${p.name} portrait`} loading="eager" />
+            {localPortrait
+              ? <img className="portrait-img" src={localPortrait} alt={`${p.name} portrait`} loading="eager" />
               : <div className="portrait-img portrait-img--empty" aria-hidden="true" />}
             <span className="hero__rankpin">{hr.cur.name}</span>
           </div>
@@ -189,8 +250,67 @@ export default function Profile({ profile = SAMPLE_PROFILE, isOwner = false }) {
               {p.gc && <span className="metachip"><I.banner className="gc-crest" /><b>{p.gc.name}</b> · {p.gc.rank}</span>}
               <span className="metachip"><I.check style={{ color: 'var(--gold)' }} /><b>{totals.done}</b> marks cleared</span>
             </div>
+            {isOwner && !linkOpen && (
+              <button className="link-char-btn" onClick={openLink}>
+                {localPortrait ? <><I.pencil />Change Character</> : <><I.link />Link Character</>}
+              </button>
+            )}
           </div>
         </div>
+
+        {/* Lodestone character link panel */}
+        {linkOpen && (
+          <div className="link-panel">
+            <div className="link-panel__head">
+              <I.link style={{ width: 14, height: 14 }} />
+              <span>Link your Lodestone character</span>
+              <button className="link-panel__close" onClick={closeLink} aria-label="Close"><I.x /></button>
+            </div>
+            <form className="link-panel__form" onSubmit={doSearch}>
+              <input
+                className="link-panel__input"
+                placeholder="Character name"
+                value={searchName}
+                onChange={(e) => setSearchName(e.target.value)}
+                required
+                autoFocus
+              />
+              <input
+                className="link-panel__input"
+                placeholder="Server (optional)"
+                value={searchServer}
+                onChange={(e) => setSearchServer(e.target.value)}
+              />
+              <button className="link-panel__search-btn" type="submit" disabled={searching || importing}>
+                {searching ? 'Searching…' : <><I.search style={{ width: 12, height: 12 }} />Search</>}
+              </button>
+            </form>
+            {linkError && <div className="link-panel__error">{linkError}</div>}
+            {searchResults.length > 0 && (
+              <div className="link-panel__results">
+                {searchResults.map((char) => (
+                  <button
+                    key={char.id}
+                    className="char-result"
+                    onClick={() => importCharacter(char)}
+                    disabled={importing}
+                  >
+                    {char.portrait
+                      ? <img className="char-result__portrait" src={char.portrait} alt="" />
+                      : <div className="char-result__portrait char-result__portrait--empty" />}
+                    <div className="char-result__info">
+                      <span className="char-result__name">{char.name}</span>
+                      <span className="char-result__world">{char.server}{char.dc ? ` · ${char.dc}` : ''}</span>
+                    </div>
+                    <span className="char-result__cta">
+                      {importing ? 'Importing…' : 'Link & import jobs →'}
+                    </span>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
 
         <div className="hunter">
           <div className="hunter__head">

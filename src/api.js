@@ -69,6 +69,15 @@ async function savePreferences({ view, accent, density }) {
   })
 }
 
+async function saveCharacterLink({ lodestone_id, world, dc, portrait_url }) {
+  const r = await apiFetch('/api/user/character', {
+    method: 'PATCH',
+    body: JSON.stringify({ lodestone_id, world, dc, portrait_url }),
+  })
+  if (!r.ok) throw new Error('Failed to link character')
+  return r.json()
+}
+
 async function fetchJobs() {
   const r = await apiFetch('/api/user/jobs')
   if (!r.ok) return []
@@ -87,4 +96,4 @@ async function saveJobs(jobs) {
   return r.json()
 }
 
-export { API, getToken, setToken, clearToken, fetchMe, loadProgress, saveProgress, resetProgress, saveStash, savePreferences, fetchJobs, saveJobs }
+export { API, getToken, setToken, clearToken, fetchMe, loadProgress, saveProgress, resetProgress, saveStash, savePreferences, fetchJobs, saveJobs, saveCharacterLink }
