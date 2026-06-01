@@ -66,7 +66,7 @@ app.get('/api/profile/:slug', async (req, res) => {
   const slug = req.params.slug.toLowerCase();
   try {
     const u = await pool.query(
-      `SELECT id, username, slug, world, dc, lodestone_id, xivapi_cache
+      `SELECT id, username, slug, world, dc, lodestone_id, xivapi_cache, portrait_url
        FROM users WHERE slug = $1 OR LOWER(username) = $1 LIMIT 1`,
       [slug]
     );
