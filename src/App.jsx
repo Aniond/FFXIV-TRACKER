@@ -197,21 +197,26 @@ function App() {
         </div>
         {user ? (
           <div className="brand__user">
-            {user.avatar && (
-              <img
-                src={`https://cdn.discordapp.com/avatars/${user.discord_id}/${user.avatar}.png?size=32`}
-                alt={user.username}
-                className="brand__avatar"
-              />
-            )}
-            <span className="brand__username">{user.username}</span>
+            <a href={`/profile/${user.username.toLowerCase()}`} className="brand__profile-link">
+              {user.avatar && (
+                <img
+                  src={`https://cdn.discordapp.com/avatars/${user.discord_id}/${user.avatar}.png?size=32`}
+                  alt={user.username}
+                  className="brand__avatar"
+                />
+              )}
+              <span className="brand__username">{user.username}</span>
+            </a>
             <button className="brand__logout" onClick={signOut}>Sign out</button>
           </div>
         ) : (
-          <a href={`${API}/auth/discord`} className="discord-btn">
-            <Icon.discord />
-            Sign in
-          </a>
+          <>
+            <a href="/profile/aniond" className="brand__demo-link">Demo Profile</a>
+            <a href={`${API}/auth/discord`} className="discord-btn">
+              <Icon.discord />
+              Sign in
+            </a>
+          </>
         )}
       </header>
 
