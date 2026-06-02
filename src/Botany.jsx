@@ -1,0 +1,208 @@
+import { useState, useEffect, useMemo, useRef } from 'react'
+import EorzeaClock from './EorzeaClock'
+import { windowState, fmtDur } from './etWindow'
+import { BOTANY_NODES, NODE_TYPES, TYPE_ORDER, ITEM_TAG, ITEM_COLOR } from './botanyData'
+import './Botany.css'
+
+/* ============================================================
+   Botany — Centurio Ledger Foraging Log (Botany tab)
+   Route: /gathering/botany
+   Forest / leaf-coded variant of the hunt board.
+   Personal gather checklist persists in localStorage.
+   Reuses the shared <EorzeaClock> and etWindow helpers.
+   ============================================================ */
+
+const COLLECT_KEY = 'ffxiv-botany-collected'
+
+const I = {
+  search:    (p) => (<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" {...p}><circle cx="11" cy="11" r="7"/><path d="m20 20-3.2-3.2"/></svg>),
+  check:     (p) => (<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" {...p}><path d="M20 6 9 17l-5-5"/></svg>),
+  copy:      (p) => (<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...p}><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg>),
+  chevron:   (p) => (<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" {...p}><path d="m6 9 6 6 6-6"/></svg>),
+  sickle:    (p) => (<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" {...p}><path d="M4 20 C5 14 10 8 17 7"/><path d="M17 7 C22 6 23 12 19 13 L13 17"/><path d="M4 20 L6.5 17.5"/></svg>),
+  leaf:      (p) => (<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" {...p}><path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10Z"/><path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12"/></svg>),
+  herb:      (p) => (<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" {...p}><line x1="12" y1="22" x2="12" y2="11"/><path d="M5 8C5 5 10 4 12 8"/><path d="M19 8C19 5 14 4 12 8"/><path d="M6 14C5 11 10 11 12 15"/><path d="M18 14C19 11 14 11 12 15"/></svg>),
+  clock:     (p) => (<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" {...p}><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>),
+  hourglass: (p) => (<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" {...p}><path d="M6 3h12M6 21h12M7 3c0 5 5 6 5 9s-5 4-5 9M17 3c0 5-5 6-5 9s5 4 5 9"/></svg>),
+  star:      (p) => (<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" {...p}><path d="M12 3l2.6 6.2 6.4.5-4.9 4.1 1.5 6.2L12 16.9 6.4 20.2l1.5-6.2L3 9.7l6.4-.5L12 3Z"/></svg>),
+}
+
+const itemKey = (nodeId, itemName) => `${nodeId}::${itemName}`
+const nodeVars = (type) => ({ '--nc': NODE_TYPES[type].color })
+
+function NodeCard({ node, collected, onToggleItem, onToggleAll, onCopy }) {
+  const t = NODE_TYPES[node.type]
+  const total = node.items.length
+  const got = node.items.filter((it) => collected[itemKey(node.id, it.name)]).length
+  const allDone = got === total
+  const win = windowState(node.window)
+  const expLabel = node.expansion === 'Dawntrail' ? 'DT' : 'EW'
+  return (
+    <article className={`node${allDone ? ' is-done' : ''}`} style={nodeVars(node.type)}>
+      <div className="node__head">
+        <div className="node__head-main">
+          <h2 className="node__name">{node.name}</h2>
+          <div className="node__zone">
+            <span className="exp">{expLabel}</span>{node.zone}
+          </div>
+          <div className="node__prog"><I.sickle style={{ width: 12, height: 12 }} /><b>{got}</b>/{total} gathered</div>
+        </div>
+        <span className="node__badge"><span className="pip" />{t.word}</span>
+        <button className={`collect-btn${allDone ? ' is-done' : ''}`} onClick={() => onToggleAll(node, !allDone)} title={allDone ? 'Reset' : 'Gather all'}>
+          <I.check />
+        </button>
+      </div>
+
+      <div className="reqs">
+        <span className="req req--coords" onClick={() => onCopy(node.coords)} title="Tap to copy"><I.copy />{node.coords}</span>
+        <span className="req req--lvl"><I.sickle />Lv {node.level}</span>
+        {!node.window && <span className="req req--time"><I.clock />Always up</span>}
+      </div>
+
+      {win && (
+        <div className="window">
+          <span className="window__ico">
+            {node.type === 'Ephemeral' ? <I.hourglass /> : node.type === 'Legendary' ? <I.star /> : <I.clock />}
+          </span>
+          <span className="window__body">
+            <span className="window__lbl">{node.type} window · {node.time}</span>
+            <span className="window__et">{win.pre} {fmtDur(win.ms)}</span>
+          </span>
+          <span className={`window__state ${win.state}`}>
+            {win.state === 'up' ? 'Active' : win.state === 'soon' ? 'Soon' : 'Closed'}
+          </span>
+        </div>
+      )}
+
+      <div className="field-lbl">Yield ({got}/{total})</div>
+      <div className="items">
+        {node.items.map((it) => {
+          const key = itemKey(node.id, it.name)
+          const done = !!collected[key]
+          const Ico = I[it.icon] || I.leaf
+          return (
+            <div className="item" key={it.name} style={{ '--ic': ITEM_COLOR[it.tag] }}>
+              <span className="item__icon"><Ico /></span>
+              <span className="item__body">
+                <span className="item__name">{it.name}</span>
+                <span className="item__meta">{ITEM_TAG[it.tag]}</span>
+              </span>
+              <span className="item__tag">{ITEM_TAG[it.tag]}</span>
+              <button className={`item__check${done ? ' is-done' : ''}`} onClick={() => onToggleItem(key)} title={done ? 'Gathered' : 'Mark gathered'}>
+                <I.check />
+              </button>
+            </div>
+          )
+        })}
+      </div>
+    </article>
+  )
+}
+
+export default function Botany({ nodes = BOTANY_NODES }) {
+  const [collected, setCollected] = useState(() => {
+    try { return JSON.parse(localStorage.getItem(COLLECT_KEY)) || {} } catch { return {} }
+  })
+  const [q, setQ] = useState('')
+  const [type, setType] = useState('All')
+  const [zone, setZone] = useState('All zones')
+  const [toast, setToast] = useState(null)
+  const [, setTick] = useState(0)
+  const toastTimer = useRef(null)
+
+  useEffect(() => { localStorage.setItem(COLLECT_KEY, JSON.stringify(collected)) }, [collected])
+  // re-render each second so spawn-window countdowns stay live
+  useEffect(() => { const id = setInterval(() => setTick((t) => t + 1), 1000); return () => clearInterval(id) }, [])
+
+  const zones = useMemo(() => {
+    const list = nodes.filter((n) => type === 'All' || n.type === type).map((n) => n.zone)
+    return ['All zones', ...Array.from(new Set(list))]
+  }, [type, nodes])
+  useEffect(() => { if (!zones.includes(zone)) setZone('All zones') }, [zones]) // eslint-disable-line
+
+  const filtered = useMemo(() => {
+    const query = q.trim().toLowerCase()
+    return nodes.filter((n) => {
+      if (type !== 'All' && n.type !== type) return false
+      if (zone !== 'All zones' && n.zone !== zone) return false
+      if (query) {
+        const hay = [n.name, n.zone, n.expansion, n.type, n.time, ...n.items.map((i) => i.name)].join(' ').toLowerCase()
+        if (!hay.includes(query)) return false
+      }
+      return true
+    })
+  }, [q, type, zone, nodes])
+
+  const totalItems = nodes.reduce((a, n) => a + n.items.length, 0)
+  const gotItems = Object.values(collected).filter(Boolean).length
+
+  function toggleItem(key) { setCollected((c) => ({ ...c, [key]: !c[key] })) }
+  function toggleAll(node, on) {
+    setCollected((c) => {
+      const next = { ...c }
+      node.items.forEach((it) => { next[itemKey(node.id, it.name)] = on })
+      return next
+    })
+  }
+  function copyCoords(text) { navigator.clipboard?.writeText(String(text).replace(/^~/, '')).catch(() => {}); showToast(`Copied ${text}`) }
+  function showToast(m) { setToast(m); clearTimeout(toastTimer.current); toastTimer.current = setTimeout(() => setToast(null), 1500) }
+
+  return (
+    <div className="ledger">
+      <header className="brand">
+        <span className="brand__crest"><I.leaf /></span>
+        <div>
+          <h1 className="brand__title">FORAGING LOG</h1>
+          <div className="brand__sub">Centurio Ledger · {gotItems}/{totalItems} gathered</div>
+        </div>
+      </header>
+
+      <EorzeaClock />
+
+      <div className="controls">
+        <div className="search">
+          <I.search className="search__icon" />
+          <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search nodes, herbs, flora…" aria-label="Search" />
+        </div>
+
+        <div className="types" role="group" aria-label="Node type">
+          {TYPE_ORDER.map((tk) => {
+            const gc = tk === 'All' ? 'var(--gem)' : NODE_TYPES[tk].color
+            return (
+              <button key={tk} className={`tchip${type === tk ? ' is-active' : ''}`} style={{ '--gc': gc }} onClick={() => setType(tk)}>
+                <span className="tchip__pip" style={{ '--gc': gc }} />{tk}
+              </button>
+            )
+          })}
+        </div>
+
+        <div className="zonebar">
+          <div className="selwrap">
+            <select value={zone} onChange={(e) => setZone(e.target.value)} aria-label="Zone">
+              {zones.map((z) => <option key={z} value={z}>{z}</option>)}
+            </select>
+            <I.chevron />
+          </div>
+          <span className="zonebar__count"><b>{filtered.length}</b> nodes</span>
+        </div>
+      </div>
+
+      {filtered.length === 0 ? (
+        <div className="empty">
+          <div className="empty__ico"><I.leaf /></div>
+          <h3>No nodes found</h3>
+          <p>Nothing matches your filters. Try a different type or zone.</p>
+        </div>
+      ) : (
+        <div className="nodes">
+          {filtered.map((n) => (
+            <NodeCard key={n.id} node={n} collected={collected}
+              onToggleItem={toggleItem} onToggleAll={toggleAll} onCopy={copyCoords} />
+          ))}
+        </div>
+      )}
+
+      <div className={`toast${toast ? ' show' : ''}`}><I.copy />{toast}</div>
+    </div>
+  )
+}
