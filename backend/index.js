@@ -462,26 +462,37 @@ function adminJWT(req, res, next) {
   }
 }
 
-// ── Admin: stats ────────────────────────────────────────────────────────────
+// ── Admin: overview stats ───────────────────────────────────────────────────
 app.get('/api/admin/stats', adminJWT, async (req, res) => {
   try {
-    const [totalUsers, queriesToday, newUsersToday, activeWeek] = await Promise.all([
+    const [totalUsers, activeToday, queriesToday, queriesMonth, signups7d, monthTokens] = await Promise.all([
       pool.query("SELECT COUNT(*) FROM users WHERE banned = false"),
-      pool.query("SELECT COUNT(*) FROM ai_queries WHERE created_at > NOW() - INTERVAL '1 day'"),
-      pool.query("SELECT COUNT(*) FROM users WHERE created_at > NOW() - INTERVAL '1 day'"),
       pool.query(`
         SELECT COUNT(DISTINCT uid) FROM (
-          SELECT user_id AS uid FROM progress WHERE updated_at > NOW() - INTERVAL '7 days'
+          SELECT user_id AS uid FROM progress   WHERE updated_at > NOW() - INTERVAL '1 day'
           UNION
-          SELECT user_id AS uid FROM ai_queries WHERE created_at > NOW() - INTERVAL '7 days' AND user_id IS NOT NULL
+          SELECT user_id AS uid FROM ai_queries WHERE created_at > NOW() - INTERVAL '1 day' AND user_id IS NOT NULL
         ) t
+      `),
+      pool.query("SELECT COUNT(*) FROM ai_queries WHERE created_at > NOW() - INTERVAL '1 day'"),
+      pool.query("SELECT COUNT(*) FROM ai_queries WHERE created_at >= DATE_TRUNC('month', NOW())"),
+      pool.query("SELECT COUNT(*) FROM users WHERE created_at > NOW() - INTERVAL '7 days'"),
+      pool.query(`
+        SELECT
+          COALESCE(SUM(tokens_in), 0)::int  AS tokens_in,
+          COALESCE(SUM(tokens_out), 0)::int AS tokens_out
+        FROM ai_queries
+        WHERE created_at >= DATE_TRUNC('month', NOW())
       `),
     ]);
     res.json({
       totalUsers:      parseInt(totalUsers.rows[0].count),
+      activeToday:     parseInt(activeToday.rows[0].count),
       queriesToday:    parseInt(queriesToday.rows[0].count),
-      newUsersToday:   parseInt(newUsersToday.rows[0].count),
-      activeUsersWeek: parseInt(activeWeek.rows[0].count),
+      queriesMonth:    parseInt(queriesMonth.rows[0].count),
+      signups7d:       parseInt(signups7d.rows[0].count),
+      monthTokensIn:   monthTokens.rows[0].tokens_in,
+      monthTokensOut:  monthTokens.rows[0].tokens_out,
     });
   } catch (err) {
     console.error('[admin/stats]', err.message);

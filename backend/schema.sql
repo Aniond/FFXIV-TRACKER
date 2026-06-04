@@ -83,6 +83,7 @@ CREATE TABLE IF NOT EXISTS feature_flags (
 );
 
 INSERT INTO feature_flags (key, enabled, description) VALUES
-  ('ENABLE_AI_PUBLIC',  false, 'Enable AI assistant for logged-in users'),
-  ('ENABLE_AI_GUESTS',  false, 'Enable AI assistant for guests (not logged in)')
+  ('ENABLE_AI_PUBLIC',   false, 'Enable AI assistant for logged-in users'),
+  ('ENABLE_AI_GUESTS',   false, 'Enable AI assistant for guests (not logged in)'),
+  ('ENABLE_SUBMISSIONS', false, 'Allow community hunt submissions')
 ON CONFLICT (key) DO NOTHING;

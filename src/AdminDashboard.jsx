@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'react'
 import './AdminDashboard.css'
 import { getToken, setToken, API,
   adminStats, adminUsers, adminBanUser, adminQueries,
-  adminSubmissions, adminUpdateSubmission, adminFlags, adminToggleFlag, adminApiUsage,
+  adminSubmissions, adminUpdateSubmission, adminFlags, adminToggleFlag,
 } from './api'
 
 // Claude Sonnet 4.6 pricing ($/1M tokens) — update when model changes
@@ -36,15 +36,17 @@ function StatCard({ label, value }) {
   )
 }
 
-// ── STATS ────────────────────────────────────────────────────────────────────
+// ── OVERVIEW ─────────────────────────────────────────────────────────────────
 function StatsSection({ stats }) {
-  if (!stats) return <div className="adm-loading">Loading stats…</div>
+  if (!stats) return <div className="adm-loading">Loading overview…</div>
   return (
     <div className="adm-stat-grid">
-      <StatCard label="Total Users"          value={stats.totalUsers} />
-      <StatCard label="AI Queries Today"     value={stats.queriesToday} />
-      <StatCard label="New Users Today"      value={stats.newUsersToday} />
-      <StatCard label="Active Users (7 d)"   value={stats.activeUsersWeek} />
+      <StatCard label="Total Registered Users" value={stats.totalUsers} />
+      <StatCard label="Active Users Today"      value={stats.activeToday} />
+      <StatCard label="AI Queries Today"        value={stats.queriesToday} />
+      <StatCard label="AI Queries This Month"   value={stats.queriesMonth} />
+      <StatCard label="New Signups (7 d)"       value={stats.signups7d} />
+      <StatCard label="Est. API Cost This Month" value={fmtCost(stats.monthTokensIn, stats.monthTokensOut)} />
     </div>
   )
 }
@@ -199,43 +201,13 @@ function FlagsSection({ flags, onToggle }) {
   )
 }
 
-// ── API USAGE ────────────────────────────────────────────────────────────────
-function ApiUsageSection({ usage }) {
-  if (!usage) return <div className="adm-loading">Loading API usage…</div>
-  const { today, month } = usage
-  return (
-    <div className="adm-usage">
-      <div className="adm-usage-group">
-        <h3 className="adm-usage-period">Today</h3>
-        <div className="adm-stat-grid">
-          <StatCard label="Queries"      value={today.queries} />
-          <StatCard label="Input tokens"  value={today.tokens_in.toLocaleString()} />
-          <StatCard label="Output tokens" value={today.tokens_out.toLocaleString()} />
-          <StatCard label="Est. cost"     value={fmtCost(today.tokens_in, today.tokens_out)} />
-        </div>
-      </div>
-      <div className="adm-usage-group">
-        <h3 className="adm-usage-period">This month</h3>
-        <div className="adm-stat-grid">
-          <StatCard label="Queries"       value={month.queries} />
-          <StatCard label="Input tokens"  value={month.tokens_in.toLocaleString()} />
-          <StatCard label="Output tokens" value={month.tokens_out.toLocaleString()} />
-          <StatCard label="Est. cost"     value={fmtCost(month.tokens_in, month.tokens_out)} />
-        </div>
-      </div>
-      <p className="adm-usage-note">Cost estimate uses Claude Sonnet 4.6 pricing ($3/$15 per 1M tokens in/out).</p>
-    </div>
-  )
-}
-
 // ── TABS ─────────────────────────────────────────────────────────────────────
 const TABS = [
-  { id: 'stats',       label: 'Stats' },
+  { id: 'stats',       label: 'Overview' },
   { id: 'users',       label: 'Users' },
   { id: 'queries',     label: 'Query Log' },
-  { id: 'submissions', label: 'Submissions' },
   { id: 'flags',       label: 'Feature Flags' },
-  { id: 'api-usage',   label: 'API Usage' },
+  { id: 'submissions', label: 'Submissions' },
 ]
 
 // ── MAIN COMPONENT ───────────────────────────────────────────────────────────
@@ -247,7 +219,6 @@ export default function AdminDashboard() {
   const [queries, setQueries]     = useState(null)
   const [submissions, setSubs]    = useState(null)
   const [flags, setFlags]         = useState(null)
-  const [usage, setUsage]         = useState(null)
 
   // On mount: capture token from OAuth redirect URL, then verify admin access
   useEffect(() => {
@@ -290,7 +261,6 @@ export default function AdminDashboard() {
     if (tab === 'queries'     && !queries)     adminQueries()    .then(setQueries)    .catch(console.error)
     if (tab === 'submissions' && !submissions) adminSubmissions().then(setSubs)       .catch(console.error)
     if (tab === 'flags'       && !flags)       adminFlags()      .then(setFlags)      .catch(console.error)
-    if (tab === 'api-usage'   && !usage)       adminApiUsage()   .then(setUsage)      .catch(console.error)
   }, [tab, authState])
 
   const handleBan = useCallback(async (id, banned) => {
@@ -335,9 +305,8 @@ export default function AdminDashboard() {
         {tab === 'stats'       && <StatsSection stats={stats} />}
         {tab === 'users'       && <UsersSection users={users} onBan={handleBan} />}
         {tab === 'queries'     && <QueryLogSection queries={queries} />}
-        {tab === 'submissions' && <SubmissionsSection submissions={submissions} onUpdateStatus={handleSubmissionStatus} />}
         {tab === 'flags'       && <FlagsSection flags={flags} onToggle={handleFlagToggle} />}
-        {tab === 'api-usage'   && <ApiUsageSection usage={usage} />}
+        {tab === 'submissions' && <SubmissionsSection submissions={submissions} onUpdateStatus={handleSubmissionStatus} />}
       </main>
     </div>
   )
