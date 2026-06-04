@@ -15,7 +15,8 @@
  *   - The large, static game-data context lives in a cached system block
  *     (Anthropic prompt caching) so repeat calls are cheap.
  *   - Identical queries are served from the user_searches table for 60s.
- *   - Every call is logged to ai_queries (the table the /admin dashboard reads).
+ *   - Every call (admin included) is logged to the ai_usage view, which writes
+ *     through to ai_queries — the table the /admin dashboard reads.
  */
 const express = require('express');
 const jwt = require('jsonwebtoken');
@@ -27,6 +28,7 @@ const pool = require('../db');
 const router = express.Router();
 
 const MODEL = 'claude-sonnet-4-6';
+const MAX_TOKENS = 4096; // headroom for broad queries (e.g. "all unspoiled nodes")
 const RATE_LIMIT = 20; // queries per hour per user
 const CACHE_SECONDS = 60; // identical-query cache window
 const FLAG = 'ENABLE_AI_PUBLIC';
@@ -42,20 +44,30 @@ try {
 }
 
 // Frozen so prompt caching stays valid: stable bytes, no per-request interpolation.
+// The persona/instruction text is the verbatim Centurio system prompt; the
+// structured-output contract (enforced by RESPONSE_SCHEMA) is appended so the
+// model knows the exact field names to fill.
 const SYSTEM_PROMPT =
-  `You are an FFXIV companion assistant with access to a database of hunt marks, ` +
-  `fishing spots, mining nodes and botany nodes. Answer the player's query using ` +
-  `only the provided database context. Return a structured JSON response with ` +
-  `type (hunt/fishing/mining/botany/recipe), results array, and a natural language summary.\n\n` +
-  `Rules:\n` +
-  `- Use ONLY the data provided in this prompt and the HUNTS block in the user message. ` +
-  `Never invent spots, nodes, coordinates, or items that are not present.\n` +
-  `- If nothing in the data matches the query, set type to "none", return an empty ` +
-  `results array, and say so plainly in the summary.\n` +
-  `- "type" is the dominant category of the results; use "mixed" if results span ` +
-  `multiple categories, "recipe" only if the query is about crafting a specific item ` +
-  `you can trace to gatherable materials in the data.\n` +
-  `- Keep the summary concise and player-friendly.\n\n` +
+  `You are an FFXIV companion assistant for ffxivlog.com called Centurio.\n` +
+  `You have access to a database of hunt marks, fishing spots, mining nodes\n` +
+  `and botany nodes for Dawntrail and Endwalker expansions.\n` +
+  `Answer the player's query using only the provided database context.\n` +
+  `Be concise and helpful. Format responses clearly.\n` +
+  `Always include coordinates when available.\n` +
+  `Flag any timed nodes (Unspoiled/Ephemeral) with their time windows.\n` +
+  `Return JSON with: { type, summary, results[], tips[] }\n\n` +
+  `Field guidance:\n` +
+  `- type: dominant category of the answer — hunt / fishing / mining / botany / ` +
+  `recipe / mixed (results span categories) / none (nothing matched).\n` +
+  `- summary: a short, natural-language answer to the player.\n` +
+  `- results[]: one entry per matching mark / spot / node. Set category, zone, and ` +
+  `coords (verbatim from the data, e.g. "X:21.4, Y:9.2"; empty string if none). ` +
+  `For timed gathering nodes set timed=true and put the Eorzea window in "window" ` +
+  `(e.g. "ET 0:00-6:00"); leave timed=false and window empty otherwise. Use "detail" ` +
+  `for level, rank, reward, bait, weather, yield items, or other useful specifics.\n` +
+  `- tips[]: 0-4 short, actionable tips (routes, timing, what to bring). Omit if none.\n` +
+  `- Never invent spots, nodes, coordinates, or items not present in the data. ` +
+  `If nothing matches, set type "none", results [], and say so in the summary.\n\n` +
   `GATHERING DATABASE (fishing spots, mining nodes, botany nodes) as JSON:\n` +
   JSON.stringify({ fishing: GAME_DATA.fishing, mining: GAME_DATA.mining, botany: GAME_DATA.botany });
 
@@ -74,14 +86,17 @@ const RESPONSE_SCHEMA = {
           name: { type: 'string', description: 'Hunt mark, fish, item, or node name' },
           category: { type: 'string', enum: ['hunt', 'fishing', 'mining', 'botany', 'recipe'] },
           zone: { type: 'string' },
-          location: { type: 'string', description: 'Coordinates and/or area, e.g. "X:21.4, Y:9.2"' },
-          detail: { type: 'string', description: 'Level, rank, reward, time/weather window, items, or other useful note' },
+          coords: { type: 'string', description: 'Verbatim coordinates, e.g. "X:21.4, Y:9.2"; "" if none' },
+          timed: { type: 'boolean', description: 'true for Unspoiled/Ephemeral/Legendary timed nodes' },
+          window: { type: 'string', description: 'Eorzea time window for timed nodes, e.g. "ET 0:00-6:00"; "" otherwise' },
+          detail: { type: 'string', description: 'Level, rank, reward, bait, weather, yield items, or other useful note' },
         },
-        required: ['name', 'category', 'zone', 'location', 'detail'],
+        required: ['name', 'category', 'zone', 'coords', 'timed', 'window', 'detail'],
       },
     },
+    tips: { type: 'array', items: { type: 'string' } },
   },
-  required: ['type', 'summary', 'results'],
+  required: ['type', 'summary', 'results', 'tips'],
 };
 
 // ── Auth: JWT required, then flag/admin gate ────────────────────────────────
@@ -143,7 +158,7 @@ router.post('/', authenticate, async (req, res) => {
     );
     if (cached.rows[0]) {
       await pool.query(
-        'INSERT INTO ai_queries (user_id, query_text, tokens_in, tokens_out, cached) VALUES ($1, $2, 0, 0, true)',
+        'INSERT INTO ai_usage (user_id, query_text, tokens_in, tokens_out, cached) VALUES ($1, $2, 0, 0, true)',
         [req.user.id, query]
       );
       return res.json({ ...cached.rows[0].response, cached: true });
@@ -160,7 +175,7 @@ router.post('/', authenticate, async (req, res) => {
 
     const message = await anthropic.messages.create({
       model: MODEL,
-      max_tokens: 2000,
+      max_tokens: MAX_TOKENS,
       thinking: { type: 'disabled' },
       output_config: {
         effort: 'low',
@@ -171,6 +186,13 @@ router.post('/', authenticate, async (req, res) => {
       ],
       messages: [{ role: 'user', content: userContent }],
     });
+
+    // A broad query (e.g. "list every node") can blow past max_tokens, which
+    // truncates the JSON mid-string. Surface that as actionable feedback rather
+    // than a parse error.
+    if (message.stop_reason === 'max_tokens') {
+      return res.status(422).json({ error: 'That query returned too many results — try narrowing it (a specific zone, item, or mark).' });
+    }
 
     const textBlock = message.content.find((b) => b.type === 'text');
     let answer;
@@ -189,7 +211,7 @@ router.post('/', authenticate, async (req, res) => {
 
     await Promise.all([
       pool.query(
-        'INSERT INTO ai_queries (user_id, query_text, tokens_in, tokens_out, cached) VALUES ($1, $2, $3, $4, false)',
+        'INSERT INTO ai_usage (user_id, query_text, tokens_in, tokens_out, cached) VALUES ($1, $2, $3, $4, false)',
         [req.user.id, query, tokensIn, tokensOut]
       ),
       pool.query(

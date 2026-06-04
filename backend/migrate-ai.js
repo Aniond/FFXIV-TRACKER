@@ -28,6 +28,13 @@ async function migrate() {
   `);
   console.log('  user_searches index ready');
 
+  // ai_usage — an auto-updatable view over ai_queries. Lets the endpoint
+  // INSERT INTO ai_usage (the name the AI spec uses) while the rows actually
+  // live in ai_queries, which the /admin dashboard already reads. One source
+  // of truth, two names. (SELECT * over a single table is insertable.)
+  await pool.query('CREATE OR REPLACE VIEW ai_usage AS SELECT * FROM ai_queries;');
+  console.log('  ai_usage view ready');
+
   console.log('AI migration complete.');
   await pool.end();
 }

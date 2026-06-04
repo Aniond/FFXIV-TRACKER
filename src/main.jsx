@@ -6,6 +6,7 @@ import AdminDashboard from './AdminDashboard'
 import Fishing from './Fishing'
 import Mining from './Mining'
 import Botany from './Botany'
+import AISearch from './AISearch'
 
 const path = window.location.pathname
 const profileMatch = path.match(/^\/profile\/([^/]+)/)
@@ -14,10 +15,12 @@ const isMining   = path === '/gathering/mining'
 const isBotany   = path === '/gathering/botany'
 const isForaging = path === '/gathering/foraging'
 const isAdmin    = path === '/admin'
+const isAI       = path === '/ai'
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
     {isAdmin      ? <AdminDashboard /> :
+     isAI         ? <AISearch /> :
      isMining     ? <Mining /> :
      isFishing    ? <Fishing /> :
      isBotany     ? <Botany /> :

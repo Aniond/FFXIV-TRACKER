@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
+import { getToken, fetchMe, fetchFlags } from './api'
 import './ActivityNav.css'
 
 /* ============================================================
@@ -99,14 +100,28 @@ const ACTIVITIES = [
   },
 ]
 
+// Admin-only entry (until ENABLE_AI_PUBLIC flips on) — appended at runtime.
+const AI_ITEM = {
+  id: 'ai',
+  label: 'AI Search',
+  href: '/ai',
+  soon: false,
+  icon: (p) => (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" {...p}>
+      <path d="M12 3v3M12 18v3M3 12h3M18 12h3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M18.4 5.6l-2.1 2.1M7.7 16.3l-2.1 2.1"/>
+      <circle cx="12" cy="12" r="2.6"/>
+    </svg>
+  ),
+}
+
 const ChevronDown = (p) => (
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" {...p}>
     <path d="m6 9 6 6 6-6"/>
   </svg>
 )
 
-function findCurrent(path) {
-  for (const a of ACTIVITIES) {
+function findCurrent(path, activities) {
+  for (const a of activities) {
     if (a.children) {
       const child = a.children.find((c) => c.href && path.startsWith(c.href))
       if (child) return { top: a, leaf: child }
@@ -116,12 +131,22 @@ function findCurrent(path) {
       }
     }
   }
-  return { top: ACTIVITIES[0], leaf: ACTIVITIES[0] }
+  return { top: activities[0], leaf: activities[0] }
 }
 
 export default function ActivityNav() {
   const path = window.location.pathname
-  const { top: currentTop, leaf: currentLeaf } = findCurrent(path)
+
+  // Reveal the AI entry for admins, or for everyone once ENABLE_AI_PUBLIC is on.
+  const [showAi, setShowAi] = useState(false)
+  useEffect(() => {
+    Promise.all([getToken() ? fetchMe().catch(() => null) : Promise.resolve(null), fetchFlags()])
+      .then(([me, flags]) => { if (me?.is_admin || flags?.ENABLE_AI_PUBLIC) setShowAi(true) })
+      .catch(() => {})
+  }, [])
+
+  const activities = showAi ? [...ACTIVITIES, AI_ITEM] : ACTIVITIES
+  const { top: currentTop, leaf: currentLeaf } = findCurrent(path, activities)
 
   const [open, setOpen] = useState(false)
   const [gatheringOpen, setGatheringOpen] = useState(currentTop.id === 'gathering')
@@ -152,7 +177,7 @@ export default function ActivityNav() {
 
       {/* Menu: hidden on mobile until open; always visible on desktop as tab bar */}
       <div className={`act-nav__menu${open ? ' is-open' : ''}`} role="menu">
-        {ACTIVITIES.map((a) => {
+        {activities.map((a) => {
           const Icon = a.icon
           const isActiveTop = a.id === currentTop.id
 

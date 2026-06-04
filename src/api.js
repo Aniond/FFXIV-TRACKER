@@ -105,6 +105,27 @@ async function saveJobs(jobs) {
   return r.json()
 }
 
+// ── AI search ────────────────────────────────────────────────────────────────
+
+// Public feature flags (so the UI can decide whether to show the AI entry point).
+async function fetchFlags() {
+  const r = await apiFetch('/api/flags')
+  if (!r.ok) return {}
+  return r.json().catch(() => ({}))
+}
+
+// POST a natural-language query to the Centurio assistant. Throws with a
+// .status on non-2xx so callers can distinguish 401/403/429/422.
+async function aiSearch(query) {
+  const r = await apiFetch('/api/ai/search', {
+    method: 'POST',
+    body: JSON.stringify({ query }),
+  })
+  const body = await r.json().catch(() => ({}))
+  if (!r.ok) throw Object.assign(new Error(body.error || `Search failed (${r.status})`), { status: r.status })
+  return body
+}
+
 // ── Admin API helpers ────────────────────────────────────────────────────────
 
 async function adminFetch(path, opts = {}) {
@@ -178,6 +199,7 @@ export {
   API, getToken, setToken, clearToken, fetchMe,
   loadProgress, saveProgress, resetProgress, saveStash, savePreferences,
   fetchJobs, saveJobs, saveCharacterLink, refreshJobsFromLodestone,
+  fetchFlags, aiSearch,
   adminStats, adminUsers, adminBanUser, adminQueries,
   adminSubmissions, adminUpdateSubmission, adminFlags, adminToggleFlag, adminApiUsage,
 }

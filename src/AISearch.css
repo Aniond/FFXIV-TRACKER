@@ -1,0 +1,222 @@
+/* ============================================================
+   AISearch — Centurio AI assistant page.
+   Reuses global .ledger / .brand / .search / .toast from App.css;
+   styles only the AI-specific surface here. Theme tokens (--gold,
+   --bill, --ink, …) come from App.css :root.
+   ============================================================ */
+
+.ai .brand__sub { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+
+.ai-preview-badge {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--gold-bright);
+  background: var(--gold-faint);
+  border: 1px solid var(--gold-dim);
+  border-radius: 999px;
+  padding: 3px 9px;
+  white-space: nowrap;
+}
+
+/* ── Search row ───────────────────────────────────────────── */
+.ai .controls {
+  display: flex;
+  gap: 10px;
+  align-items: stretch;
+  padding: 0 14px;
+  margin-top: 12px;
+}
+.ai .controls .search { flex: 1; }
+
+.ai-go {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 16px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--gold-dim);
+  background: linear-gradient(180deg, var(--gold), var(--gold-dim));
+  color: #14110b;
+  font-weight: 700;
+  font-size: 14px;
+  cursor: pointer;
+  transition: filter 0.15s, opacity 0.15s;
+}
+.ai-go svg { width: 16px; height: 16px; }
+.ai-go:hover:not(:disabled) { filter: brightness(1.1); }
+.ai-go:disabled { opacity: 0.45; cursor: not-allowed; }
+
+/* ── Sample-query chips ───────────────────────────────────── */
+.ai-samples {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 12px 14px 0;
+}
+.ai-sample {
+  font-size: 12px;
+  color: var(--ink);
+  background: var(--bill);
+  border: 1px solid var(--bill-edge);
+  border-radius: 999px;
+  padding: 6px 12px;
+  cursor: pointer;
+  transition: border-color 0.15s, color 0.15s;
+}
+.ai-sample:hover:not(:disabled) { border-color: var(--gold-dim); color: var(--gold-bright); }
+.ai-sample:disabled { opacity: 0.5; cursor: default; }
+
+/* ── States ───────────────────────────────────────────────── */
+.ai-note, .ai-error, .ai-thinking, .ai-cached {
+  margin: 14px;
+  padding: 12px 14px;
+  border-radius: var(--radius-sm);
+  font-size: 14px;
+}
+.ai-note { color: var(--ink-dim); text-align: center; }
+.ai-error {
+  color: #f0b8ad;
+  background: rgba(214, 72, 58, 0.12);
+  border: 1px solid rgba(214, 72, 58, 0.4);
+}
+.ai-thinking {
+  display: flex; align-items: center; gap: 10px;
+  color: var(--ink-dim);
+  background: var(--bill);
+  border: 1px solid var(--bill-edge);
+}
+.ai-dots { display: inline-flex; gap: 4px; }
+.ai-dots i {
+  width: 7px; height: 7px; border-radius: 50%;
+  background: var(--gold);
+  animation: aipulse 1s infinite ease-in-out;
+}
+.ai-dots i:nth-child(2) { animation-delay: 0.15s; }
+.ai-dots i:nth-child(3) { animation-delay: 0.3s; }
+@keyframes aipulse { 0%, 80%, 100% { opacity: 0.25; transform: scale(0.8); } 40% { opacity: 1; transform: scale(1); } }
+
+.ai-locked {
+  margin: 30px 14px;
+  text-align: center;
+  color: var(--ink-dim);
+}
+.ai-locked__ico {
+  width: 56px; height: 56px; margin: 0 auto 14px;
+  display: grid; place-items: center;
+  color: var(--gold);
+  border: 1px solid var(--gold-dim);
+  border-radius: 50%;
+  background: var(--gold-faint);
+}
+.ai-locked__ico svg { width: 28px; height: 28px; }
+.ai-locked h3 { color: var(--parchment); margin: 0 0 6px; font-family: var(--font-display); }
+.ai-locked p { margin: 0 auto 16px; max-width: 320px; line-height: 1.5; }
+
+/* ── Result ───────────────────────────────────────────────── */
+.ai-result { padding: 14px; }
+.ai-cached {
+  margin: 0 0 10px; padding: 5px 10px;
+  display: inline-block;
+  font-size: 11px; color: var(--ink-dim);
+  background: var(--bill); border: 1px solid var(--bill-edge);
+}
+.ai-summary {
+  display: flex; gap: 10px;
+  padding: 14px 16px;
+  background: linear-gradient(180deg, var(--bill-raised), var(--bill));
+  border: 1px solid var(--bill-edge);
+  border-left: 3px solid var(--gold);
+  border-radius: var(--radius-sm);
+  color: var(--parchment);
+  font-size: 15px; line-height: 1.55;
+}
+.ai-summary__ico { flex: 0 0 auto; width: 18px; height: 18px; color: var(--gold); margin-top: 2px; }
+
+.ai-cards {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 10px;
+  margin-top: 12px;
+}
+@media (min-width: 560px) { .ai-cards { grid-template-columns: 1fr 1fr; } }
+
+.aicard {
+  --cat: var(--gold);
+  background: var(--bill);
+  border: 1px solid var(--bill-edge);
+  border-left: 3px solid var(--cat);
+  border-radius: var(--radius-sm);
+  padding: 12px 14px;
+  display: flex; flex-direction: column; gap: 8px;
+}
+.aicard--hunt    { --cat: var(--gold); }
+.aicard--fishing { --cat: #58c4e8; }
+.aicard--mining  { --cat: #e0b252; }
+.aicard--botany  { --cat: #6fc08a; }
+.aicard--recipe  { --cat: #c79be0; }
+
+.aicard__head { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
+.aicard__name { margin: 0; font-size: 15px; color: var(--parchment); font-weight: 700; line-height: 1.3; }
+.aicard__cat {
+  flex: 0 0 auto;
+  font-size: 10px; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase;
+  color: var(--cat);
+  border: 1px solid var(--cat);
+  border-radius: 999px; padding: 2px 8px;
+  opacity: 0.9;
+}
+.aicard__zone { display: flex; align-items: center; gap: 5px; font-size: 12px; color: var(--ink-dim); }
+.aicard__zone svg { width: 13px; height: 13px; }
+.aicard__detail { margin: 0; font-size: 13px; line-height: 1.5; color: var(--ink); }
+
+.aicard__foot { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 2px; }
+.aicard__coords {
+  display: inline-flex; align-items: center; gap: 5px;
+  font-size: 12px; font-variant-numeric: tabular-nums;
+  color: var(--gold-bright);
+  background: var(--gold-faint);
+  border: 1px solid var(--gold-dim);
+  border-radius: 6px; padding: 4px 9px; cursor: pointer;
+  transition: filter 0.15s;
+}
+.aicard__coords:hover { filter: brightness(1.15); }
+.aicard__coords svg { width: 12px; height: 12px; }
+
+.aicard__link {
+  margin-left: auto;
+  display: inline-flex; align-items: center; gap: 3px;
+  font-size: 12px; color: var(--ink-dim); text-decoration: none;
+}
+.aicard__link svg { width: 13px; height: 13px; }
+.aicard__link:hover { color: var(--gold-bright); }
+
+.aicard__timer {
+  display: inline-flex; align-items: center; gap: 5px;
+  font-size: 11px; padding: 4px 9px; border-radius: 6px;
+  border: 1px solid var(--bill-edge); background: var(--board-2);
+}
+.aicard__timer svg { width: 13px; height: 13px; }
+.aicard__timer b { font-weight: 700; }
+.aicard__timer-sub { color: var(--ink-dim); font-variant-numeric: tabular-nums; }
+.aicard__timer.is-up     { border-color: var(--rank-b); color: var(--rank-b); }
+.aicard__timer.is-soon   { border-color: #e0b252; color: #e0b252; }
+.aicard__timer.is-closed { border-color: var(--ink-faint); color: var(--ink-faint); }
+.aicard__timer.is-timed  { border-color: var(--gold-dim); color: var(--gold); }
+
+/* ── Tips ─────────────────────────────────────────────────── */
+.ai-tips {
+  margin-top: 12px; padding: 12px 14px;
+  background: var(--bill); border: 1px solid var(--bill-edge);
+  border-radius: var(--radius-sm);
+}
+.ai-tips__hd {
+  display: flex; align-items: center; gap: 6px;
+  font-size: 12px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase;
+  color: var(--gold); margin-bottom: 8px;
+}
+.ai-tips__hd svg { width: 15px; height: 15px; }
+.ai-tips ul { margin: 0; padding-left: 18px; }
+.ai-tips li { font-size: 13px; line-height: 1.6; color: var(--ink); }
