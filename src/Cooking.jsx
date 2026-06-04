@@ -33,6 +33,7 @@ const I = {
   bookmark:  p => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" {...p}><path d="m19 21-7-4-7 4V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16z"/></svg>,
   clock:     p => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" {...p}><circle cx="12" cy="12" r="9"/><path d="M12 7v5l4 2"/></svg>,
   sort:      p => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" {...p}><path d="M3 6h18M6 12h12M9 18h6"/></svg>,
+  copy:      p => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...p}><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg>,
   x:         p => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" {...p}><path d="M18 6 6 18M6 6l12 12"/></svg>,
 }
 
@@ -86,7 +87,7 @@ function EarliestCraftTime({ ingredients }) {
 }
 
 /* ── Ingredient Chip ─────────────────────────────────────── */
-function IngredientChip({ ing, onNav, checked, onCheck }) {
+function IngredientChip({ ing, onNav, onCopy, checked, onCheck }) {
   const ws = ing.window ? winState(ing.window) : null
   const canNav = !!ing.nodeId
   const SrcIco = I[SRC[ing.source].icon]
@@ -112,6 +113,12 @@ function IngredientChip({ ing, onNav, checked, onCheck }) {
       <span className="chip__main">
         <span className="chip__name">{ing.name}</span>
         <TimerBadge ing={ing}/>
+        {ing.coords && (
+          <button className="chip__coords" title="Tap to copy"
+            onClick={e => { e.stopPropagation(); onCopy(ing.coords) }}>
+            <I.copy/>{ing.coords}
+          </button>
+        )}
       </span>
       <span className="chip__qty">×{ing.qty}</span>
       {canNav && (
@@ -125,7 +132,7 @@ function IngredientChip({ ing, onNav, checked, onCheck }) {
 }
 
 /* ── Recipe Card ─────────────────────────────────────────── */
-function RecipeCard({ recipe, inList, isSaved, onToggleList, onToggleSave, onNav }) {
+function RecipeCard({ recipe, inList, isSaved, onToggleList, onToggleSave, onNav, onCopy }) {
   const [expanded, setExpanded] = useState(false)
   const [checked, setChecked] = useState(() => new Set())
 
@@ -217,7 +224,7 @@ function RecipeCard({ recipe, inList, isSaved, onToggleList, onToggleSave, onNav
             <div className="chips">
               {sorted.map(ing => (
                 <IngredientChip key={ing.name + ing.source} ing={ing}
-                  onNav={onNav} checked={checked.has(ing.name)} onCheck={toggleCheck}/>
+                  onNav={onNav} onCopy={onCopy} checked={checked.has(ing.name)} onCheck={toggleCheck}/>
               ))}
             </div>
 
@@ -420,6 +427,10 @@ export default function Cooking() {
     if (!src.path) return
     window.location.href = ing.nodeId ? `${src.path}?node=${encodeURIComponent(ing.nodeId)}` : src.path
   }
+  function copyCoords(text) {
+    navigator.clipboard?.writeText(String(text).replace(/^~/, '')).catch(() => {})
+    showToast(`Copied ${text}`)
+  }
 
   return (
     <div className="ledger">
@@ -494,7 +505,7 @@ export default function Cooking() {
           {filtered.map(r => (
             <RecipeCard key={r.id} recipe={r}
               inList={listIds.has(r.id)} isSaved={savedIds.has(r.id)}
-              onToggleList={toggleList} onToggleSave={toggleSave} onNav={handleNav}/>
+              onToggleList={toggleList} onToggleSave={toggleSave} onNav={handleNav} onCopy={copyCoords}/>
           ))}
         </div>
       )}

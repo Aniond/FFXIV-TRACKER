@@ -27,6 +27,30 @@ async function migrate() {
   `);
   console.log('  recipes table ready');
 
+  // Manual ingredient source/location overrides — take precedence over the
+  // baked Teamcraft data at request time (see /api/recipes). Patch any gap by
+  // inserting a row; no code change or re-scrape needed.
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS ingredient_overrides (
+      item_id   INTEGER PRIMARY KEY,
+      item_name VARCHAR(255),
+      source    VARCHAR(20),  -- 'Fishing' | 'Mining' | 'Botany' | 'Market Board'
+      node_name VARCHAR(255),
+      zone      VARCHAR(100),
+      coords    VARCHAR(50),
+      notes     TEXT
+    );
+  `);
+  // Seed known Dawntrail gaps missing from Teamcraft's open dataset.
+  // ON CONFLICT DO NOTHING so manual edits to existing rows are preserved.
+  await pool.query(`
+    INSERT INTO ingredient_overrides (item_id, item_name, source, node_name, zone, coords, notes) VALUES
+      (49233, 'Quahog',       'Fishing', NULL, NULL, NULL, 'Dawntrail coastal fishing — missing from Teamcraft open data'),
+      (39865, 'Dark Eggplant','Botany',  NULL, NULL, NULL, 'Dawntrail botany — missing from Teamcraft open data')
+    ON CONFLICT (item_id) DO NOTHING;
+  `);
+  console.log('  ingredient_overrides table ready + seeded');
+
   const seed = JSON.parse(fs.readFileSync(path.join(__dirname, 'cooking-recipes.json'), 'utf8'));
 
   await pool.query("DELETE FROM recipes WHERE job = 'CUL' AND expansion = 'Dawntrail'");

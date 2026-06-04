@@ -4,10 +4,9 @@
    shape Cooking.jsx expects. Categories reflect REAL FFXIV food
    buffs (substats + VIT, plus crafter/gatherer stats) — the
    handoff mock's STR/DEX food doesn't exist in the game.
+   Ingredient location (source/zone/coords/window) comes baked in the API
+   payload now (Teamcraft nodes + overrides — see backend/scrape-cooking.js).
    ============================================================ */
-import { MINING_NODES } from './miningData'
-import { BOTANY_NODES } from './botanyData'
-import { FISHING_SPOTS } from './fishingData'
 
 // Filter/accent categories, keyed by the recipe's primary (headline) stat.
 export const STAT_TYPES = {
@@ -44,25 +43,6 @@ const STAT_FULL = {
 }
 const API_SRC = { FISHING: 'fishing', MINING: 'mining', BOTANY: 'botany', MARKET_BOARD: 'market' }
 
-const norm = (s) => String(s || '').replace(/\s*\(.*?\)\s*$/, '').trim().toLowerCase()
-
-// Gatherable item/fish name -> its node (id, zone, spawn window), for ingredient
-// cross-referencing. Only timed/gatherable nodes carry a window.
-const GATHER = (() => {
-  const m = new Map()
-  const add = (nodes) => nodes.forEach((n) => (n.items || []).forEach((it) => {
-    const k = norm(it.name)
-    if (!m.has(k)) m.set(k, { id: n.id, zone: n.zone, window: n.window || null })
-  }))
-  add(MINING_NODES)
-  add(BOTANY_NODES)
-  FISHING_SPOTS.forEach((s) => (s.fish || []).forEach((f) => {
-    const k = norm(f.name)
-    if (!m.has(k)) m.set(k, { id: s.id, zone: s.zone, window: null })
-  }))
-  return m
-})()
-
 /**
  * Adapt the /api/recipes payload to Cooking.jsx's recipe shape.
  * Only food with a buff is included (the catalog's other CUL entries are
@@ -86,14 +66,17 @@ export function adaptRecipes(apiRecipes) {
       })),
       ingredients: r.ingredients.map((ing) => {
         const source = API_SRC[ing.source] || 'market'
-        const loc = source !== 'market' ? GATHER.get(norm(ing.name)) : null
+        const located = source !== 'market' && (ing.coords || ing.zone)
         return {
           name: ing.name,
           qty: ing.amount,
           source,
-          nodeId: loc?.id ?? null,
-          nodeName: loc?.zone ?? null,
-          window: loc?.window ?? null,
+          // nodeId presence enables the "go to gathering page" arrow.
+          nodeId: located ? String(ing.id) : null,
+          nodeName: ing.zone || ing.node_name || null,
+          coords: ing.coords || null,
+          nodeType: ing.node_type || null,
+          window: ing.window || null,
         }
       }),
     }))

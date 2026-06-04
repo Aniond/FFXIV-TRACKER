@@ -44,42 +44,68 @@ const getJson = async (file) => {
 
 const norm = (s) => String(s || '').replace(/\s*\(.*?\)\s*$/, '').trim().toLowerCase();
 
-function buildGatherIndex() {
+const coordStr = (x, y) => `X:${Number(x).toFixed(1)}, Y:${Number(y).toFixed(1)}`;
+
+// Our curated gathering snapshot (backend/ai/gameData.json) — name -> full
+// location. Used as a fallback for items Teamcraft's open data misses.
+function buildGameLocations() {
   const game = JSON.parse(fs.readFileSync(path.join(__dirname, 'ai', 'gameData.json'), 'utf8'));
-  const fishing = new Set();
-  const mining = new Set();
-  const botany = new Set();
-  (game.fishing || []).forEach((s) => (s.fish || []).forEach((f) => fishing.add(norm(f))));
-  (game.mining || []).forEach((n) => (n.items || []).forEach((i) => mining.add(norm(i))));
-  (game.botany || []).forEach((n) => (n.items || []).forEach((i) => botany.add(norm(i))));
-  return { fishing, mining, botany };
+  const m = new Map();
+  const addNodes = (nodes, source) => (nodes || []).forEach((n) => (n.items || []).forEach((it) => {
+    const k = norm(it);
+    if (!m.has(k)) m.set(k, { source, node_name: n.zone, zone: n.zone, coords: n.coords, node_type: n.type || 'Regular', window: n.window || null });
+  }));
+  addNodes(game.mining, 'MINING');
+  addNodes(game.botany, 'BOTANY');
+  (game.fishing || []).forEach((s) => (s.fish || []).forEach((f) => {
+    const k = norm(f);
+    if (!m.has(k)) m.set(k, { source: 'FISHING', node_name: s.name || s.zone, zone: s.zone, coords: s.coords, node_type: 'Fishing Hole', window: null });
+  }));
+  return m;
 }
 
-// Authoritative source sets keyed by item ID, from Teamcraft's gathering nodes
-// (type 0/1 = mining/quarrying, 2/3 = logging/harvesting = botany) and fishing
-// data. Far broader than our curated node snapshot.
-function buildTeamcraftSources(nodes, fishes, fspots) {
-  const fishIds = new Set();
-  const ids = Array.isArray(fishes) ? fishes : Object.values(fishes);
-  ids.forEach((f) => { const id = typeof f === 'object' ? (f.id ?? f.itemId) : f; if (Number.isFinite(id)) fishIds.add(id); });
-  Object.values(fspots).forEach((s) => (s.fishes || []).forEach((id) => fishIds.add(id)));
-  const mineIds = new Set();
-  const botanyIds = new Set();
-  Object.values(nodes).forEach((n) => {
-    const set = (n.type === 0 || n.type === 1) ? mineIds : (n.type === 2 || n.type === 3) ? botanyIds : null;
-    if (set) (n.items || []).forEach((it) => set.add(typeof it === 'object' ? it.id : it));
-  });
-  return { fishIds, mineIds, botanyIds };
+// Teamcraft node/fishing location resolver, keyed by item ID. Nodes carry the
+// gather type (0/1 mining, 2/3 botany), zone, coords, and (for timed nodes)
+// spawn windows via `spawns` (ET start hours) + `duration` (ET minutes).
+function buildTeamcraftLocations(nodes, fspots, places) {
+  const byItem = new Map();
+  for (const n of Object.values(nodes)) {
+    for (const it of (n.items || [])) {
+      const id = typeof it === 'object' ? it.id : it;
+      if (!byItem.has(id)) byItem.set(id, []);
+      byItem.get(id).push(n);
+    }
+  }
+  const fspotByItem = new Map();
+  for (const s of Object.values(fspots)) {
+    for (const id of (s.fishes || [])) if (!fspotByItem.has(id)) fspotByItem.set(id, s);
+  }
+  const zoneName = (id) => places[id]?.en || null;
+
+  return (id) => {
+    const ns = byItem.get(id);
+    if (ns && ns.length) {
+      const n = ns.find((x) => x.ephemeral || x.limited || x.legendary) || ns[0];
+      const node_type = n.ephemeral ? 'Ephemeral' : n.legendary ? 'Legendary' : n.limited ? 'Unspoiled' : 'Regular';
+      const source = (n.type === 0 || n.type === 1) ? 'MINING' : 'BOTANY';
+      let window = null;
+      if (n.spawns?.length && n.duration) {
+        const o = n.spawns[0];
+        const c = (o + n.duration / 60) % 24;
+        window = { open: [o, 0], close: [Math.floor(c), Math.round((c % 1) * 60)] };
+      }
+      return { source, node_name: zoneName(n.zoneid), zone: zoneName(n.zoneid), coords: coordStr(n.x, n.y), node_type, window };
+    }
+    const sp = fspotByItem.get(id);
+    if (sp) {
+      const zone = zoneName(sp.placeId) || zoneName(sp.zoneId);
+      return { source: 'FISHING', node_name: zone, zone, coords: sp.coords ? coordStr(sp.coords.x, sp.coords.y) : null, node_type: 'Fishing Hole', window: null };
+    }
+    return null;
+  };
 }
 
-// Cross-reference an ingredient by item ID (Teamcraft) and name (our snapshot).
-function ingredientSource(id, name, gather, tc) {
-  const k = norm(name);
-  if (tc.botanyIds.has(id) || gather.botany.has(k)) return 'BOTANY';
-  if (tc.mineIds.has(id)   || gather.mining.has(k)) return 'MINING';
-  if (tc.fishIds.has(id)   || gather.fishing.has(k)) return 'FISHING';
-  return 'MARKET_BOARD';
-}
+const MARKET = { source: 'MARKET_BOARD', node_name: null, zone: null, coords: null, node_type: null, window: null };
 
 function foodBuff(result, foodMap) {
   const f = foodMap.get(result);
@@ -97,22 +123,23 @@ function foodBuff(result, foodMap) {
 
 async function main() {
   console.log('Fetching Teamcraft data…');
-  const [recipes, items, foods, ilvls, nodes, fishes, fspots] = await Promise.all([
+  const [recipes, items, foods, ilvls, nodes, fspots, places] = await Promise.all([
     getJson('recipes.json'),
     getJson('items.json'),
     getJson('foods.json'),
     getJson('ilvls.json'),
     getJson('nodes.json'),
-    getJson('fishes.json'),
     getJson('fishing-spots.json'),
+    getJson('places.json'),
   ]);
   console.log(`  recipes ${recipes.length}, items ${Object.keys(items).length}, foods ${foods.length}, nodes ${Object.keys(nodes).length}`);
 
   const foodMap = new Map(foods.map((f) => [f.ID, f]));
   const craftedIds = new Set(recipes.map((r) => r.result)); // any recipe's result => crafted
   const nameOf = (id) => items[id]?.en || `#${id}`;
-  const gather = buildGatherIndex();
-  const tc = buildTeamcraftSources(nodes, fishes, fspots);
+  const gameLoc = buildGameLocations();
+  const tcLoc = buildTeamcraftLocations(nodes, fspots, places);
+  const resolveLoc = (id, name) => tcLoc(id) || gameLoc.get(norm(name)) || null;
 
   const culDt = recipes.filter((r) => r.job === CUL_JOB && (ilvls[r.result] ?? 0) >= DT_MIN_ILVL);
 
@@ -124,13 +151,21 @@ async function main() {
     food_buff: foodBuff(r.result, foodMap),
     ingredients: r.ingredients
       .filter((ing) => ing.id > 19) // drop base shards/crystals/clusters (ids 1-19)
-      .map((ing) => ({
-        id: ing.id,
-        name: nameOf(ing.id),
-        amount: ing.amount,
-        source: ingredientSource(ing.id, nameOf(ing.id), gather, tc),
-        subcraft: craftedIds.has(ing.id),
-      })),
+      .map((ing) => {
+        const loc = resolveLoc(ing.id, nameOf(ing.id)) || MARKET;
+        return {
+          id: ing.id,
+          name: nameOf(ing.id),
+          amount: ing.amount,
+          subcraft: craftedIds.has(ing.id),
+          source: loc.source,
+          node_name: loc.node_name,
+          zone: loc.zone,
+          coords: loc.coords,
+          node_type: loc.node_type,
+          window: loc.window,
+        };
+      }),
     expansion: 'Dawntrail',
   }))
     .filter((r) => !r.name.startsWith('#')) // skip unresolved/deprecated results

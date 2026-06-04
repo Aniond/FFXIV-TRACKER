@@ -408,3 +408,14 @@ body.cooking-page .toast {
 }
 body.cooking-page .toast.show {opacity:1;transform:translateX(-50%) translateY(0);}
 body.cooking-page .toast svg {width:15px;height:15px;color:var(--hearth-bright);}
+
+/* Ingredient coords — tap to copy (added on top of the handoff design) */
+body.cooking-page .chip__coords {
+  display: inline-flex; align-items: center; gap: 4px; margin-top: 5px;
+  font: 600 10.5px var(--fb); font-variant-numeric: tabular-nums;
+  color: var(--hearth-bright); background: var(--hearth-faint);
+  border: 1px solid var(--hearth-dim); border-radius: 6px; padding: 2px 7px;
+  cursor: pointer; align-self: flex-start;
+}
+body.cooking-page .chip__coords svg { width: 11px; height: 11px; }
+body.cooking-page .chip__coords:hover { filter: brightness(1.12); }

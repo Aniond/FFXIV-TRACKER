@@ -350,7 +350,31 @@ app.get('/api/recipes', async (req, res) => {
        FROM recipes ${clause} ORDER BY item_level, name`,
       params
     );
-    res.json(result.rows);
+
+    // Apply manual ingredient overrides (precedence over baked Teamcraft data).
+    const NORM = { Fishing: 'FISHING', Mining: 'MINING', Botany: 'BOTANY', 'Market Board': 'MARKET_BOARD' };
+    let overrides = new Map();
+    try {
+      const ov = await pool.query('SELECT item_id, source, node_name, zone, coords, notes FROM ingredient_overrides');
+      overrides = new Map(ov.rows.map((o) => [o.item_id, o]));
+    } catch { /* table not migrated yet — serve baked data */ }
+
+    const rows = result.rows.map((r) => ({
+      ...r,
+      ingredients: (r.ingredients || []).map((ing) => {
+        const o = overrides.get(ing.id);
+        if (!o) return ing;
+        return {
+          ...ing,
+          source: NORM[o.source] || o.source || ing.source,
+          node_name: o.node_name ?? ing.node_name,
+          zone: o.zone ?? ing.zone,
+          coords: o.coords ?? ing.coords,
+          notes: o.notes ?? null,
+        };
+      }),
+    }));
+    res.json(rows);
   } catch (err) {
     console.error('[recipes]', err.message);
     res.status(500).json({ error: 'Failed to load recipes' });
