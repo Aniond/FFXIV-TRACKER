@@ -8,15 +8,17 @@ import Botany from './Botany'
 
 const path = window.location.pathname
 const profileMatch = path.match(/^\/profile\/([^/]+)/)
-const isFishing = path === '/gathering/fishing'
-const isMining  = path === '/gathering/mining'
-const isBotany  = path === '/gathering/botany'
+const isFishing  = path === '/gathering/fishing'
+const isMining   = path === '/gathering/mining'
+const isBotany   = path === '/gathering/botany'
+const isForaging = path === '/gathering/foraging'
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
-    {isMining   ? <Mining /> :
-     isFishing  ? <Fishing /> :
-     isBotany   ? <Botany /> :
+    {isMining    ? <Mining /> :
+     isFishing   ? <Fishing /> :
+     isBotany    ? <Botany /> :
+     isForaging  ? <Botany /> :
      profileMatch ? <ProfileRoute slug={profileMatch[1]} /> :
      <App />}
   </React.StrictMode>

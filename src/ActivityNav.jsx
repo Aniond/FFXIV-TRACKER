@@ -3,8 +3,9 @@ import './ActivityNav.css'
 
 /* ============================================================
    ActivityNav — site-level activity switcher.
-   Top-level items link directly. Items with `children` expand
-   inline as an accordion when clicked (mobile-friendly).
+   Mobile (<768px): dropdown pill triggered by button.
+   Desktop (≥768px): horizontal tab bar; Gathering sub-items
+   appear in a hover dropdown. CSS controls visibility.
    ============================================================ */
 
 const ACTIVITIES = [
@@ -58,6 +59,18 @@ const ACTIVITIES = [
         ),
       },
       {
+        id: 'foraging',
+        label: 'Foraging',
+        href: '/gathering/foraging',
+        soon: false,
+        icon: (p) => (
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" {...p}>
+            <path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10Z"/>
+            <path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12"/>
+          </svg>
+        ),
+      },
+      {
         id: 'botany',
         label: 'Botany',
         href: '/gathering/botany',
@@ -85,15 +98,14 @@ const ACTIVITIES = [
     ),
   },
   {
-    id: 'treasure',
-    label: 'Treasure',
-    href: '/treasure',
-    soon: true,
+    id: 'profile',
+    label: 'Profile',
+    href: '/profile',
+    soon: false,
     icon: (p) => (
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" {...p}>
-        <path d="M4 9v11a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9"/>
-        <path d="M2 6a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v2a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V6Z"/>
-        <path d="M12 12v4"/>
+        <circle cx="12" cy="8" r="4"/>
+        <path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/>
       </svg>
     ),
   },
@@ -124,7 +136,6 @@ export default function ActivityNav() {
   const { top: currentTop, leaf: currentLeaf } = findCurrent(path)
 
   const [open, setOpen] = useState(false)
-  // Gathering group auto-expands when on a gathering sub-page
   const [gatheringOpen, setGatheringOpen] = useState(currentTop.id === 'gathering')
   const ref = useRef(null)
 
@@ -139,6 +150,7 @@ export default function ActivityNav() {
 
   return (
     <div className="act-nav" ref={ref}>
+      {/* Mobile-only trigger button — hidden on desktop via CSS */}
       <button
         className={`act-nav__trigger${open ? ' is-open' : ''}`}
         onClick={() => setOpen((o) => !o)}
@@ -150,70 +162,68 @@ export default function ActivityNav() {
         <ChevronDown className="act-nav__chevron" />
       </button>
 
-      {open && (
-        <div className="act-nav__menu" role="menu">
-          {ACTIVITIES.map((a) => {
-            const Icon = a.icon
-            const isActiveTop = a.id === currentTop.id
+      {/* Menu: hidden on mobile until open; always visible on desktop as tab bar */}
+      <div className={`act-nav__menu${open ? ' is-open' : ''}`} role="menu">
+        {ACTIVITIES.map((a) => {
+          const Icon = a.icon
+          const isActiveTop = a.id === currentTop.id
 
-            if (a.children) {
-              return (
-                <div key={a.id} className="act-nav__group">
-                  <button
-                    className={`act-nav__group-hd${isActiveTop ? ' is-active' : ''}`}
-                    onClick={() => setGatheringOpen((o) => !o)}
-                  >
-                    <Icon className="act-nav__item-ico" />
-                    <span className="act-nav__item-label">{a.label}</span>
-                    <ChevronDown className={`act-nav__group-chevron${gatheringOpen ? ' is-open' : ''}`} />
-                  </button>
-
-                  {gatheringOpen && (
-                    <div className="act-nav__children">
-                      {a.children.map((c) => {
-                        const CIcon = c.icon
-                        const isActiveChild = c.id === currentLeaf.id
-                        return (
-                          <a
-                            key={c.id}
-                            className={`act-nav__child${isActiveChild ? ' is-active' : ''}${c.soon ? ' is-soon' : ''}`}
-                            href={c.soon ? undefined : c.href}
-                            role="menuitem"
-                            onClick={c.soon ? (e) => e.preventDefault() : () => setOpen(false)}
-                            aria-disabled={c.soon}
-                          >
-                            <CIcon className="act-nav__item-ico" />
-                            <span className="act-nav__item-label">{c.label}</span>
-                            {c.soon && <span className="act-nav__soon">Soon</span>}
-                            {isActiveChild && <span className="act-nav__active-dot" />}
-                          </a>
-                        )
-                      })}
-                    </div>
-                  )}
-                </div>
-              )
-            }
-
-            const isActive = a.id === currentLeaf.id
+          if (a.children) {
             return (
-              <a
-                key={a.id}
-                className={`act-nav__item${isActive ? ' is-active' : ''}${a.soon ? ' is-soon' : ''}`}
-                href={a.soon ? undefined : a.href}
-                role="menuitem"
-                onClick={a.soon ? (e) => e.preventDefault() : () => setOpen(false)}
-                aria-disabled={a.soon}
-              >
-                <Icon className="act-nav__item-ico" />
-                <span className="act-nav__item-label">{a.label}</span>
-                {a.soon && <span className="act-nav__soon">Soon</span>}
-                {isActive && <span className="act-nav__active-dot" />}
-              </a>
+              <div key={a.id} className={`act-nav__group${isActiveTop ? ' is-active-top' : ''}`}>
+                <button
+                  className={`act-nav__group-hd${isActiveTop ? ' is-active' : ''}`}
+                  onClick={() => setGatheringOpen((o) => !o)}
+                >
+                  <Icon className="act-nav__item-ico" />
+                  <span className="act-nav__item-label">{a.label}</span>
+                  <ChevronDown className={`act-nav__group-chevron${gatheringOpen ? ' is-open' : ''}`} />
+                </button>
+
+                {/* Always in DOM; mobile shows via is-open class, desktop shows on hover */}
+                <div className={`act-nav__children${gatheringOpen ? ' is-open' : ''}`}>
+                  {a.children.map((c) => {
+                    const CIcon = c.icon
+                    const isActiveChild = c.id === currentLeaf.id
+                    return (
+                      <a
+                        key={c.id}
+                        className={`act-nav__child${isActiveChild ? ' is-active' : ''}${c.soon ? ' is-soon' : ''}`}
+                        href={c.soon ? undefined : c.href}
+                        role="menuitem"
+                        onClick={c.soon ? (e) => e.preventDefault() : () => setOpen(false)}
+                        aria-disabled={c.soon}
+                      >
+                        <CIcon className="act-nav__item-ico" />
+                        <span className="act-nav__item-label">{c.label}</span>
+                        {c.soon && <span className="act-nav__soon">Soon</span>}
+                        {isActiveChild && <span className="act-nav__active-dot" />}
+                      </a>
+                    )
+                  })}
+                </div>
+              </div>
             )
-          })}
-        </div>
-      )}
+          }
+
+          const isActive = a.id === currentLeaf.id
+          return (
+            <a
+              key={a.id}
+              className={`act-nav__item${isActive ? ' is-active' : ''}${a.soon ? ' is-soon' : ''}`}
+              href={a.soon ? undefined : a.href}
+              role="menuitem"
+              onClick={a.soon ? (e) => e.preventDefault() : () => setOpen(false)}
+              aria-disabled={a.soon}
+            >
+              <Icon className="act-nav__item-ico" />
+              <span className="act-nav__item-label">{a.label}</span>
+              {a.soon && <span className="act-nav__soon">Soon</span>}
+              {isActive && <span className="act-nav__active-dot" />}
+            </a>
+          )
+        })}
+      </div>
     </div>
   )
 }

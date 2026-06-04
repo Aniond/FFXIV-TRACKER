@@ -1,7 +1,8 @@
 /* ============================================================
-   ActivityNav — site-level activity switcher dropdown.
-   Hardcoded neutral-dark so it renders identically on both
-   the warm hunt board and the cool fishing page.
+   ActivityNav — site-level activity switcher.
+   Mobile (<768px): dropdown pill.
+   Desktop (≥768px): horizontal tab bar with hover sub-menu
+   for Gathering.
    ============================================================ */
 
 .act-nav {
@@ -10,7 +11,7 @@
   z-index: 50;
 }
 
-/* ---- Trigger pill ---- */
+/* ---- Mobile trigger pill ---- */
 .act-nav__trigger {
   display: flex; align-items: center; gap: 9px;
   width: 100%;
@@ -31,7 +32,7 @@
 
 .act-nav__ico {
   width: 17px; height: 17px; flex: 0 0 17px;
-  color: #c9a35b; /* neutral gold — readable on both pages */
+  color: #c9a35b;
 }
 .act-nav__label { flex: 1; }
 .act-nav__chevron {
@@ -40,8 +41,9 @@
 }
 .act-nav__trigger.is-open .act-nav__chevron { transform: rotate(180deg); }
 
-/* ---- Dropdown menu ---- */
+/* ---- Dropdown menu (mobile: hidden until open) ---- */
 .act-nav__menu {
+  display: none;
   position: absolute; left: 0; right: 0; top: 100%;
   background: linear-gradient(180deg, #1e1e1e, #161616);
   border: 1px solid #2e2e2e; border-top: none;
@@ -49,6 +51,7 @@
   overflow: hidden;
   box-shadow: 0 12px 32px rgba(0,0,0,.6);
 }
+.act-nav__menu.is-open { display: block; }
 
 /* ---- Menu items ---- */
 .act-nav__item {
@@ -74,10 +77,7 @@
 .act-nav__item-label { flex: 1; }
 
 /* Active state */
-.act-nav__item.is-active {
-  color: #d4cfc4;
-  background: rgba(255,255,255,.03);
-}
+.act-nav__item.is-active { color: #d4cfc4; background: rgba(255,255,255,.03); }
 .act-nav__item.is-active .act-nav__item-ico { color: #c9a35b; }
 .act-nav__active-dot {
   width: 6px; height: 6px; border-radius: 50%;
@@ -92,7 +92,7 @@
   color: #6a6a6a; border: 1px solid #333; border-radius: 20px; padding: 1px 6px;
 }
 
-/* ---- Gathering group (accordion) ---- */
+/* ---- Gathering group (accordion, mobile) ---- */
 .act-nav__group { border-top: 1px solid #2a2a2a; }
 .act-nav__group:first-child { border-top: none; }
 
@@ -116,12 +116,14 @@
 }
 .act-nav__group-chevron.is-open { transform: rotate(180deg); }
 
-/* ---- Child items (indented under group) ---- */
+/* ---- Child items (mobile: hidden unless is-open) ---- */
 .act-nav__children {
+  display: none;
   background: rgba(0,0,0,.15);
   border-top: 1px solid #222;
   border-bottom: 1px solid #222;
 }
+.act-nav__children.is-open { display: block; }
 
 .act-nav__child {
   display: flex; align-items: center; gap: 11px;
@@ -141,3 +143,130 @@
 .act-nav__child.is-active { color: #d4cfc4; background: rgba(255,255,255,.03); }
 .act-nav__child.is-active .act-nav__item-ico { color: #c9a35b; }
 .act-nav__child.is-soon { opacity: .45; cursor: default; }
+
+
+/* ============================================================
+   Desktop tab bar (≥768px)
+   ============================================================ */
+@media (min-width: 768px) {
+
+  .act-nav {
+    margin: 0 0 0 0;
+    border-bottom: 1px solid #222;
+  }
+
+  /* Hide mobile trigger */
+  .act-nav__trigger { display: none; }
+
+  /* Menu: always visible as horizontal flex row */
+  .act-nav__menu {
+    display: flex !important; /* override mobile display:none and .is-open */
+    position: static;
+    background: none;
+    border: none;
+    border-radius: 0;
+    box-shadow: none;
+    overflow: visible; /* allow hover dropdown to overflow */
+    padding: 0;
+  }
+
+  /* ---- Tab items ---- */
+  .act-nav__item {
+    flex: 1;
+    justify-content: center;
+    padding: 10px 8px;
+    border-top: none;
+    border-radius: 0;
+    color: #8a8278;
+    font-size: 12.5px;
+    gap: 7px;
+  }
+  /* Gold underline indicator */
+  .act-nav__item::after {
+    content: '';
+    position: absolute;
+    bottom: 0; left: 0; right: 0; height: 2px;
+    background: transparent;
+    transition: background .15s;
+  }
+  .act-nav__item:hover:not(.is-soon) { background: rgba(255,255,255,.03); color: #c8c0b0; }
+  .act-nav__item:hover:not(.is-soon)::after { background: rgba(201,163,91,.35); }
+
+  .act-nav__item.is-active {
+    color: #c9a35b;
+    background: rgba(201,163,91,.05);
+  }
+  .act-nav__item.is-active::after { background: #c9a35b; }
+  .act-nav__item.is-active .act-nav__item-ico { color: #c9a35b; }
+
+  /* Hide dot — underline serves as active indicator */
+  .act-nav__active-dot { display: none; }
+
+  /* ---- Gathering group as a tab with hover dropdown ---- */
+  .act-nav__group {
+    flex: 1;
+    border-top: none;
+    position: relative; /* anchor for hover dropdown */
+  }
+
+  .act-nav__group-hd {
+    justify-content: center;
+    padding: 10px 8px;
+    border-radius: 0;
+    color: #8a8278;
+    font-size: 12.5px;
+    gap: 7px;
+    position: relative;
+    height: 100%;
+  }
+  /* Underline indicator for group tab */
+  .act-nav__group-hd::after {
+    content: '';
+    position: absolute;
+    bottom: 0; left: 0; right: 0; height: 2px;
+    background: transparent;
+    transition: background .15s;
+  }
+  .act-nav__group:hover .act-nav__group-hd { background: rgba(255,255,255,.03); color: #c8c0b0; }
+  .act-nav__group:hover .act-nav__group-hd::after { background: rgba(201,163,91,.35); }
+
+  .act-nav__group.is-active-top .act-nav__group-hd {
+    color: #c9a35b;
+    background: rgba(201,163,91,.05);
+  }
+  .act-nav__group.is-active-top .act-nav__group-hd::after { background: #c9a35b; }
+  .act-nav__group.is-active-top .act-nav__group-hd .act-nav__item-ico { color: #c9a35b; }
+
+  /* Hide accordion chevron on desktop */
+  .act-nav__group-chevron { display: none; }
+
+  /* ---- Gathering hover dropdown ---- */
+  .act-nav__children {
+    display: none;
+    position: absolute;
+    top: 100%; left: 0;
+    min-width: 160px;
+    background: linear-gradient(180deg, #1e1e1e, #161616);
+    border: 1px solid #2e2e2e;
+    border-top: none;
+    border-bottom-left-radius: 11px; border-bottom-right-radius: 11px;
+    box-shadow: 0 12px 32px rgba(0,0,0,.6);
+    overflow: hidden;
+    z-index: 100;
+  }
+  /* Show on hover OR when toggled via click (is-open) */
+  .act-nav__group:hover .act-nav__children,
+  .act-nav__children.is-open {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .act-nav__child {
+    padding: 10px 14px;
+    font-size: 13px;
+    border-top: 1px solid #1e1e1e;
+    white-space: nowrap;
+  }
+  .act-nav__child:first-child { border-top: none; }
+
+}
