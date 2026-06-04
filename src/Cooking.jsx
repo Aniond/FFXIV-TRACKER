@@ -145,7 +145,7 @@ function RecipeCard({ recipe, inList, isSaved, onToggleList, onToggleSave, onNav
       className={`recipe${expanded ? ' is-open' : ''}${inList ? ' is-listed' : ''}${isSaved ? ' is-saved' : ''}`}
       style={{ '--rc': st.color }}
     >
-      <div className="recipe__head">
+      <div className="recipe__head" onClick={() => setExpanded(o => !o)} style={{ cursor: 'pointer' }}>
         <span className="recipe__crest"><I.knife/></span>
         <div className="recipe__info">
           <h2 className="recipe__name">{recipe.name}</h2>
@@ -163,14 +163,14 @@ function RecipeCard({ recipe, inList, isSaved, onToggleList, onToggleSave, onNav
         </div>
         <div className="recipe__actions">
           <button className={`save-btn${isSaved ? ' is-active' : ''}`}
-            onClick={() => onToggleSave(recipe.id)} title={isSaved ? 'Unsave' : 'Save recipe'}>
+            onClick={(e) => { e.stopPropagation(); onToggleSave(recipe.id) }} title={isSaved ? 'Unsave' : 'Save recipe'}>
             <I.bookmark/>
           </button>
           <button className={`list-btn${inList ? ' is-active' : ''}`}
-            onClick={() => onToggleList(recipe.id)} title={inList ? 'Remove from list' : 'Add to list'}>
+            onClick={(e) => { e.stopPropagation(); onToggleList(recipe.id) }} title={inList ? 'Remove from list' : 'Add to list'}>
             {inList ? <I.check/> : <I.basket/>}
           </button>
-          <button className="expand-btn" onClick={() => setExpanded(o => !o)}
+          <button className="expand-btn" onClick={(e) => { e.stopPropagation(); setExpanded(o => !o) }}
             aria-label={expanded ? 'Collapse' : 'Expand'}>
             <I.chevron style={{ transform: expanded ? 'rotate(180deg)' : 'none', transition: 'transform .18s' }}/>
           </button>

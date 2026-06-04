@@ -55,11 +55,29 @@ function buildGatherIndex() {
   return { fishing, mining, botany };
 }
 
-function ingredientSource(name, gather) {
+// Authoritative source sets keyed by item ID, from Teamcraft's gathering nodes
+// (type 0/1 = mining/quarrying, 2/3 = logging/harvesting = botany) and fishing
+// data. Far broader than our curated node snapshot.
+function buildTeamcraftSources(nodes, fishes, fspots) {
+  const fishIds = new Set();
+  const ids = Array.isArray(fishes) ? fishes : Object.values(fishes);
+  ids.forEach((f) => { const id = typeof f === 'object' ? (f.id ?? f.itemId) : f; if (Number.isFinite(id)) fishIds.add(id); });
+  Object.values(fspots).forEach((s) => (s.fishes || []).forEach((id) => fishIds.add(id)));
+  const mineIds = new Set();
+  const botanyIds = new Set();
+  Object.values(nodes).forEach((n) => {
+    const set = (n.type === 0 || n.type === 1) ? mineIds : (n.type === 2 || n.type === 3) ? botanyIds : null;
+    if (set) (n.items || []).forEach((it) => set.add(typeof it === 'object' ? it.id : it));
+  });
+  return { fishIds, mineIds, botanyIds };
+}
+
+// Cross-reference an ingredient by item ID (Teamcraft) and name (our snapshot).
+function ingredientSource(id, name, gather, tc) {
   const k = norm(name);
-  if (gather.botany.has(k)) return 'BOTANY';
-  if (gather.mining.has(k)) return 'MINING';
-  if (gather.fishing.has(k)) return 'FISHING';
+  if (tc.botanyIds.has(id) || gather.botany.has(k)) return 'BOTANY';
+  if (tc.mineIds.has(id)   || gather.mining.has(k)) return 'MINING';
+  if (tc.fishIds.has(id)   || gather.fishing.has(k)) return 'FISHING';
   return 'MARKET_BOARD';
 }
 
@@ -79,18 +97,22 @@ function foodBuff(result, foodMap) {
 
 async function main() {
   console.log('Fetching Teamcraft data…');
-  const [recipes, items, foods, ilvls] = await Promise.all([
+  const [recipes, items, foods, ilvls, nodes, fishes, fspots] = await Promise.all([
     getJson('recipes.json'),
     getJson('items.json'),
     getJson('foods.json'),
     getJson('ilvls.json'),
+    getJson('nodes.json'),
+    getJson('fishes.json'),
+    getJson('fishing-spots.json'),
   ]);
-  console.log(`  recipes ${recipes.length}, items ${Object.keys(items).length}, foods ${foods.length}`);
+  console.log(`  recipes ${recipes.length}, items ${Object.keys(items).length}, foods ${foods.length}, nodes ${Object.keys(nodes).length}`);
 
   const foodMap = new Map(foods.map((f) => [f.ID, f]));
   const craftedIds = new Set(recipes.map((r) => r.result)); // any recipe's result => crafted
   const nameOf = (id) => items[id]?.en || `#${id}`;
   const gather = buildGatherIndex();
+  const tc = buildTeamcraftSources(nodes, fishes, fspots);
 
   const culDt = recipes.filter((r) => r.job === CUL_JOB && (ilvls[r.result] ?? 0) >= DT_MIN_ILVL);
 
@@ -106,7 +128,7 @@ async function main() {
         id: ing.id,
         name: nameOf(ing.id),
         amount: ing.amount,
-        source: ingredientSource(nameOf(ing.id), gather),
+        source: ingredientSource(ing.id, nameOf(ing.id), gather, tc),
         subcraft: craftedIds.has(ing.id),
       })),
     expansion: 'Dawntrail',
