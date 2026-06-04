@@ -89,8 +89,8 @@ const ACTIVITIES = [
   {
     id: 'crafting',
     label: 'Crafting',
-    href: '/crafting',
-    soon: true,
+    href: '/crafting/cooking',
+    soon: false,
     icon: (p) => (
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" {...p}>
         <path d="m14.7 6.3-8 8a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l8-8-3-3Z"/>

@@ -198,7 +198,7 @@ export default function HomePage({ user }) {
     { label: 'Mining', href: '/gathering/mining', color: '#e0b252', ico: 'pick' },
     { label: 'Botany', href: '/gathering/botany', color: '#5aaa72', ico: 'leaf' },
     { label: 'Fishing', href: '/gathering/fishing', color: '#58c4e8', ico: 'fish' },
-    { label: 'Cooking', color: '#d4923a', ico: 'knife', soon: true },
+    { label: 'Cooking', href: '/crafting/cooking', color: '#d4923a', ico: 'knife' },
   ]
 
   return (

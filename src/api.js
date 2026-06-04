@@ -126,6 +126,18 @@ async function aiSearch(query) {
   return body
 }
 
+// ── Recipes ──────────────────────────────────────────────────────────────────
+
+// Public crafting recipes (currently Dawntrail Culinarian). No auth required.
+async function fetchRecipes({ job = 'CUL', expansion = 'Dawntrail' } = {}) {
+  const qs = new URLSearchParams()
+  if (job) qs.set('job', job)
+  if (expansion) qs.set('expansion', expansion)
+  const r = await apiFetch(`/api/recipes?${qs.toString()}`)
+  if (!r.ok) return []
+  return r.json().catch(() => [])
+}
+
 // ── Admin API helpers ────────────────────────────────────────────────────────
 
 async function adminFetch(path, opts = {}) {
@@ -199,7 +211,7 @@ export {
   API, getToken, setToken, clearToken, fetchMe,
   loadProgress, saveProgress, resetProgress, saveStash, savePreferences,
   fetchJobs, saveJobs, saveCharacterLink, refreshJobsFromLodestone,
-  fetchFlags, aiSearch,
+  fetchFlags, aiSearch, fetchRecipes,
   adminStats, adminUsers, adminBanUser, adminQueries,
   adminSubmissions, adminUpdateSubmission, adminFlags, adminToggleFlag, adminApiUsage,
 }

@@ -1,0 +1,103 @@
+/* ============================================================
+   Cooking — Culinarian recipe book. Reuses global .ledger /
+   .brand / .search / .toast (App.css); styles ck- classes here.
+   Warm "kitchen" amber accent.
+   ============================================================ */
+.cooking { --ck: #d4923a; --ck-bright: #ecb463; }
+
+.ck-stars { color: var(--ck-bright); font-size: 0.92em; letter-spacing: -0.04em; }
+
+/* ── Recipe list ──────────────────────────────────────────── */
+.ck-list { display: grid; grid-template-columns: 1fr; gap: 9px; padding: 12px 14px; }
+@media (min-width: 560px) { .ck-list { grid-template-columns: 1fr 1fr; } }
+
+.ck-card {
+  text-align: left; cursor: pointer;
+  background: linear-gradient(158deg, var(--bill-raised), var(--bill));
+  border: 1px solid var(--bill-edge); border-left: 3px solid var(--ck);
+  border-radius: var(--radius-sm); padding: 12px 13px;
+  display: flex; flex-direction: column; gap: 6px;
+  transition: transform .1s, border-color .15s, box-shadow .18s;
+}
+.ck-card:hover { transform: translateY(-2px); border-color: color-mix(in srgb, var(--ck) 45%, var(--bill-edge)); box-shadow: 0 8px 20px rgba(0,0,0,.4); }
+.ck-card__top { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; }
+.ck-card__name { font: 700 14.5px var(--font-display); color: var(--parchment); line-height: 1.25; }
+.ck-card__saved { width: 15px; height: 15px; color: var(--ck-bright); flex: 0 0 15px; }
+.ck-card__meta { font-size: 11.5px; color: var(--ink-dim); }
+.ck-card__buffs { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 2px; }
+.ck-card__buff { font: 700 9.5px var(--font-body); letter-spacing: .04em; color: var(--ck-bright); border: 1px solid color-mix(in srgb, var(--ck) 40%, transparent); border-radius: 999px; padding: 1px 7px; }
+
+/* ── Filter bar (ingredient -> recipes) ───────────────────── */
+.ck-filterbar {
+  display: flex; align-items: center; gap: 8px;
+  margin: 0 14px; padding: 9px 13px;
+  background: var(--gold-faint); border: 1px solid var(--gold-dim);
+  border-radius: var(--radius-sm); font-size: 13px; color: var(--ink);
+}
+.ck-filterbar b { color: var(--gold-bright); }
+.ck-filterbar button { margin-left: auto; display: grid; place-items: center; width: 24px; height: 24px; border-radius: 6px; border: 1px solid var(--bill-edge); background: var(--bill); color: var(--ink-dim); cursor: pointer; }
+.ck-filterbar button:hover { color: var(--parchment); }
+.ck-filterbar svg { width: 13px; height: 13px; }
+
+.ck-note { padding: 28px 16px; text-align: center; color: var(--ink-dim); }
+
+/* ── Recipe detail ────────────────────────────────────────── */
+.ck-detail { padding: 12px 14px; }
+.ck-back {
+  display: inline-flex; align-items: center; gap: 6px;
+  background: none; border: 0; cursor: pointer;
+  color: var(--ink-dim); font: 600 12.5px var(--font-body); padding: 4px 0 10px;
+}
+.ck-back svg { width: 16px; height: 16px; }
+.ck-back:hover { color: var(--gold-bright); }
+
+.ck-detail__hd { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; }
+.ck-detail__title h2 { margin: 0; font: 800 20px var(--font-display); color: var(--parchment); letter-spacing: .02em; }
+.ck-detail__meta { font-size: 12px; color: var(--ink-dim); margin-top: 3px; }
+.ck-detail__usedin { color: var(--ink-faint); }
+.ck-save { flex: 0 0 auto; width: 38px; height: 38px; display: grid; place-items: center; border-radius: 10px; border: 1px solid var(--bill-edge); background: rgba(0,0,0,.25); color: var(--ink-faint); cursor: pointer; transition: color .15s, border-color .15s; }
+.ck-save svg { width: 19px; height: 19px; }
+.ck-save:hover { color: var(--ck-bright); border-color: var(--ck); }
+.ck-save.is-on { color: var(--ck-bright); border-color: color-mix(in srgb, var(--ck) 55%, transparent); background: color-mix(in srgb, var(--ck) 12%, transparent); }
+.ck-save.is-on svg { fill: currentColor; }
+
+.ck-buff { display: flex; flex-wrap: wrap; gap: 7px; margin: 12px 0 4px; }
+.ck-buff__chip { display: inline-flex; align-items: baseline; gap: 5px; font: 600 12px var(--font-body); color: var(--parchment); background: color-mix(in srgb, var(--ck) 10%, var(--bill)); border: 1px solid color-mix(in srgb, var(--ck) 35%, var(--bill-edge)); border-radius: 8px; padding: 4px 9px; }
+.ck-buff__chip b { color: var(--ck-bright); font-weight: 800; }
+.ck-buff__chip i { font-style: normal; font-size: 10.5px; color: var(--ink-faint); }
+
+.ck-field-lbl { font: 700 10px var(--font-body); letter-spacing: .14em; text-transform: uppercase; color: var(--ink-faint); margin: 18px 0 8px; }
+
+/* ── Ingredient rows ──────────────────────────────────────── */
+.ck-ings { display: flex; flex-direction: column; gap: 8px; }
+.ck-ing {
+  --sc: var(--ink-dim);
+  background: var(--bill); border: 1px solid var(--bill-edge); border-left: 3px solid var(--sc);
+  border-radius: var(--radius-sm); padding: 10px 12px;
+}
+.ck-ing.depth-1 { background: var(--board-2); }
+.ck-ing__main { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; }
+.ck-ing__amt { font: 800 13px var(--font-display); color: var(--ck-bright); font-variant-numeric: tabular-nums; }
+.ck-ing__name { background: none; border: 0; padding: 0; cursor: pointer; font: 600 14px var(--font-body); color: var(--parchment); text-align: left; }
+.ck-ing__name:hover { color: var(--gold-bright); text-decoration: underline; }
+.ck-ing__src { font: 700 9px var(--font-body); letter-spacing: .06em; text-transform: uppercase; color: var(--sc); border: 1px solid var(--sc); border-radius: 999px; padding: 1px 7px; opacity: .9; }
+.ck-ing__sub { font: 700 9px var(--font-body); letter-spacing: .06em; text-transform: uppercase; color: var(--ink-dim); border: 1px solid var(--bill-edge); border-radius: 999px; padding: 1px 7px; }
+
+.ck-ing__where { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 8px; font-size: 12px; }
+.ck-ing__pin { display: inline-flex; align-items: center; gap: 4px; color: var(--ink); }
+.ck-ing__pin svg { width: 13px; height: 13px; color: var(--sc); }
+.ck-ing__coords { display: inline-flex; align-items: center; gap: 4px; cursor: pointer; font-variant-numeric: tabular-nums; color: var(--gold-bright); background: var(--gold-faint); border: 1px solid var(--gold-dim); border-radius: 6px; padding: 3px 8px; }
+.ck-ing__coords svg { width: 11px; height: 11px; }
+.ck-ing__win { display: inline-flex; align-items: center; gap: 4px; font-variant-numeric: tabular-nums; border-radius: 6px; padding: 3px 7px; border: 1px solid var(--bill-edge); }
+.ck-ing__win svg { width: 12px; height: 12px; }
+.ck-ing__win.is-up { color: var(--rank-b); border-color: var(--rank-b); }
+.ck-ing__win.is-soon { color: #e0b252; border-color: #e0b252; }
+.ck-ing__win.is-closed { color: var(--ink-faint); }
+.ck-ing__market { color: var(--ink-dim); }
+
+.ck-ing__expand { display: inline-flex; align-items: center; gap: 3px; margin-left: auto; background: none; border: 0; cursor: pointer; color: var(--gold-dim); font: 600 11.5px var(--font-body); }
+.ck-ing__expand svg { width: 13px; height: 13px; transition: transform .18s; }
+.ck-ing__expand.is-open svg { transform: rotate(180deg); }
+.ck-ing__expand:hover { color: var(--gold-bright); }
+.ck-ing__nested { margin-top: 10px; padding-left: 10px; border-left: 1px dashed var(--bill-edge); display: flex; flex-direction: column; gap: 8px; }
+.ck-ing__nested-hd { font: 700 10px var(--font-body); letter-spacing: .1em; text-transform: uppercase; color: var(--ink-faint); }
