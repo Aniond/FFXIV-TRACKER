@@ -3,6 +3,7 @@ import EorzeaClock from './EorzeaClock'
 import { windowState, fmtDur } from './etWindow'
 import { MINING_NODES, NODE_TYPES, TYPE_ORDER, ITEM_TAG, ITEM_COLOR } from './miningData'
 import ActivityNav from './ActivityNav'
+import FavStar from './FavStar'
 import './Mining.css'
 
 /* ============================================================
@@ -48,6 +49,7 @@ function NodeCard({ node, collected, onToggleItem, onToggleAll, onCopy }) {
           <div className="node__prog"><I.pick style={{ width: 12, height: 12 }} /><b>{got}</b>/{total} collected</div>
         </div>
         <span className="node__gem"><span className="gem" />{t.word}</span>
+        <FavStar id={node.id} title="Pin to dashboard timers" />
         <button className={`collect-btn${allDone ? ' is-done' : ''}`} onClick={() => onToggleAll(node, !allDone)} title={allDone ? 'Reset' : 'Collect all'}>
           <I.check />
         </button>

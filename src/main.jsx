@@ -1,6 +1,7 @@
 import React from 'react'
 import ReactDOM from 'react-dom/client'
 import App from './App'
+import Home from './Home'
 import ProfileRoute from './ProfileRoute'
 import AdminDashboard from './AdminDashboard'
 import Fishing from './Fishing'
@@ -16,16 +17,18 @@ const isBotany   = path === '/gathering/botany'
 const isForaging = path === '/gathering/foraging'
 const isAdmin    = path === '/admin'
 const isAI       = path === '/ai'
+const isHunts    = path === '/hunts'
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
     {isAdmin      ? <AdminDashboard /> :
      isAI         ? <AISearch /> :
+     isHunts      ? <App /> :
      isMining     ? <Mining /> :
      isFishing    ? <Fishing /> :
      isBotany     ? <Botany /> :
      isForaging   ? <Botany /> :
      profileMatch ? <ProfileRoute slug={profileMatch[1]} /> :
-     <App />}
+     <Home />}
   </React.StrictMode>
 )

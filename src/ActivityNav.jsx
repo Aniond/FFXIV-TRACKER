@@ -13,7 +13,7 @@ const ACTIVITIES = [
   {
     id: 'hunts',
     label: 'Hunts',
-    href: '/',
+    href: '/hunts',
     soon: false,
     icon: (p) => (
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" {...p}>

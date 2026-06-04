@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo, useRef } from 'react'
 import EorzeaClock from './EorzeaClock'
 import { windowState, fmtDur } from './etWindow'
 import { BOTANY_NODES, NODE_TYPES, TYPE_ORDER, ITEM_TAG, ITEM_COLOR } from './botanyData'
+import FavStar from './FavStar'
 import './Botany.css'
 
 /* ============================================================
@@ -48,6 +49,7 @@ function NodeCard({ node, collected, onToggleItem, onToggleAll, onCopy }) {
           <div className="node__prog"><I.sickle style={{ width: 12, height: 12 }} /><b>{got}</b>/{total} gathered</div>
         </div>
         <span className="node__badge"><span className="pip" />{t.word}</span>
+        <FavStar id={node.id} title="Pin to dashboard timers" />
         <button className={`collect-btn${allDone ? ' is-done' : ''}`} onClick={() => onToggleAll(node, !allDone)} title={allDone ? 'Reset' : 'Gather all'}>
           <I.check />
         </button>

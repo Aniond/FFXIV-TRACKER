@@ -36,6 +36,16 @@ const I = {
 
 const normCoords = (c) => String(c || '').replace(/~/g, '').replace(/\s+/g, '').toLowerCase()
 
+// Recent-search history powers the dashboard's "Recent" chips.
+const HISTORY_KEY = 'ffxiv-search-history'
+function pushHistory(text) {
+  try {
+    const cur = JSON.parse(localStorage.getItem(HISTORY_KEY)) || []
+    const next = [text, ...cur.filter((x) => x.toLowerCase() !== text.toLowerCase())].slice(0, 8)
+    localStorage.setItem(HISTORY_KEY, JSON.stringify(next))
+  } catch { /* ignore quota/parse errors */ }
+}
+
 // Map verbatim coords -> source node, but only for TIMED nodes (those carry a
 // spawn window). Lets us recover the precise window object the AI can't reliably
 // echo, and render a live "Active/Soon/Closed" countdown.
@@ -92,6 +102,7 @@ export default function AISearch() {
   const [toast, setToast] = useState(null)
   const [, setTick] = useState(0)
   const toastTimer = useRef(null)
+  const didAuto = useRef(false)
 
   useEffect(() => {
     document.body.classList.add('ai-page')
@@ -116,6 +127,13 @@ export default function AISearch() {
   const isAdmin = !!user?.is_admin
   const canUse = isAdmin || publicOn
 
+  // Auto-run a query passed via ?q= (e.g. from the dashboard's AI hero / chips).
+  useEffect(() => {
+    if (!ready || !canUse || didAuto.current) return
+    const iq = new URLSearchParams(window.location.search).get('q')
+    if (iq && iq.trim()) { didAuto.current = true; setQ(iq.trim()); run(iq.trim()) }
+  }, [ready, canUse]) // eslint-disable-line react-hooks/exhaustive-deps
+
   function showToast(m) { setToast(m); clearTimeout(toastTimer.current); toastTimer.current = setTimeout(() => setToast(null), 1500) }
   function copyCoords(text) { navigator.clipboard?.writeText(String(text).replace(/^~/, '')).catch(() => {}); showToast(`Copied ${text}`) }
 
@@ -127,6 +145,7 @@ export default function AISearch() {
     try {
       const data = await aiSearch(text)
       setResult(data)
+      pushHistory(text)
     } catch (err) {
       if (err.status === 401) setError('Please sign in with Discord to use AI search.')
       else if (err.status === 403) setError('AI search is in admin preview right now.')
