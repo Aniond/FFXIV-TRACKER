@@ -89,7 +89,7 @@ const ACTIVITIES = [
   {
     id: 'crafting',
     label: 'Crafting',
-    href: '/crafting/cooking',
+    href: null,
     soon: false,
     icon: (p) => (
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" {...p}>
@@ -97,6 +97,20 @@ const ACTIVITIES = [
         <path d="m16 2 6 6-2 2-6-6 2-2ZM4 20l1-4 3 3-4 1Z"/>
       </svg>
     ),
+    children: [
+      {
+        id: 'cooking',
+        label: 'Cooking',
+        href: '/crafting/cooking',
+        soon: false,
+        icon: (p) => (
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" {...p}>
+            <path d="M6 22 17.5 4"/>
+            <path d="M17.5 4c1.5 2.5 2 5 0 9s-2 6-1.5 9"/>
+          </svg>
+        ),
+      },
+    ],
   },
 ]
 
@@ -172,7 +186,9 @@ export default function ActivityNav() {
   const { top: currentTop, leaf: currentLeaf } = findCurrent(path, activities)
 
   const [open, setOpen] = useState(false)
-  const [gatheringOpen, setGatheringOpen] = useState(currentTop.id === 'gathering')
+  // Per-group accordion state (mobile). The active group's section starts open.
+  const [openGroups, setOpenGroups] = useState(() => ({ [currentTop.id]: true }))
+  const toggleGroup = (id) => setOpenGroups((g) => ({ ...g, [id]: !g[id] }))
   const ref = useRef(null)
 
   useEffect(() => {
@@ -209,15 +225,15 @@ export default function ActivityNav() {
               <div key={a.id} className={`act-nav__group${isActiveTop ? ' is-active-top' : ''}`}>
                 <button
                   className={`act-nav__group-hd${isActiveTop ? ' is-active' : ''}`}
-                  onClick={() => setGatheringOpen((o) => !o)}
+                  onClick={() => toggleGroup(a.id)}
                 >
                   <Icon className="act-nav__item-ico" />
                   <span className="act-nav__item-label">{a.label}</span>
-                  <ChevronDown className={`act-nav__group-chevron${gatheringOpen ? ' is-open' : ''}`} />
+                  <ChevronDown className={`act-nav__group-chevron${openGroups[a.id] ? ' is-open' : ''}`} />
                 </button>
 
                 {/* Always in DOM; mobile shows via is-open class, desktop shows on hover */}
-                <div className={`act-nav__children${gatheringOpen ? ' is-open' : ''}`}>
+                <div className={`act-nav__children${openGroups[a.id] ? ' is-open' : ''}`}>
                   {a.children.map((c) => {
                     const CIcon = c.icon
                     const isActiveChild = c.id === currentLeaf.id
