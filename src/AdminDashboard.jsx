@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import './AdminDashboard.css'
-import { getToken, API,
+import { getToken, setToken, API,
   adminStats, adminUsers, adminBanUser, adminQueries,
   adminSubmissions, adminUpdateSubmission, adminFlags, adminToggleFlag, adminApiUsage,
 } from './api'
@@ -249,8 +249,15 @@ export default function AdminDashboard() {
   const [flags, setFlags]         = useState(null)
   const [usage, setUsage]         = useState(null)
 
-  // On mount: verify admin access by fetching stats
+  // On mount: capture token from OAuth redirect URL, then verify admin access
   useEffect(() => {
+    const params = new URLSearchParams(window.location.search)
+    const urlToken = params.get('token')
+    if (urlToken) {
+      setToken(urlToken)
+      window.history.replaceState({}, '', '/admin')
+    }
+
     if (!getToken()) {
       setAuthState('unauth')
       return
