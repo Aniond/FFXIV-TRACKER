@@ -1,8 +1,9 @@
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, useRef } from 'react'
 import { windowState as winState, fmtDur } from './etWindow'
 import { MINING_NODES } from './miningData'
 import { BOTANY_NODES } from './botanyData'
 import { getFavNodes } from './favNodes'
+import { clearToken } from './api'
 import './HomePage.css'
 
 /* ============================================================
@@ -57,6 +58,9 @@ const I = {
   moon: (p) => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" {...p}><path d="M20 13.5A8 8 0 1 1 10.5 4a6.2 6.2 0 0 0 9.5 9.5Z"/></svg>,
   hist: (p) => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" {...p}><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5M12 7v5l4 2"/></svg>,
   star: (p) => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" {...p}><path d="M12 3l2.6 6.2 6.4.5-4.9 4.1 1.5 6.2L12 16.9 6.4 20.2l1.5-6.2L3 9.7l6.4-.5L12 3Z"/></svg>,
+  user: (p) => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" {...p}><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.5-6 8-6s8 2 8 6"/></svg>,
+  shield: (p) => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" {...p}><path d="M12 3 5 6v5c0 4.4 3 7.4 7 9 4-1.6 7-4.6 7-9V6l-7-3Z"/><path d="m9.5 12 1.8 1.8L15 10"/></svg>,
+  logout: (p) => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" {...p}><path d="M15 4h3a1 1 0 0 1 1 1v14a1 1 0 0 1-1 1h-3"/><path d="M10 17l-5-5 5-5M5 12h11"/></svg>,
 }
 
 const SRC_ICO = { botany: I.leaf, mining: I.pick, fishing: I.fish }
@@ -163,6 +167,8 @@ function AIHero() {
 
 export default function HomePage({ user }) {
   const [, setTick] = useState(0)
+  const [menuOpen, setMenuOpen] = useState(false)
+  const menuRef = useRef(null)
   const favs = useMemo(() => getFavNodes().map((id) => NODE_INDEX.get(id)).filter(Boolean), [])
 
   // Live countdowns: re-render each second while any timer is shown.
@@ -171,6 +177,16 @@ export default function HomePage({ user }) {
     const id = setInterval(() => setTick((t) => t + 1), 1000)
     return () => clearInterval(id)
   }, [favs.length])
+
+  // Close the account menu on outside click.
+  useEffect(() => {
+    if (!menuOpen) return
+    const onDoc = (e) => { if (!menuRef.current?.contains(e.target)) setMenuOpen(false) }
+    document.addEventListener('mousedown', onDoc)
+    return () => document.removeEventListener('mousedown', onDoc)
+  }, [menuOpen])
+
+  function signOut() { clearToken(); window.location.href = '/' }
 
   const activeCount = favs.filter((f) => winState(f.node.window)?.state === 'up').length
 
@@ -188,11 +204,38 @@ export default function HomePage({ user }) {
   return (
     <div className="dh">
       <header className="dh-top">
-        <div className="dh-top__avatar">
-          {avatarUrl ? <img src={avatarUrl} alt={user.username} /> : initials}
+        <div className="dh-acct" ref={menuRef}>
+          <button
+            type="button"
+            className="dh-top__avatar"
+            onClick={() => setMenuOpen((o) => !o)}
+            aria-haspopup="menu"
+            aria-expanded={menuOpen}
+            title="Account menu"
+          >
+            {avatarUrl ? <img src={avatarUrl} alt={user.username} /> : initials}
+          </button>
+          {menuOpen && (
+            <div className="dh-menu" role="menu">
+              <a className="dh-menu__item" href={`/profile/${(user?.username || '').toLowerCase()}`} role="menuitem">
+                <I.user />View profile
+              </a>
+              {user?.is_admin && (
+                <a className="dh-menu__item" href="/admin" role="menuitem">
+                  <I.shield />Admin dashboard
+                </a>
+              )}
+              <button type="button" className="dh-menu__item dh-menu__item--danger" onClick={signOut} role="menuitem">
+                <I.logout />Sign out
+              </button>
+            </div>
+          )}
         </div>
         <div className="dh-top__id">
-          <div className="dh-top__name">{greeting()}, <strong>{user?.username || 'Adventurer'}</strong></div>
+          <div className="dh-top__name">
+            {greeting()}, <strong>{user?.username || 'Adventurer'}</strong>
+            {user?.is_admin && <span className="dh-top__admin">Admin</span>}
+          </div>
           <div className="dh-top__meta"><b>Centurio Ledger</b> · {user?.nuts_stash ?? 0} Sacks of Nuts</div>
         </div>
         <CompactET />
