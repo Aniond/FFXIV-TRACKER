@@ -2,7 +2,6 @@ import { useState, useEffect, useMemo } from 'react'
 import { windowState as winState, fmtDur } from './etWindow'
 import { MINING_NODES } from './miningData'
 import { BOTANY_NODES } from './botanyData'
-import { FISHING_SPOTS } from './fishingData'
 import { getFavNodes } from './favNodes'
 import './HomePage.css'
 
@@ -112,7 +111,6 @@ function QuickTile({ tile }) {
     <>
       <div className="dh-tile__ico"><IcoEl /></div>
       <div className="dh-tile__label">{tile.label}</div>
-      <div className="dh-tile__sub">{tile.sub}</div>
     </>
   )
   if (tile.soon) return <div className="dh-tile is-soon" style={{ '--tc': tile.color }}>{inner}</div>
@@ -180,12 +178,11 @@ export default function HomePage({ user }) {
   const avatarUrl = user?.avatar ? `https://cdn.discordapp.com/avatars/${user.discord_id}/${user.avatar}.png?size=64` : null
 
   const tiles = [
-    { label: 'Hunt Board', sub: 'Dawntrail marks', href: '/hunts', color: '#d6483a', ico: 'target' },
-    { label: 'Mining', sub: `${MINING_NODES.length} nodes`, href: '/gathering/mining', color: '#e0b252', ico: 'pick' },
-    { label: 'Botany', sub: `${BOTANY_NODES.length} nodes`, href: '/gathering/botany', color: '#5aaa72', ico: 'leaf' },
-    { label: 'Fishing', sub: `${FISHING_SPOTS.length} spots`, href: '/gathering/fishing', color: '#58c4e8', ico: 'fish' },
-    { label: 'Cooking', sub: 'Coming soon', color: '#d4923a', ico: 'knife', soon: true },
-    { label: 'Centurio AI', sub: 'Natural language', href: '/ai', color: '#8fb6d6', ico: 'spark' },
+    { label: 'Hunt Board', href: '/hunts', color: '#d6483a', ico: 'target' },
+    { label: 'Mining', href: '/gathering/mining', color: '#e0b252', ico: 'pick' },
+    { label: 'Botany', href: '/gathering/botany', color: '#5aaa72', ico: 'leaf' },
+    { label: 'Fishing', href: '/gathering/fishing', color: '#58c4e8', ico: 'fish' },
+    { label: 'Cooking', color: '#d4923a', ico: 'knife', soon: true },
   ]
 
   return (
