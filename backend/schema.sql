@@ -87,3 +87,17 @@ INSERT INTO feature_flags (key, enabled, description) VALUES
   ('ENABLE_AI_GUESTS',   false, 'Enable AI assistant for guests (not logged in)'),
   ('ENABLE_SUBMISSIONS', false, 'Allow community hunt submissions')
 ON CONFLICT (key) DO NOTHING;
+
+-- AI search cache (added by migrate-ai.js) — 60s identical-query cache for /api/ai/search.
+-- AI usage logging reuses the ai_queries table above.
+
+CREATE TABLE IF NOT EXISTS user_searches (
+  id          SERIAL PRIMARY KEY,
+  user_id     INTEGER REFERENCES users(id) ON DELETE CASCADE,
+  query_norm  TEXT NOT NULL,
+  response    JSONB NOT NULL,
+  created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_user_searches_lookup
+  ON user_searches (query_norm, created_at DESC);

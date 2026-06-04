@@ -8,6 +8,7 @@ const cron = require('node-cron');
 const pool = require('./db');
 const { searchCharacter, fetchCharacter } = require('./lodestone');
 const { refreshUserJobs } = require('./refresh');
+const aiSearchRouter = require('./ai/search');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -74,6 +75,20 @@ function adminAuth(req, res, next) {
 
 // Health
 app.get('/health', (req, res) => res.json({ status: 'ok' }));
+
+// Public feature-flag read — lets the frontend decide whether to show the AI UI.
+app.get('/api/flags', async (req, res) => {
+  try {
+    const result = await pool.query('SELECT key, enabled FROM feature_flags');
+    const flags = Object.fromEntries(result.rows.map((r) => [r.key, r.enabled]));
+    res.json(flags);
+  } catch {
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+// AI search assistant — POST /api/ai/search (JWT + flag/admin gated, see ai/search.js)
+app.use('/api/ai/search', aiSearchRouter);
 
 // Public profile — no auth required
 app.get('/api/profile/:slug', async (req, res) => {
