@@ -43,14 +43,31 @@ try {
   console.error('[ai/search] gameData.json missing — run ai/extract-data.mjs:', err.message);
 }
 
+// Dawntrail Culinarian recipes (compacted for the prompt — drop ids; each
+// ingredient already carries a cross-referenced source + subcraft flag).
+let RECIPES = [];
+try {
+  const raw = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'cooking-recipes.json'), 'utf8'));
+  RECIPES = raw.map((r) => ({
+    name: r.name,
+    itemLevel: r.item_level,
+    stars: r.stars,
+    foodBuff: r.food_buff ? r.food_buff.map((b) => ({ stat: b.stat, hq: b.valueHQ, max: b.maxHQ })) : null,
+    ingredients: r.ingredients.map((i) => ({ name: i.name, amount: i.amount, source: i.source, subcraft: i.subcraft })),
+  }));
+} catch (err) {
+  console.error('[ai/search] cooking-recipes.json missing — run scrape-cooking.js:', err.message);
+}
+
 // Frozen so prompt caching stays valid: stable bytes, no per-request interpolation.
 // The persona/instruction text is the verbatim Centurio system prompt; the
 // structured-output contract (enforced by RESPONSE_SCHEMA) is appended so the
 // model knows the exact field names to fill.
 const SYSTEM_PROMPT =
   `You are an FFXIV companion assistant for ffxivlog.com called Centurio.\n` +
-  `You have access to a database of hunt marks, fishing spots, mining nodes\n` +
-  `and botany nodes for Dawntrail and Endwalker expansions.\n` +
+  `You have access to a database of hunt marks, fishing spots, mining nodes,\n` +
+  `botany nodes, and Dawntrail Culinarian (cooking) recipes for the Dawntrail\n` +
+  `and Endwalker expansions.\n` +
   `Answer the player's query using only the provided database context.\n` +
   `Be concise and helpful. Format responses clearly.\n` +
   `Always include coordinates when available.\n` +
@@ -60,16 +77,29 @@ const SYSTEM_PROMPT =
   `- type: dominant category of the answer — hunt / fishing / mining / botany / ` +
   `recipe / mixed (results span categories) / none (nothing matched).\n` +
   `- summary: a short, natural-language answer to the player.\n` +
-  `- results[]: one entry per matching mark / spot / node. Set category, zone, and ` +
-  `coords (verbatim from the data, e.g. "X:21.4, Y:9.2"; empty string if none). ` +
+  `- results[]: one entry per matching mark / spot / node / ingredient. Set category, ` +
+  `zone, and coords (verbatim from the data, e.g. "X:21.4, Y:9.2"; empty string if none). ` +
   `For timed gathering nodes set timed=true and put the Eorzea window in "window" ` +
   `(e.g. "ET 0:00-6:00"); leave timed=false and window empty otherwise. Use "detail" ` +
-  `for level, rank, reward, bait, weather, yield items, or other useful specifics.\n` +
+  `for level, rank, reward, bait, weather, yield items, quantity, or other useful specifics.\n` +
   `- tips[]: 0-4 short, actionable tips (routes, timing, what to bring). Omit if none.\n` +
-  `- Never invent spots, nodes, coordinates, or items not present in the data. ` +
+  `- Never invent spots, nodes, coordinates, items, or recipes not present in the data. ` +
   `If nothing matches, set type "none", results [], and say so in the summary.\n\n` +
+  `CROSS-REFERENCING RECIPES & INGREDIENTS:\n` +
+  `Each recipe lists its ingredients with an obtain "source":\n` +
+  `- FISHING / MINING / BOTANY = gatherable. Look the ingredient name up in the ` +
+  `gathering database below and report the exact zone, coords, level, and (if timed) ` +
+  `the spawn window so the player knows where to get it. Use category fishing/mining/botany.\n` +
+  `- MARKET_BOARD = bought from the market board or a vendor (no gather location). Use category "item".\n` +
+  `- subcraft=true = the ingredient is itself a crafted item; note that it must be crafted.\n` +
+  `For "how do I make X" list each ingredient (amount + where to get it). You can also answer ` +
+  `the reverse ("which recipes use Megamaguey Pineapple?") and recommend food by its buff ` +
+  `(foodBuff lists the HQ stat bonuses, e.g. CRT/DET/VIT, with their caps). Recipes are ` +
+  `Culinarian only for now; say so if asked about other crafting jobs.\n\n` +
   `GATHERING DATABASE (fishing spots, mining nodes, botany nodes) as JSON:\n` +
-  JSON.stringify({ fishing: GAME_DATA.fishing, mining: GAME_DATA.mining, botany: GAME_DATA.botany });
+  JSON.stringify({ fishing: GAME_DATA.fishing, mining: GAME_DATA.mining, botany: GAME_DATA.botany }) +
+  `\n\nDAWNTRAIL CULINARIAN RECIPES as JSON:\n` +
+  JSON.stringify(RECIPES);
 
 const RESPONSE_SCHEMA = {
   type: 'object',
@@ -83,8 +113,8 @@ const RESPONSE_SCHEMA = {
         type: 'object',
         additionalProperties: false,
         properties: {
-          name: { type: 'string', description: 'Hunt mark, fish, item, or node name' },
-          category: { type: 'string', enum: ['hunt', 'fishing', 'mining', 'botany', 'recipe'] },
+          name: { type: 'string', description: 'Hunt mark, fish, item, ingredient, recipe, or node name' },
+          category: { type: 'string', enum: ['hunt', 'fishing', 'mining', 'botany', 'recipe', 'item'] },
           zone: { type: 'string' },
           coords: { type: 'string', description: 'Verbatim coordinates, e.g. "X:21.4, Y:9.2"; "" if none' },
           timed: { type: 'boolean', description: 'true for Unspoiled/Ephemeral/Legendary timed nodes' },
