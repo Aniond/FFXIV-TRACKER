@@ -210,6 +210,7 @@ function App() {
               )}
               <span className="brand__username">{user.username}</span>
             </a>
+            {user.is_admin && <a href="/admin" className="brand__admin-pip">Admin</a>}
             <button className="brand__logout" onClick={signOut}>Sign out</button>
           </div>
         ) : (

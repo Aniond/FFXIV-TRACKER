@@ -212,6 +212,26 @@ mark {
 }
 .brand__logout:hover { color: var(--ink-dim); }
 
+.brand__admin-pip {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--gold-dim);
+  background: var(--gold-faint);
+  border: 1px solid var(--gold-dim);
+  border-radius: 4px;
+  padding: 2px 7px;
+  text-decoration: none;
+  white-space: nowrap;
+  transition: color .15s, border-color .15s, background .15s;
+}
+.brand__admin-pip:hover {
+  color: var(--gold-bright);
+  border-color: var(--gold);
+  background: rgba(143,182,214,0.2);
+}
+
 /* ---------- Sticky control cluster ---------- */
 .controls {
   position: sticky;

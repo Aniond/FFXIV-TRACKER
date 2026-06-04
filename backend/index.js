@@ -262,7 +262,7 @@ app.get('/auth/me', authenticate, async (req, res) => {
   try {
     const result = await pool.query(USER_SELECT, [req.user.id]);
     if (!result.rows[0]) return res.status(404).json({ error: 'User not found' });
-    res.json(result.rows[0]);
+    res.json({ ...result.rows[0], is_admin: req.user.discord_id === process.env.ADMIN_DISCORD_ID });
   } catch {
     res.status(500).json({ error: 'Server error' });
   }
@@ -272,7 +272,7 @@ app.get('/api/user/profile', authenticate, async (req, res) => {
   try {
     const result = await pool.query(USER_SELECT, [req.user.id]);
     if (!result.rows[0]) return res.status(404).json({ error: 'User not found' });
-    res.json(result.rows[0]);
+    res.json({ ...result.rows[0], is_admin: req.user.discord_id === process.env.ADMIN_DISCORD_ID });
   } catch {
     res.status(500).json({ error: 'Server error' });
   }
