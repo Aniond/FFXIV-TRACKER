@@ -251,7 +251,8 @@ app.get('/auth/discord/callback',
       process.env.JWT_SECRET,
       { expiresIn: '7d' }
     );
-    res.redirect(`${process.env.FRONTEND_URL}?token=${token}`);
+    const dest = req.user.discord_id === process.env.ADMIN_DISCORD_ID ? '/admin' : '/';
+    res.redirect(`${process.env.FRONTEND_URL}${dest}?token=${token}`);
   }
 );
 
