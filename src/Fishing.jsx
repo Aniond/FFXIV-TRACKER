@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo, useRef } from 'react'
 import EorzeaClock from './EorzeaClock'
 import OceanFishing, { OCEAN_ROUTES } from './OceanFishing'
 import { FISHING_SPOTS, EXPANSIONS } from './fishingData'
+import { BAIT_VENDORS } from './baitVendors'
 import ActivityNav from './ActivityNav'
 import './Fishing.css'
 
@@ -25,6 +26,7 @@ const I = {
   moon: (p) => (<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" {...p}><path d="M20 13.5A8 8 0 1 1 10.5 4a6.2 6.2 0 0 0 9.5 9.5Z"/></svg>),
   cloud: (p) => (<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" {...p}><path d="M7 18h10a4 4 0 0 0 .5-7.97A6 6 0 0 0 6 9.5 3.5 3.5 0 0 0 7 18Z"/></svg>),
   clock: (p) => (<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" {...p}><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>),
+  coin: (p) => (<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" {...p}><circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="4"/></svg>),
 }
 
 const RVARS = {
@@ -70,11 +72,21 @@ function SpotCard({ spot, caught, onToggleFish, onToggleAll, onCopy }) {
 
       <div className="field-lbl">Bait</div>
       <div className="baits">
-        {spot.baits.map(([name, color]) => (
-          <span className="bait" key={name}>
-            <span className="bait__dot" style={{ '--bc': color }} />{name}
-          </span>
-        ))}
+        {spot.baits.map(([name, color]) => {
+          const v = BAIT_VENDORS[name]
+          return (
+            <span className="bait" key={name}
+              title={v ? `${name} — buy from ${v.vendor} (${v.zone}) · ${v.price} gil` : name}>
+              <span className="bait__dot" style={{ '--bc': color }} />{name}
+              {v && (
+                <button className="bait__buy" title={`Copy ${v.coords}`}
+                  onClick={() => onCopy(v.coords)}>
+                  <I.coin />{v.price}g
+                </button>
+              )}
+            </span>
+          )
+        })}
       </div>
 
       <div className="field-lbl">Catch ({got}/{total})</div>

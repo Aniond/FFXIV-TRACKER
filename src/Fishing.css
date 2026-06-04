@@ -194,6 +194,15 @@ body.fishing-page {
   background: radial-gradient(circle at 40% 35%, var(--bc, var(--teal-bright)), color-mix(in srgb, var(--bc, var(--teal)) 55%, #0a1213));
   border: 1px solid rgba(255,255,255,.18);
 }
+/* Where-to-buy the bait (vendor + gil), tap to copy coords */
+.bait__buy {
+  display: inline-flex; align-items: center; gap: 4px; margin-left: 1px;
+  font: 700 10.5px var(--fb); color: var(--teal-bright); font-variant-numeric: tabular-nums;
+  background: rgba(63,182,176,.12); border: 1px solid var(--teal-dim);
+  border-radius: 14px; padding: 2px 8px; cursor: pointer;
+}
+.bait__buy svg { width: 11px; height: 11px; }
+.bait__buy:hover { filter: brightness(1.15); }
 
 /* fish list */
 .fish-list { display: flex; flex-direction: column; gap: 6px; margin-top: 7px; }
