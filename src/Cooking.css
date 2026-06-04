@@ -419,3 +419,12 @@ body.cooking-page .chip__coords {
 }
 body.cooking-page .chip__coords svg { width: 11px; height: 11px; }
 body.cooking-page .chip__coords:hover { filter: brightness(1.12); }
+
+/* Ingredient where-to-get row (coords + vendor price) */
+body.cooking-page .chip__where { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+body.cooking-page .chip__price {
+  display: inline-flex; align-items: center; margin-top: 5px;
+  font: 700 10px var(--fb); letter-spacing: .03em;
+  color: #e8c878; background: rgba(212,168,74,.12);
+  border: 1px solid rgba(212,168,74,.4); border-radius: 6px; padding: 2px 7px;
+}

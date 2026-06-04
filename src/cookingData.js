@@ -28,6 +28,7 @@ export const SRC = {
   botany:  { label: 'Botany',  icon: 'leaf', path: '/gathering/botany' },
   mining:  { label: 'Mining',  icon: 'pick', path: '/gathering/mining' },
   fishing: { label: 'Fishing', icon: 'fish', path: '/gathering/fishing' },
+  vendor:  { label: 'Vendor',  icon: 'coin', path: null },
   market:  { label: 'Market',  icon: 'cart', path: null },
 }
 
@@ -41,7 +42,7 @@ const STAT_FULL = {
   TEN: 'Tenacity', PIE: 'Piety', VIT: 'Vitality', CP: 'CP', GP: 'GP',
   CMS: 'Craftsmanship', CTL: 'Control', GAT: 'Gathering', PER: 'Perception',
 }
-const API_SRC = { FISHING: 'fishing', MINING: 'mining', BOTANY: 'botany', MARKET_BOARD: 'market' }
+const API_SRC = { FISHING: 'fishing', MINING: 'mining', BOTANY: 'botany', VENDOR: 'vendor', MARKET_BOARD: 'market' }
 
 /**
  * Adapt the /api/recipes payload to Cooking.jsx's recipe shape.
@@ -66,17 +67,19 @@ export function adaptRecipes(apiRecipes) {
       })),
       ingredients: r.ingredients.map((ing) => {
         const source = API_SRC[ing.source] || 'market'
-        const located = source !== 'market' && (ing.coords || ing.zone)
+        // Only gathering sources link to a page; vendor/market show location inline.
+        const navable = source === 'fishing' || source === 'mining' || source === 'botany'
         return {
           name: ing.name,
           qty: ing.amount,
           source,
-          // nodeId presence enables the "go to gathering page" arrow.
-          nodeId: located ? String(ing.id) : null,
-          nodeName: ing.zone || ing.node_name || null,
+          nodeId: navable && (ing.coords || ing.zone) ? String(ing.id) : null,
+          nodeName: ing.node_name || ing.zone || null,
+          zone: ing.zone || null,
           coords: ing.coords || null,
           nodeType: ing.node_type || null,
           window: ing.window || null,
+          price: ing.price ?? null,
         }
       }),
     }))

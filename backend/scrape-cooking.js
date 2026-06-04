@@ -105,7 +105,41 @@ function buildTeamcraftLocations(nodes, fspots, places) {
   };
 }
 
-const MARKET = { source: 'MARKET_BOARD', node_name: null, zone: null, coords: null, node_type: null, window: null };
+// NPC gil-shop vendor resolver: item ID -> cheapest gil price + the selling
+// NPC's name and map location. Covers basic staples (salt, water, etc.) that
+// aren't gathered or crafted.
+function buildVendorIndex(shops, npcs, places) {
+  const byItem = new Map();
+  for (const shop of Object.values(shops)) {
+    if (shop.type !== 'GilShop') continue;
+    const npcId = (shop.npcs || [])[0];
+    for (const t of (shop.trades || [])) {
+      const gil = (t.currencies || []).find((c) => c.id === 1);
+      if (!gil) continue;
+      for (const it of (t.items || [])) {
+        const prev = byItem.get(it.id);
+        if (!prev || gil.amount < prev.price) byItem.set(it.id, { price: gil.amount, npcId });
+      }
+    }
+  }
+  return (id) => {
+    const v = byItem.get(id);
+    if (!v) return null;
+    const npc = npcs[v.npcId];
+    const pos = npc?.position;
+    return {
+      source: 'VENDOR',
+      node_name: npc?.en || 'Vendor',
+      zone: pos ? (places[pos.zoneid]?.en || null) : null,
+      coords: pos && pos.x != null ? coordStr(pos.x, pos.y) : null,
+      node_type: 'Vendor',
+      window: null,
+      price: v.price,
+    };
+  };
+}
+
+const MARKET = { source: 'MARKET_BOARD', node_name: null, zone: null, coords: null, node_type: null, window: null, price: null };
 
 function foodBuff(result, foodMap) {
   const f = foodMap.get(result);
@@ -123,7 +157,7 @@ function foodBuff(result, foodMap) {
 
 async function main() {
   console.log('Fetching Teamcraft data…');
-  const [recipes, items, foods, ilvls, nodes, fspots, places] = await Promise.all([
+  const [recipes, items, foods, ilvls, nodes, fspots, places, shops, npcs] = await Promise.all([
     getJson('recipes.json'),
     getJson('items.json'),
     getJson('foods.json'),
@@ -131,15 +165,19 @@ async function main() {
     getJson('nodes.json'),
     getJson('fishing-spots.json'),
     getJson('places.json'),
+    getJson('shops.json'),
+    getJson('npcs.json'),
   ]);
-  console.log(`  recipes ${recipes.length}, items ${Object.keys(items).length}, foods ${foods.length}, nodes ${Object.keys(nodes).length}`);
+  console.log(`  recipes ${recipes.length}, items ${Object.keys(items).length}, foods ${foods.length}, nodes ${Object.keys(nodes).length}, shops ${Object.keys(shops).length}`);
 
   const foodMap = new Map(foods.map((f) => [f.ID, f]));
   const craftedIds = new Set(recipes.map((r) => r.result)); // any recipe's result => crafted
   const nameOf = (id) => items[id]?.en || `#${id}`;
   const gameLoc = buildGameLocations();
   const tcLoc = buildTeamcraftLocations(nodes, fspots, places);
-  const resolveLoc = (id, name) => tcLoc(id) || gameLoc.get(norm(name)) || null;
+  const vendorLoc = buildVendorIndex(shops, npcs, places);
+  // Gather/fish first; then NPC vendor; market board only if nothing else.
+  const resolveLoc = (id, name) => tcLoc(id) || gameLoc.get(norm(name)) || vendorLoc(id) || null;
 
   const culDt = recipes.filter((r) => r.job === CUL_JOB && (ilvls[r.result] ?? 0) >= DT_MIN_ILVL);
 
@@ -164,6 +202,7 @@ async function main() {
           coords: loc.coords,
           node_type: loc.node_type,
           window: loc.window,
+          price: loc.price ?? null,
         };
       }),
     expansion: 'Dawntrail',

@@ -27,6 +27,7 @@ const I = {
   pick:      p => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" {...p}><path d="M3 21 13 11"/><path d="M4 9c4-4 12-5 16-2-3-1-7 0-9 2 3-1 6 0 7 2-4-3-11-2-14-2Z"/><path d="m12.5 11.5 2 2"/></svg>,
   fish:      p => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" {...p}><path d="M3 12c3-5 8-6 12-6 3 0 5 2 6 6-1 4-3 6-6 6-4 0-9-1-12-6Z"/><path d="M3 12c-1 1.5-1 3 0 4.5M3 12c-1-1.5-1-3 0-4.5"/><circle cx="15" cy="11" r="1" fill="currentColor" stroke="none"/></svg>,
   cart:      p => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" {...p}><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>,
+  coin:      p => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" {...p}><circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="4"/></svg>,
   arrow:     p => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" {...p}><path d="m5 12 14 0M12 5l7 7-7 7"/></svg>,
   basket:    p => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" {...p}><path d="M5 11 7.5 4h9L19 11"/><path d="M3 11h18v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-8Z"/><path d="M12 11v8M8 15h8"/></svg>,
   hourglass: p => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" {...p}><path d="M6 3h12M6 21h12M7 3c0 5 5 6 5 9s-5 4-5 9M17 3c0 5-5 6-5 9s5 4 5 9"/></svg>,
@@ -39,7 +40,7 @@ const I = {
 
 /* ── Timer Badge ─────────────────────────────────────────── */
 function TimerBadge({ ing }) {
-  if (ing.source === 'market') return null
+  if (ing.source === 'market' || ing.source === 'vendor') return null
   if (!ing.window) return (
     <span className="tbadge tbadge--avail"><span className="tbadge__dot"/>Always Available</span>
   )
@@ -94,6 +95,7 @@ function IngredientChip({ ing, onNav, onCopy, checked, onCheck }) {
 
   let dc
   if (ing.source === 'market')  dc = 'var(--dot-market)'
+  else if (ing.source === 'vendor') dc = '#d4a84a'
   else if (!ing.window)         dc = 'var(--dot-avail)'
   else if (ws.state === 'up')   dc = 'var(--dot-avail)'
   else if (ws.state === 'soon') dc = 'var(--dot-soon)'
@@ -113,12 +115,15 @@ function IngredientChip({ ing, onNav, onCopy, checked, onCheck }) {
       <span className="chip__main">
         <span className="chip__name">{ing.name}</span>
         <TimerBadge ing={ing}/>
-        {ing.coords && (
-          <button className="chip__coords" title="Tap to copy"
-            onClick={e => { e.stopPropagation(); onCopy(ing.coords) }}>
-            <I.copy/>{ing.coords}
-          </button>
-        )}
+        <span className="chip__where">
+          {ing.coords && (
+            <button className="chip__coords" title={ing.nodeName ? `Tap to copy · ${ing.nodeName}` : 'Tap to copy'}
+              onClick={e => { e.stopPropagation(); onCopy(ing.coords) }}>
+              <I.copy/>{ing.coords}
+            </button>
+          )}
+          {ing.price != null && <span className="chip__price">{ing.price} gil</span>}
+        </span>
       </span>
       <span className="chip__qty">×{ing.qty}</span>
       {canNav && (
@@ -263,12 +268,13 @@ function ShoppingList({ list, isOpen, onOpen, onClose, onClear }) {
   const count = Object.keys(list).length
 
   const groups = useMemo(() => {
-    const timed=[], botany=[], mining=[], fishing=[], market=[]
+    const timed=[], botany=[], mining=[], fishing=[], vendor=[], market=[]
     for (const item of Object.values(list)) {
       if (item.window)               timed.push(item)
       else if (item.source==='botany')  botany.push(item)
       else if (item.source==='mining')  mining.push(item)
       else if (item.source==='fishing') fishing.push(item)
+      else if (item.source==='vendor')  vendor.push(item)
       else                              market.push(item)
     }
     const ord = { up:0, soon:1, closed:2 }
@@ -276,7 +282,7 @@ function ShoppingList({ list, isOpen, onOpen, onClose, onClear }) {
       const wa=winState(a.window), wb=winState(b.window)
       return (ord[wa?.state]??3) - (ord[wb?.state]??3)
     })
-    return { timed, botany, mining, fishing, market }
+    return { timed, botany, mining, fishing, vendor, market }
   }, [list])
 
   function ShopGroup({ label, iconName, items, isTimed=false }) {
@@ -286,13 +292,14 @@ function ShoppingList({ list, isOpen, onOpen, onClose, onClear }) {
         <div className={`slist__group-hd${isTimed ? ' is-timed' : ''}`}><IcoEl/>{label}</div>
         {items.map(item => {
           const ws = item.window ? winState(item.window) : null
-          let dc = item.source==='market' ? 'var(--dot-market)' : 'var(--dot-avail)'
+          let dc = item.source==='market' ? 'var(--dot-market)' : item.source==='vendor' ? '#d4a84a' : 'var(--dot-avail)'
           if (ws) dc = ws.state==='up' ? 'var(--dot-avail)' : ws.state==='soon' ? 'var(--dot-soon)' : 'var(--dot-closed)'
           return (
             <div className="slist__item" key={item.name}>
               <span className="slist__item-dot" style={{ background:dc, boxShadow:`0 0 5px ${dc}` }}/>
               <span className="slist__item-name">{item.name}</span>
-              {ws && <span className="slist__item-cd">{ws.pre} {fmtDur(ws.ms)}</span>}
+              {ws ? <span className="slist__item-cd">{ws.pre} {fmtDur(ws.ms)}</span>
+                : item.price != null ? <span className="slist__item-cd">{item.price} gil</span> : null}
               <span className="slist__item-qty">×{item.qty}</span>
             </div>
           )
@@ -328,6 +335,7 @@ function ShoppingList({ list, isOpen, onOpen, onClose, onClear }) {
                   {groups.botany.length  > 0 && <ShopGroup label="Botany"               iconName="leaf"      items={groups.botany}/>}
                   {groups.mining.length  > 0 && <ShopGroup label="Mining"               iconName="pick"      items={groups.mining}/>}
                   {groups.fishing.length > 0 && <ShopGroup label="Fishing"              iconName="fish"      items={groups.fishing}/>}
+                  {groups.vendor.length  > 0 && <ShopGroup label="Vendor"               iconName="coin"      items={groups.vendor}/>}
                   {groups.market.length  > 0 && <ShopGroup label="Market Board"         iconName="cart"      items={groups.market}/>}
                 </>
               )}
