@@ -3,6 +3,7 @@ import EorzeaClock from './EorzeaClock'
 import OceanFishing, { OCEAN_ROUTES } from './OceanFishing'
 import { FISHING_SPOTS, EXPANSIONS } from './fishingData'
 import { BAIT_VENDORS } from './baitVendors'
+import { BAIT_TACKLE } from './baitTackleData'
 import ActivityNav from './ActivityNav'
 import './Fishing.css'
 
@@ -154,6 +155,14 @@ export default function Fishing({ spots = FISHING_SPOTS }) {
   const totalFish = spots.reduce((a, s) => a + s.fish.length, 0)
   const caughtCount = Object.values(caught).filter(Boolean).length
 
+  const [view, setView] = useState('spots') // 'spots' | 'bait'
+  const baitFiltered = useMemo(() => {
+    const query = q.trim().toLowerCase()
+    if (!query) return BAIT_TACKLE
+    return BAIT_TACKLE.filter((b) =>
+      (b.name + ' ' + (b.vendor ? `${b.vendor.npc} ${b.vendor.zone || ''}` : '')).toLowerCase().includes(query))
+  }, [q])
+
   const showOcean = zone === 'All zones' && (() => {
     const query = q.trim().toLowerCase()
     if (!query) return true
@@ -188,46 +197,81 @@ export default function Fishing({ spots = FISHING_SPOTS }) {
       <EorzeaClock />
 
       <div className="controls">
+        <div className="seg fish-tabs" role="group" aria-label="View">
+          <button className={view === 'spots' ? 'is-active' : ''} onClick={() => setView('spots')}>Spots</button>
+          <button className={view === 'bait' ? 'is-active' : ''} onClick={() => setView('bait')}>Bait &amp; Tackle</button>
+        </div>
+
         <div className="search">
           <I.search className="search__icon" />
-          <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search spots, fish, bait…" aria-label="Search" />
+          <input value={q} onChange={(e) => setQ(e.target.value)}
+            placeholder={view === 'bait' ? 'Search bait, lures, vendors…' : 'Search spots, fish, bait…'} aria-label="Search" />
         </div>
 
-        <div className="seg" role="group" aria-label="Expansion">
-          {EXPANSIONS.map((e) => (
-            <button key={e.key} className={exp === e.key ? 'is-active' : ''} onClick={() => setExp(e.key)}>
-              <span className="dot" style={{ background: exp === e.key ? 'currentColor' : e.dot }} />{e.key}
-            </button>
-          ))}
-        </div>
-
-        <div className="zonebar">
-          <div className="selwrap">
-            <select value={zone} onChange={(e) => setZone(e.target.value)} aria-label="Zone">
-              {zones.map((z) => <option key={z} value={z}>{z}</option>)}
-            </select>
-            <I.chevron />
-          </div>
-          <span className="zonebar__count"><b>{filtered.length}</b> spots</span>
-        </div>
+        {view === 'spots' ? (
+          <>
+            <div className="seg" role="group" aria-label="Expansion">
+              {EXPANSIONS.map((e) => (
+                <button key={e.key} className={exp === e.key ? 'is-active' : ''} onClick={() => setExp(e.key)}>
+                  <span className="dot" style={{ background: exp === e.key ? 'currentColor' : e.dot }} />{e.key}
+                </button>
+              ))}
+            </div>
+            <div className="zonebar">
+              <div className="selwrap">
+                <select value={zone} onChange={(e) => setZone(e.target.value)} aria-label="Zone">
+                  {zones.map((z) => <option key={z} value={z}>{z}</option>)}
+                </select>
+                <I.chevron />
+              </div>
+              <span className="zonebar__count"><b>{filtered.length}</b> spots</span>
+            </div>
+          </>
+        ) : (
+          <div className="zonebar"><span className="zonebar__count"><b>{baitFiltered.length}</b> bait &amp; tackle</span></div>
+        )}
       </div>
 
-      {showOcean && <OceanFishing />}
-
-      {filtered.length === 0 ? (
-        showOcean ? null : (
-          <div className="empty">
-            <div className="empty__ico"><I.fish /></div>
-            <h3>No spots found</h3>
-            <p>Nothing matches your filters. Try a different zone or expansion.</p>
-          </div>
-        )
-      ) : (
-        <div className="spots">
-          {filtered.map((s) => (
-            <SpotCard key={s.id} spot={s} caught={caught} onToggleFish={toggleFish} onToggleAll={toggleAll} onCopy={copyCoords} />
+      {view === 'bait' ? (
+        <div className="bait-ref">
+          {baitFiltered.map((b) => (
+            <div className="bt-row" key={b.name}>
+              <span className="bt-name"><I.hook />{b.name}</span>
+              {b.vendor ? (
+                <span className="bt-where">
+                  <span className="bt-npc">{b.vendor.npc}{b.vendor.zone ? ` · ${b.vendor.zone}` : ''}</span>
+                  {b.vendor.coords && (
+                    <button className="bt-coords" title="Tap to copy" onClick={() => copyCoords(b.vendor.coords)}>
+                      <I.copy />{b.vendor.coords}
+                    </button>
+                  )}
+                  <span className="bt-price"><I.coin />{b.vendor.price}g</span>
+                </span>
+              ) : (
+                <span className="bt-other">Gathered / other</span>
+              )}
+            </div>
           ))}
         </div>
+      ) : (
+        <>
+          {showOcean && <OceanFishing />}
+          {filtered.length === 0 ? (
+            showOcean ? null : (
+              <div className="empty">
+                <div className="empty__ico"><I.fish /></div>
+                <h3>No spots found</h3>
+                <p>Nothing matches your filters. Try a different zone or expansion.</p>
+              </div>
+            )
+          ) : (
+            <div className="spots">
+              {filtered.map((s) => (
+                <SpotCard key={s.id} spot={s} caught={caught} onToggleFish={toggleFish} onToggleAll={toggleAll} onCopy={copyCoords} />
+              ))}
+            </div>
+          )}
+        </>
       )}
 
       <div className={`toast${toast ? ' show' : ''}`}><I.copy />{toast}</div>

@@ -326,3 +326,24 @@ body.fishing-page {
 .sched__time { font:700 12.5px var(--fd); color: var(--parchment); font-variant-numeric: tabular-nums; }
 .sched__row.is-next .sched__time { color: var(--teal-bright); }
 .sched__route { font:600 12px var(--fb); color: var(--ink); min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* ── Bait & Tackle reference view ───────────────────────────── */
+.bait-ref { display: flex; flex-direction: column; gap: 6px; padding: 4px 16px 0; }
+.bt-row {
+  display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap;
+  background: rgba(63,182,176,.05); border: 1px solid var(--teal-dim); border-radius: 10px; padding: 9px 12px;
+}
+.bt-name { display: inline-flex; align-items: center; gap: 7px; font: 600 13.5px var(--fb); color: var(--parchment); }
+.bt-name svg { width: 14px; height: 14px; color: var(--teal-bright); flex: 0 0 14px; }
+.bt-where { display: inline-flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.bt-npc { font: 500 11.5px var(--fb); color: var(--ink-dim); text-transform: capitalize; }
+.bt-coords {
+  display: inline-flex; align-items: center; gap: 4px; font: 600 11px var(--fb); font-variant-numeric: tabular-nums;
+  color: var(--teal-bright); background: rgba(63,182,176,.12); border: 1px solid var(--teal-dim);
+  border-radius: 6px; padding: 2px 7px; cursor: pointer;
+}
+.bt-coords svg { width: 11px; height: 11px; }
+.bt-price { display: inline-flex; align-items: center; gap: 4px; font: 700 11.5px var(--fb); color: var(--teal-bright); }
+.bt-price svg { width: 12px; height: 12px; }
+.bt-other { font: 500 11.5px var(--fb); color: var(--ink-faint); }
+.fish-tabs { width: 100%; }
