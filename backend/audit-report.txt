@@ -1,0 +1,308 @@
+
+========================================================================
+ffxivlog.com DATA & FEATURE AUDIT
+========================================================================
+Generated: 2026-06-04T23:46:51Z UTC
+Scope: recipes, gathering (fishing/mining/botany), DB integrity.
+Hunt marks: SKIPPED (confirmed accurate).
+
+========================================================================
+1 · RECIPE AUDIT (CUL — Dawntrail + Endwalker)
+========================================================================
+Total recipes in DB: 110
+By expansion: {"Dawntrail":110}
+By job: {"CUL":110}
+  ⚠ FINDING: 0 Endwalker CUL recipes in DB (only Dawntrail seeded). Endwalker food tier is absent.
+
+--- 1a · Recipes with 0 ingredients (failed import) ---
+Count: 0
+
+--- 1b · Duplicate recipes (same name + job + item_level) ---
+Duplicate groups: 0
+
+--- 1c · Recipes missing food buff data ---
+Count: 35 of 110
+INTERPRETATION: food_buff is null only when the result is NOT in Teamcraft foods.json,
+i.e. the item is not an actual consumable meal. These are non-food CUL crafts that the
+ilvl>=640 scraper filter swept in (collectables, Cosmic Exploration mission turn-ins,
+intermediate goods). The buff absence is EXPECTED; the real issue is their presence in a
+cooking/food recipe list. Split below by heuristic:
+  • Likely non-food (collectable/mission/intermediate): 20
+    • Aunt Tii's Billboard [ilvl 645] (id 653)
+    • Cooking Mezcal [ilvl 650] (id 655)
+    • Map Printing Essentials [ilvl 650] (id 656)
+    • Rarefied Boiled Alpaca Steak [ilvl 650] (id 658)
+    • Trusty Taco Tin [ilvl 650] (id 660)
+    • Engineer's Supply Kit [ilvl 653] (id 662)
+    • Mountain Salt [ilvl 653] (id 665)
+    • Railroad Repair Kit [ilvl 656] (id 670)
+    • Rarefied Banana Ponzecake [ilvl 656] (id 671)
+    • Royal Maple Syrup [ilvl 656] (id 672)
+    • Turali Corn Oil [ilvl 660] (id 678)
+    • Aunt Tii's Tunic Supplies [ilvl 665] (id 679)
+    • Kukuru Pulp Juice [ilvl 665] (id 681)
+    • Rarefied Turali Pineapple Ponzecake [ilvl 665] (id 682)
+    • Rarefied Salmon Jerky [ilvl 675] (id 691)
+    • Shaco Packaging [ilvl 675] (id 692)
+    • Rarefied Stuffed Peppers [ilvl 685] (id 701)
+    • Rarefied Tacos de Carne Asada [ilvl 690] (id 711)
+    • Synthetic Dark Matter Gamma [ilvl 740] (id 736)
+    • Aspected Aetherocatalyst [ilvl 770] (id 740)
+  • Other no-buff recipes worth a manual look: 15
+    • Connoisseur's Crab Cakes [ilvl 642] (id 651)
+    • Connoisseur's Chili Crab [ilvl 643] (id 652)
+    • Ut'ohmu Chili Sauce [ilvl 650] (id 661)
+    • Neomasher [ilvl 655] (id 666)
+    • Fermented Aloe Juice [ilvl 656] (id 668)
+    • Ja Tiika Juice [ilvl 665] (id 680)
+    • Whipped Cream [ilvl 665] (id 683)
+    • Prickly Pear Juice [ilvl 680] (id 697)
+    • Boonewa Soda [ilvl 690] (id 702)
+    • Kugane-yaki [ilvl 690] (id 705)
+    • Leg of Prosciutto [ilvl 690] (id 706)
+    • Mug of Cocoa [ilvl 690] (id 708)
+    • Old Fishwife's Paella [ilvl 690] (id 709)
+    • Popoto Chips [ilvl 690] (id 710)
+    • Steaming Stew Bowl [ilvl 690] (id 712)
+
+--- 1d · Recipes missing star rating / item level ---
+stars IS NULL: 0   (note: stars=0 is valid = "no star", not reported)
+item_level IS NULL: 0
+
+--- 1e · Ingredients classified MARKET_BOARD but match a gather source ---
+Distinct mis-sourced ingredients: 0 (occurrences: 0)
+
+--- 1f · Ingredient source distribution (after overrides) ---
+Total ingredient rows: 521
+    MARKET_BOARD   331
+    BOTANY         145
+    MINING         19
+    FISHING        16
+    VENDOR         10
+
+========================================================================
+2 · SUBCRAFT CHAIN COMPLETENESS
+========================================================================
+Ingredients flagged subcraft=true: 182
+Distinct subcraft items WITHOUT a matching recipe in DB: 20
+⚠ These are broken subcraft chains — the UI flags them as crafted but cannot show a recipe:
+    • Upland Wheat Flour (id 27841) — used in 21 recipe(s): Broccoflower Stew, Caviar Canapes, Caviar Sandwich, Banana Ponzecake…
+    • Palm Sugar (id 36080) — used in 11 recipe(s): Honeyed Dragonfruit, Gateau au Chocolat, Creamy Hot Chocolate, Tender Shortcake…
+    • Frantoio Oil (id 27838) — used in 10 recipe(s): Baked Eggplant, Tandoori Raptor, Spaghetti al Olio e Peperoncino, Acqua Pazza…
+    • Dark Rye Flour (id 36077) — used in 9 recipe(s): Maple Teriyaki, Sweetmuffin, Tacos Al Pastor, Tart Turali Tart…
+    • Garlean Cheese (id 36081) — used in 8 recipe(s): Baked Eggplant, Caviar Canapes, Turali Pineapple Ponzecake, Rarefied Turali Pineapple Ponzecake…
+    • Fermented Butter (id 12895) — used in 8 recipe(s): Omelette Rice, Maple Teriyaki, Royal Toast, Gateau au Chocolat…
+    • Perilla Oil (id 36079) — used in 7 recipe(s): Baba Ghanoush, Marinated Broccoflower, Mezcal-marinated Swampmonk, Nasi Goreng…
+    • Northern Sea Salt (id 36078) — used in 7 recipe(s): Broccoflower Stew, Caviar Sandwich, Spicy Stellar Soup, Tandoori Raptor…
+    • Night Vinegar (id 27843) — used in 5 recipe(s): Marinated Broccoflower, Roast Rroneek, Rroneek Steak, Lomo Saltado…
+    • Coconut Milk (id 36082) — used in 3 recipe(s): Dragonfruit Blend, Moqueca, Sweet Maple Mate
+    • Gelatin (id 4863) — used in 2 recipe(s): Fruit and Aloe Jelly, Pineapple Orange Jelly
+    • Algae Salt (id 19848) — used in 1 recipe(s): Baba Ghanoush
+    • Garden Beet Sugar (id 27839) — used in 1 recipe(s): Dragonfruit Blend
+    • Golden Honey (id 27842) — used in 1 recipe(s): Honeyed Dragonfruit
+    • Sour Cream (id 12894) — used in 1 recipe(s): Spicy Stellar Soup
+    • Grade 1 Gemsap of Dexterity (id 44045) — used in 1 recipe(s): Fermented Aloe Juice
+    • Grade 1 Gemsap of Vitality (id 44046) — used in 1 recipe(s): Ja Tiika Juice
+    • Sanctified Water (id 44051) — used in 1 recipe(s): Prickly Pear Juice
+    • Ginseng Lumber (id 44019) — used in 1 recipe(s): Leg of Prosciutto
+    • Vermicelli (id 12908) — used in 1 recipe(s): Chicken Pasta
+
+========================================================================
+3 · FISHING SPOTS AUDIT
+========================================================================
+Total fishing spots: 79
+
+--- 3a · Spots with 0 fish ---
+Count: 0
+
+--- 3b · Spots missing bait data ---
+Count: 0
+
+--- 3c · Spots missing coords ---
+Count: 0
+
+--- 3d · Spot counts per zone (Dawntrail) — watch for suspiciously low ---
+    ⚠   1  Solution Nine
+        3  Tuliyollal
+        3  Urqopacha
+        4  Shaaloani
+        4  Heritage Found
+        6  Living Memory
+        8  Kozama'uka
+       11  Yak T'el
+    (Dawntrail zones flagged ⚠ have < 3 spots — verify completeness)
+
+========================================================================
+4 · MINING NODES AUDIT
+========================================================================
+Total Mining nodes: 51
+
+--- Mining · nodes with 0 items ---
+Count: 0
+
+--- Mining · nodes missing coords ---
+Count: 0
+
+--- Mining · nodes missing expansion ---
+Count: 0
+
+--- Mining · Unspoiled/Ephemeral/Legendary missing time window ---
+Timed nodes: 25; missing window: 21
+    • Labyrinthos [Labyrinthos, Endwalker] Unspoiled (time="See Unspoiled Nodes list")
+    • Mare Lamentorum [Mare Lamentorum, Endwalker] Unspoiled (time="See Unspoiled Nodes list")
+    • Garlemald [Garlemald, Endwalker] Unspoiled (time="See Unspoiled Nodes list")
+    • Elpis [Elpis, Endwalker] Unspoiled (time="See Unspoiled Nodes list")
+    • Thavnair [Thavnair, Endwalker] Unspoiled (time="See Unspoiled Nodes list")
+    • Garlemald [Garlemald, Endwalker] Unspoiled (time="See Unspoiled Nodes list")
+    • Mare Lamentorum [Mare Lamentorum, Endwalker] Unspoiled (time="See Unspoiled Nodes list")
+    • Elpis [Elpis, Endwalker] Unspoiled (time="See Unspoiled Nodes list")
+    • Garlemald [Garlemald, Endwalker] Unspoiled (time="See Unspoiled Nodes list")
+    • Mare Lamentorum [Mare Lamentorum, Endwalker] Unspoiled (time="See Unspoiled Nodes list")
+    • Labyrinthos [Labyrinthos, Endwalker] Unspoiled (time="See Unspoiled Nodes list")
+    • Thavnair [Thavnair, Endwalker] Unspoiled (time="See Unspoiled Nodes list")
+    • Ultima Thule [Ultima Thule, Endwalker] Unspoiled (time="See Unspoiled Nodes list")
+    • Elpis [Elpis, Endwalker] Unspoiled (time="See Unspoiled Nodes list")
+    • Kozama'uka [Kozama'uka, Dawntrail] Unspoiled (time="See Unspoiled Nodes list")
+    • Shaaloani [Shaaloani, Dawntrail] Unspoiled (time="See Unspoiled Nodes list")
+    • Heritage Found [Heritage Found, Dawntrail] Unspoiled (time="See Unspoiled Nodes list")
+    • Living Memory [Living Memory, Dawntrail] Unspoiled (time="See Unspoiled Nodes list")
+    • Urqopacha [Urqopacha, Dawntrail] Unspoiled (time="See Unspoiled Nodes list")
+    • Shaaloani [Shaaloani, Dawntrail] Unspoiled (time="See Unspoiled Nodes list")
+    • Living Memory [Living Memory, Dawntrail] Unspoiled (time="See Unspoiled Nodes list")
+
+--- Mining · nodes per expansion ---
+     28  Endwalker
+     23  Dawntrail
+
+========================================================================
+5 · BOTANY NODES AUDIT
+========================================================================
+Total Botany nodes: 43
+
+--- Botany · nodes with 0 items ---
+Count: 0
+
+--- Botany · nodes missing coords ---
+Count: 0
+
+--- Botany · nodes missing expansion ---
+Count: 0
+
+--- Botany · Unspoiled/Ephemeral/Legendary missing time window ---
+Timed nodes: 18; missing window: 9
+    • Garlemald [Garlemald, Endwalker] Unspoiled (time="See Unspoiled Nodes list")
+    • Elpis [Elpis, Endwalker] Unspoiled (time="See Unspoiled Nodes list")
+    • Ultima Thule [Ultima Thule, Endwalker] Unspoiled (time="See Unspoiled Nodes list")
+    • Urqopacha [Urqopacha, Dawntrail] Unspoiled (time="See Unspoiled Nodes list")
+    • Kozama'uka [Kozama'uka, Dawntrail] Unspoiled (time="See Unspoiled Nodes list")
+    • Yak T'el [Yak T'el, Dawntrail] Unspoiled (time="See Unspoiled Nodes list")
+    • Shaaloani [Shaaloani, Dawntrail] Unspoiled (time="See Unspoiled Nodes list")
+    • Heritage Found [Heritage Found, Dawntrail] Unspoiled (time="See Unspoiled Nodes list")
+    • Living Memory [Living Memory, Dawntrail] Unspoiled (time="See Unspoiled Nodes list")
+
+--- Botany · nodes per expansion ---
+     19  Endwalker
+     24  Dawntrail
+
+========================================================================
+6 · CROSS-REFERENCE SPOT-CHECK (20 sampled ingredients)
+========================================================================
+Distinct ingredients: 130; sampling 20 (even spread by item id).
+    Raptor Shank               src=MARKET_BOARD  ✓ ok (no gather match)
+    Galago Mint                src=BOTANY        ? unverified (not found in local BOTANY dataset)
+    Sour Cream                 src=MARKET_BOARD  ✓ ok (no gather match)
+    Koshu Pork                 src=MARKET_BOARD  ✓ ok (no gather match)
+    Upland Wheat               src=BOTANY        ? unverified (not found in local BOTANY dataset)
+    Upland Wheat Flour         src=MARKET_BOARD  ✓ ok (no gather match)
+    Garlean Cheese             src=MARKET_BOARD  ✓ ok (no gather match)
+    Eblan Lentils              src=BOTANY        ? unverified (not found in local BOTANY dataset)
+    Bird of Elpis Breast       src=MARKET_BOARD  ✓ ok (no gather match)
+    Broccoflower               src=MARKET_BOARD  ✓ ok (no gather match)
+    Yok Kukuru Pod             src=MARKET_BOARD  ✓ ok (no gather match)
+    Turali Corn Oil            src=MARKET_BOARD  ✓ ok (no gather match)
+    Broccoli                   src=BOTANY        ? unverified (not found in local BOTANY dataset)
+    Turali Aloe                src=BOTANY        ? unverified (not found in local BOTANY dataset)
+    Grade 1 Gemsap of Dexterity src=MARKET_BOARD  ✓ ok (no gather match)
+    Nopalitender Tuna          src=MARKET_BOARD  ✓ ok (no gather match)
+    Royal Lobster              src=MARKET_BOARD  ✓ ok (no gather match)
+    Fulgurite                  src=MINING        ? unverified (not found in local MINING dataset)
+    Levinchrome Aethersand     src=MARKET_BOARD  ✓ ok (no gather match)
+    Rock-fist Popoto           src=MARKET_BOARD  ✓ ok (no gather match)
+
+Spot-check misclassifications: 0 of 20
+
+========================================================================
+7 · DATABASE INTEGRITY
+========================================================================
+
+--- 7a · Orphaned progress records (user_id → deleted user) ---
+Orphaned progress rows: 0  (FK is ON DELETE CASCADE, so expected 0)
+
+--- 7b · Orphaned user_jobs records ---
+Orphaned user_jobs rows: 0
+Orphaned submissions rows: 0
+Orphaned user_searches rows: 0
+Orphaned ai_queries rows: 0
+
+--- 7c · Indexes (frequently-queried columns) ---
+  ai_queries:
+      ai_queries_pkey  USING btree (id)
+  feature_flags:
+      feature_flags_pkey  USING btree (key)
+  hunts:
+      hunts_pkey  USING btree (id)
+  ingredient_overrides:
+      ingredient_overrides_pkey  USING btree (item_id)
+  lodestone_cache:
+      lodestone_cache_expires_idx  USING btree (expires_at)
+      lodestone_cache_pkey  USING btree (cache_key)
+  progress:
+      progress_pkey  USING btree (id)
+      progress_user_id_hunt_id_key  USING btree (user_id, hunt_id)
+  recipes:
+      recipes_pkey  USING btree (id)
+  submissions:
+      submissions_pkey  USING btree (id)
+  user_jobs:
+      user_jobs_pkey  USING btree (id)
+      user_jobs_user_id_job_abbr_key  USING btree (user_id, job_abbr)
+  user_searches:
+      idx_user_searches_lookup  USING btree (query_norm, created_at DESC)
+      user_searches_pkey  USING btree (id)
+  users:
+      users_discord_id_key  USING btree (discord_id)
+      users_pkey  USING btree (id)
+      users_slug_unique  USING btree (slug) WHERE (slug IS NOT NULL)
+
+--- 7c-gaps · Likely-missing indexes (heuristic) ---
+
+    • recipes(job, expansion) — /api/recipes filters on these; currently full-scan (small table, low impact).
+    • submissions(user_id) — admin/user submission lookups.
+    • ai_queries(created_at) — usage reporting by date.
+  NOTE: UNIQUE(user_id, hunt_id)/(user_id, job_abbr) constraints already provide a leading-column index on user_id.
+
+--- 7d · ingredient_overrides table ---
+Rows: 2
+    • Quahog (id 49233) → Fishing  — Dawntrail coastal fishing — missing from Teamcraft open data
+    • Dark Eggplant (id 39865) → Botany  — Dawntrail botany — missing from Teamcraft open data
+    seed check: Quahog (id 49233) → Fishing
+    seed check: Dark Eggplant (id 39865) → Botany
+    overrides not referenced by any recipe ingredient: 0
+    ingredient occurrences corrected at request-time by an override: 4
+
+========================================================================
+AUDIT SUMMARY
+========================================================================
+Recipes: 110 (Dawntrail)
+  • 0-ingredient recipes ......... 0
+  • duplicate groups ............. 0
+  • missing food buff ............ 35
+  • missing star rating (null) ... 0
+  • MARKET_BOARD→gather mismatches  0 distinct
+  • broken subcraft chains ....... 20 distinct items
+Fishing: 79 spots — 0 empty, 0 no-bait, 0 no-coords
+Mining:  51 nodes (see §4 for breakdown)
+Botany:  43 nodes (see §5 for breakdown)
+DB integrity: checked (orphans, indexes, overrides) — see §7
+
+Reminder: nothing was auto-fixed. Review findings before acting.
