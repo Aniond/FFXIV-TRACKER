@@ -74,7 +74,7 @@
 }
 .act-nav__item:hover:not(.is-soon) .act-nav__item-ico { color: #9a9388; }
 
-.act-nav__item-label { flex: 1; }
+.act-nav__item-label { flex: 1; white-space: nowrap; }
 
 /* Active state */
 .act-nav__item.is-active { color: #d4cfc4; background: rgba(255,255,255,.03); }
