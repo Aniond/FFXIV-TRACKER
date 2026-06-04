@@ -160,7 +160,7 @@ export default function AISearch() {
     <div className="ledger ai">
       <ActivityNav />
       <header className="brand">
-        <span className="brand__crest"><I.spark /></span>
+        <a href="/" className="brand__crest" title="Home" aria-label="Home"><I.spark /></a>
         <div>
           <h1 className="brand__title">CENTURIO AI</h1>
           <div className="brand__sub">

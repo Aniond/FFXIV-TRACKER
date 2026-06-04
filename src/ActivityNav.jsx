@@ -100,6 +100,21 @@ const ACTIVITIES = [
   },
 ]
 
+// Home → personal dashboard. Shown only to logged-in users (prepended at runtime).
+const HOME_ITEM = {
+  id: 'home',
+  label: 'Home',
+  href: '/',
+  soon: false,
+  icon: (p) => (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" {...p}>
+      <path d="M3 11.5 12 4l9 7.5"/>
+      <path d="M5 10v9a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-9"/>
+      <path d="M9.5 20v-5h5v5"/>
+    </svg>
+  ),
+}
+
 // Admin-only entry (until ENABLE_AI_PUBLIC flips on) — appended at runtime.
 const AI_ITEM = {
   id: 'ai',
@@ -137,15 +152,23 @@ function findCurrent(path, activities) {
 export default function ActivityNav() {
   const path = window.location.pathname
 
-  // Reveal the AI entry for admins, or for everyone once ENABLE_AI_PUBLIC is on.
+  // Home link for logged-in users; AI entry for admins (or everyone once ENABLE_AI_PUBLIC is on).
   const [showAi, setShowAi] = useState(false)
+  const [loggedIn, setLoggedIn] = useState(false)
   useEffect(() => {
     Promise.all([getToken() ? fetchMe().catch(() => null) : Promise.resolve(null), fetchFlags()])
-      .then(([me, flags]) => { if (me?.is_admin || flags?.ENABLE_AI_PUBLIC) setShowAi(true) })
+      .then(([me, flags]) => {
+        setLoggedIn(!!me)
+        if (me?.is_admin || flags?.ENABLE_AI_PUBLIC) setShowAi(true)
+      })
       .catch(() => {})
   }, [])
 
-  const activities = showAi ? [...ACTIVITIES, AI_ITEM] : ACTIVITIES
+  const activities = [
+    ...(loggedIn ? [HOME_ITEM] : []),
+    ...ACTIVITIES,
+    ...(showAi ? [AI_ITEM] : []),
+  ]
   const { top: currentTop, leaf: currentLeaf } = findCurrent(path, activities)
 
   const [open, setOpen] = useState(false)

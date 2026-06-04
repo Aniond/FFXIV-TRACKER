@@ -152,7 +152,7 @@ export default function Botany({ nodes = BOTANY_NODES }) {
   return (
     <div className="ledger">
       <header className="brand">
-        <span className="brand__crest"><I.leaf /></span>
+        <a href="/" className="brand__crest" title="Home" aria-label="Home"><I.leaf /></a>
         <div>
           <h1 className="brand__title">FORAGING LOG</h1>
           <div className="brand__sub">Centurio Ledger · {gotItems}/{totalItems} gathered</div>

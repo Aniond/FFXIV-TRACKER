@@ -162,7 +162,7 @@ export default function Mining({ nodes = MINING_NODES }) {
     <div className="ledger">
       <ActivityNav />
       <header className="brand">
-        <span className="brand__crest"><I.pick /></span>
+        <a href="/" className="brand__crest" title="Home" aria-label="Home"><I.pick /></a>
         <div>
           <h1 className="brand__title">MINING LOG</h1>
           <div className="brand__sub">Centurio Ledger · {gotItems}/{totalItems} collected</div>

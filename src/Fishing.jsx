@@ -166,7 +166,7 @@ export default function Fishing({ spots = FISHING_SPOTS }) {
     <div className="ledger">
       <ActivityNav />
       <header className="brand">
-        <span className="brand__crest"><I.hook /></span>
+        <a href="/" className="brand__crest" title="Home" aria-label="Home"><I.hook /></a>
         <div>
           <h1 className="brand__title">FISHING LOG</h1>
           <div className="brand__sub">Centurio Ledger · {caughtCount}/{totalFish} logged</div>

@@ -193,7 +193,7 @@ function App() {
     <div className={`ledger${t.density === 'compact' ? ' is-compact' : ''}`}>
       <ActivityNav />
       <header className="brand">
-        <div className="brand__crest"><Icon.crest /></div>
+        <a href="/" className="brand__crest" title="Home" aria-label="Home"><Icon.crest /></a>
         <div className="brand__info">
           <h1 className="brand__title">CENTURIO LEDGER</h1>
           <div className="brand__sub">Hunt Board · {doneCount}/{hunts.length} cleared</div>
