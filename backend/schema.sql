@@ -101,3 +101,18 @@ CREATE TABLE IF NOT EXISTS user_searches (
 
 CREATE INDEX IF NOT EXISTS idx_user_searches_lookup
   ON user_searches (query_norm, created_at DESC);
+
+-- Crafting recipes (added + seeded by migrate-cooking.js from Teamcraft data).
+-- Currently Dawntrail Culinarian (CUL). See backend/scrape-cooking.js.
+
+CREATE TABLE IF NOT EXISTS recipes (
+  id          SERIAL PRIMARY KEY,
+  name        VARCHAR(255),
+  job         VARCHAR(10) DEFAULT 'CUL',
+  item_level  INTEGER,
+  stars       INTEGER DEFAULT 0,
+  food_buff   JSONB,
+  ingredients JSONB,
+  expansion   VARCHAR(50) DEFAULT 'Dawntrail',
+  created_at  TIMESTAMPTZ DEFAULT NOW()
+);

@@ -336,6 +336,27 @@ app.get('/api/hunts', async (req, res) => {
   }
 });
 
+// Recipes — Dawntrail crafting data (currently Culinarian). Public read.
+// Optional filters: ?job=CUL  ?expansion=Dawntrail
+app.get('/api/recipes', async (req, res) => {
+  const where = [];
+  const params = [];
+  if (req.query.job) { params.push(String(req.query.job).toUpperCase()); where.push(`job = $${params.length}`); }
+  if (req.query.expansion) { params.push(String(req.query.expansion)); where.push(`expansion = $${params.length}`); }
+  const clause = where.length ? `WHERE ${where.join(' AND ')}` : '';
+  try {
+    const result = await pool.query(
+      `SELECT id, name, job, item_level, stars, food_buff, ingredients, expansion
+       FROM recipes ${clause} ORDER BY item_level, name`,
+      params
+    );
+    res.json(result.rows);
+  } catch (err) {
+    console.error('[recipes]', err.message);
+    res.status(500).json({ error: 'Failed to load recipes' });
+  }
+});
+
 app.post('/api/hunts', adminAuth, async (req, res) => {
   const { name, rank, type, billNumber, zone, area, coords, coordsNote, targets, reward, authority, tips, status } = req.body;
   if (!name) return res.status(400).json({ error: 'name is required' });
