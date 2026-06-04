@@ -61,3 +61,28 @@ CREATE TABLE IF NOT EXISTS hunts (
   created_at   TIMESTAMPTZ DEFAULT NOW(),
   updated_at   TIMESTAMPTZ DEFAULT NOW()
 );
+
+-- Admin tables (added by migrate-admin.js)
+
+ALTER TABLE users ADD COLUMN IF NOT EXISTS banned BOOLEAN NOT NULL DEFAULT false;
+
+CREATE TABLE IF NOT EXISTS ai_queries (
+  id          SERIAL PRIMARY KEY,
+  user_id     INTEGER REFERENCES users(id) ON DELETE SET NULL,
+  query_text  TEXT NOT NULL,
+  tokens_in   INTEGER NOT NULL DEFAULT 0,
+  tokens_out  INTEGER NOT NULL DEFAULT 0,
+  cached      BOOLEAN NOT NULL DEFAULT false,
+  created_at  TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS feature_flags (
+  key         VARCHAR(100) PRIMARY KEY,
+  enabled     BOOLEAN NOT NULL DEFAULT false,
+  description TEXT
+);
+
+INSERT INTO feature_flags (key, enabled, description) VALUES
+  ('ENABLE_AI_PUBLIC',  false, 'Enable AI assistant for logged-in users'),
+  ('ENABLE_AI_GUESTS',  false, 'Enable AI assistant for guests (not logged in)')
+ON CONFLICT (key) DO NOTHING;

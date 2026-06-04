@@ -105,4 +105,79 @@ async function saveJobs(jobs) {
   return r.json()
 }
 
-export { API, getToken, setToken, clearToken, fetchMe, loadProgress, saveProgress, resetProgress, saveStash, savePreferences, fetchJobs, saveJobs, saveCharacterLink, refreshJobsFromLodestone }
+// ── Admin API helpers ────────────────────────────────────────────────────────
+
+async function adminFetch(path, opts = {}) {
+  return apiFetch(`/api/admin${path}`, opts)
+}
+
+async function adminStats() {
+  const r = await adminFetch('/stats')
+  if (!r.ok) throw Object.assign(new Error('admin fetch failed'), { status: r.status })
+  return r.json()
+}
+
+async function adminUsers() {
+  const r = await adminFetch('/users')
+  if (!r.ok) throw Object.assign(new Error('admin fetch failed'), { status: r.status })
+  return r.json()
+}
+
+async function adminBanUser(id, banned) {
+  const r = await adminFetch(`/users/${id}/ban`, {
+    method: 'POST',
+    body: JSON.stringify({ banned }),
+  })
+  if (!r.ok) throw new Error('ban failed')
+  return r.json()
+}
+
+async function adminQueries() {
+  const r = await adminFetch('/queries')
+  if (!r.ok) throw Object.assign(new Error('admin fetch failed'), { status: r.status })
+  return r.json()
+}
+
+async function adminSubmissions() {
+  const r = await adminFetch('/submissions')
+  if (!r.ok) throw Object.assign(new Error('admin fetch failed'), { status: r.status })
+  return r.json()
+}
+
+async function adminUpdateSubmission(id, status) {
+  const r = await adminFetch(`/submissions/${id}`, {
+    method: 'PATCH',
+    body: JSON.stringify({ status }),
+  })
+  if (!r.ok) throw new Error('submission update failed')
+  return r.json()
+}
+
+async function adminFlags() {
+  const r = await adminFetch('/flags')
+  if (!r.ok) throw Object.assign(new Error('admin fetch failed'), { status: r.status })
+  return r.json()
+}
+
+async function adminToggleFlag(key, enabled) {
+  const r = await adminFetch(`/flags/${key}`, {
+    method: 'PATCH',
+    body: JSON.stringify({ enabled }),
+  })
+  if (!r.ok) throw new Error('flag update failed')
+  return r.json()
+}
+
+async function adminApiUsage() {
+  const r = await adminFetch('/api-usage')
+  if (!r.ok) throw Object.assign(new Error('admin fetch failed'), { status: r.status })
+  return r.json()
+}
+
+export {
+  API, getToken, setToken, clearToken, fetchMe,
+  loadProgress, saveProgress, resetProgress, saveStash, savePreferences,
+  fetchJobs, saveJobs, saveCharacterLink, refreshJobsFromLodestone,
+  adminStats, adminUsers, adminBanUser, adminQueries,
+  adminSubmissions, adminUpdateSubmission, adminFlags, adminToggleFlag, adminApiUsage,
+}
