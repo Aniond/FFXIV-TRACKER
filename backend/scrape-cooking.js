@@ -1,5 +1,5 @@
 /**
- * scrape-cooking.js — Dawntrail Culinarian (CUL) recipe scraper.
+ * scrape-cooking.js — Culinarian (CUL) food recipes + full subcraft chains.
  *
  * Source: FFXIV Teamcraft public data on GitHub.
  *   - recipes.json  : recipe defs (job, rlvl, stars, result id, ingredients[])
@@ -7,18 +7,27 @@
  *   - foods.json    : food items with stat Bonuses (the food buff)
  *   - ilvls.json    : id -> item level
  *
- * Filters to CUL (job 15) Dawntrail recipes by RESULT ITEM LEVEL >= 640 (the
- * DT food tier). Filtering on item level — not recipe level — deliberately
- * excludes ~200 item-level-1 special crafts that share the DT recipe tier
- * (Cosmic Exploration mission turn-ins, seasonal "Launch Party" foods, etc.)
- * plus a couple of stray Endwalker ilvl-620 resins. Resolves names, extracts
- * the food buff, and tags
- * each ingredient's source by cross-referencing the gathering data snapshot
- * (backend/ai/gameData.json) — FISHING / MINING / BOTANY / MARKET_BOARD —
- * plus a subcraft flag when the ingredient is itself a crafted item.
+ * What it emits (backend/cooking-recipes.json), two kinds of rows:
+ *
+ *   1. FOOD DISHES  (is_subcraft = false)
+ *      CUL recipes whose RESULT is an actual food (present in foods.json with a
+ *      stat buff) AND result item level >= 580. Tagged Endwalker (580-639) or
+ *      Dawntrail (>=640) by result item level. This filter excludes the ~35
+ *      non-food CUL crafts at the DT tier (Rarefied collectables, Cosmic
+ *      Exploration mission turn-ins, repair kits, etc.) — they have no food
+ *      buff and never belonged on a cooking page.
+ *
+ *   2. SUBCRAFTS    (is_subcraft = true)
+ *      Every intermediate crafted item transitively required by a dish, from
+ *      ANY crafting job (ALC, CUL, WVR, …). These carry no food buff but MUST
+ *      exist so the UI can resolve a recipe for every ingredient flagged
+ *      subcraft=true. Resolved recursively (a subcraft's own crafted
+ *      ingredients are pulled in too).
+ *
+ * Each ingredient is source-tagged (FISHING / MINING / BOTANY / VENDOR /
+ * MARKET_BOARD) by cross-referencing Teamcraft nodes + our gather snapshot.
  *
  * Output: backend/cooking-recipes.json (seed consumed by migrate-cooking.js).
- *
  * Run:  node backend/scrape-cooking.js
  */
 const fs = require('fs');
@@ -26,7 +35,11 @@ const path = require('path');
 
 const BASE = 'https://raw.githubusercontent.com/ffxiv-teamcraft/ffxiv-teamcraft/master/libs/data/src/lib/json/';
 const CUL_JOB = 15;
-const DT_MIN_ILVL = 640; // Dawntrail food tier (result item level)
+const EW_MIN_ILVL = 580;  // Endwalker food floor (result item level)
+const DT_MIN_ILVL = 640;  // Dawntrail food floor (result item level)
+
+// Teamcraft job id -> FFXIV class abbreviation (DoH crafters).
+const JOB_ABBR = { 8: 'CRP', 9: 'BSM', 10: 'ARM', 11: 'GSM', 12: 'LTW', 13: 'WVR', 14: 'ALC', 15: 'CUL' };
 
 // Teamcraft food Bonuses stat name -> FFXIV abbreviation.
 const STAT_ABBR = {
@@ -43,7 +56,6 @@ const getJson = async (file) => {
 };
 
 const norm = (s) => String(s || '').replace(/\s*\(.*?\)\s*$/, '').trim().toLowerCase();
-
 const coordStr = (x, y) => `X:${Number(x).toFixed(1)}, Y:${Number(y).toFixed(1)}`;
 
 // Our curated gathering snapshot (backend/ai/gameData.json) — name -> full
@@ -64,9 +76,7 @@ function buildGameLocations() {
   return m;
 }
 
-// Teamcraft node/fishing location resolver, keyed by item ID. Nodes carry the
-// gather type (0/1 mining, 2/3 botany), zone, coords, and (for timed nodes)
-// spawn windows via `spawns` (ET start hours) + `duration` (ET minutes).
+// Teamcraft node/fishing location resolver, keyed by item ID.
 function buildTeamcraftLocations(nodes, fspots, places) {
   const byItem = new Map();
   for (const n of Object.values(nodes)) {
@@ -105,9 +115,7 @@ function buildTeamcraftLocations(nodes, fspots, places) {
   };
 }
 
-// NPC gil-shop vendor resolver: item ID -> cheapest gil price + the selling
-// NPC's name and map location. Covers basic staples (salt, water, etc.) that
-// aren't gathered or crafted.
+// NPC gil-shop vendor resolver: item ID -> cheapest gil price + NPC location.
 function buildVendorIndex(shops, npcs, places) {
   const byItem = new Map();
   for (const shop of Object.values(shops)) {
@@ -168,59 +176,111 @@ async function main() {
     getJson('shops.json'),
     getJson('npcs.json'),
   ]);
-  console.log(`  recipes ${recipes.length}, items ${Object.keys(items).length}, foods ${foods.length}, nodes ${Object.keys(nodes).length}, shops ${Object.keys(shops).length}`);
+  console.log(`  recipes ${recipes.length}, items ${Object.keys(items).length}, foods ${foods.length}, nodes ${Object.keys(nodes).length}`);
 
   const foodMap = new Map(foods.map((f) => [f.ID, f]));
-  const craftedIds = new Set(recipes.map((r) => r.result)); // any recipe's result => crafted
+  const ilvlOf = (id) => ilvls[id] ?? 0;
   const nameOf = (id) => items[id]?.en || `#${id}`;
+
+  // Index every recipe by its result id (first recipe wins) + the set of all
+  // crafted item ids (any job) for the subcraft flag.
+  const recipeByResult = new Map();
+  const craftedIds = new Set();
+  for (const r of recipes) {
+    craftedIds.add(r.result);
+    if (!recipeByResult.has(r.result)) recipeByResult.set(r.result, r);
+  }
+
   const gameLoc = buildGameLocations();
   const tcLoc = buildTeamcraftLocations(nodes, fspots, places);
   const vendorLoc = buildVendorIndex(shops, npcs, places);
   // Gather/fish first; then NPC vendor; market board only if nothing else.
-  const resolveLoc = (id, name) => tcLoc(id) || gameLoc.get(norm(name)) || vendorLoc(id) || null;
+  const resolveLoc = (id) => tcLoc(id) || gameLoc.get(norm(nameOf(id))) || vendorLoc(id) || null;
 
-  const culDt = recipes.filter((r) => r.job === CUL_JOB && (ilvls[r.result] ?? 0) >= DT_MIN_ILVL);
+  const mapIngredients = (r) => r.ingredients
+    .filter((ing) => ing.id > 19) // drop base shards/crystals/clusters (ids 1-19)
+    .map((ing) => {
+      const loc = resolveLoc(ing.id) || MARKET;
+      return {
+        id: ing.id,
+        name: nameOf(ing.id),
+        amount: ing.amount,
+        subcraft: craftedIds.has(ing.id),
+        source: loc.source,
+        node_name: loc.node_name,
+        zone: loc.zone,
+        coords: loc.coords,
+        node_type: loc.node_type,
+        window: loc.window,
+        price: loc.price ?? null,
+      };
+    });
 
-  const out = culDt.map((r) => ({
+  // ---- 1. FOOD DISHES ---------------------------------------------------
+  const dishRecipes = recipes.filter((r) =>
+    r.job === CUL_JOB && ilvlOf(r.result) >= EW_MIN_ILVL && foodBuff(r.result, foodMap));
+  const dishIds = new Set(dishRecipes.map((r) => r.result));
+
+  // ---- 2. SUBCRAFTS (transitive crafted ingredients of every dish) ------
+  const subcraftIds = new Set();
+  const collect = (r) => {
+    for (const ing of r.ingredients) {
+      if (ing.id <= 19) continue;
+      if (!craftedIds.has(ing.id)) continue;
+      if (dishIds.has(ing.id) || subcraftIds.has(ing.id)) continue; // dish or already seen
+      subcraftIds.add(ing.id);
+      const sub = recipeByResult.get(ing.id);
+      if (sub) collect(sub);
+    }
+  };
+  dishRecipes.forEach(collect);
+
+  const expansionFor = (resultId) => (ilvlOf(resultId) >= DT_MIN_ILVL ? 'Dawntrail' : 'Endwalker');
+
+  const dishRows = dishRecipes.map((r) => ({
     name: nameOf(r.result),
     job: 'CUL',
     item_level: ilvls[r.result] ?? null,
     stars: r.stars || 0,
     food_buff: foodBuff(r.result, foodMap),
-    ingredients: r.ingredients
-      .filter((ing) => ing.id > 19) // drop base shards/crystals/clusters (ids 1-19)
-      .map((ing) => {
-        const loc = resolveLoc(ing.id, nameOf(ing.id)) || MARKET;
-        return {
-          id: ing.id,
-          name: nameOf(ing.id),
-          amount: ing.amount,
-          subcraft: craftedIds.has(ing.id),
-          source: loc.source,
-          node_name: loc.node_name,
-          zone: loc.zone,
-          coords: loc.coords,
-          node_type: loc.node_type,
-          window: loc.window,
-          price: loc.price ?? null,
-        };
-      }),
-    expansion: 'Dawntrail',
-  }))
-    .filter((r) => !r.name.startsWith('#')) // skip unresolved/deprecated results
-    .sort((a, b) => (a.item_level - b.item_level) || a.name.localeCompare(b.name));
+    is_subcraft: false,
+    ingredients: mapIngredients(r),
+    expansion: expansionFor(r.result),
+  }));
 
-  // Summary
-  const withBuff = out.filter((r) => r.food_buff).length;
-  const srcCounts = {};
-  out.forEach((r) => r.ingredients.forEach((i) => { srcCounts[i.source] = (srcCounts[i.source] || 0) + 1; }));
-  console.log(`\nCUL Dawntrail recipes: ${out.length} (with food buff: ${withBuff})`);
-  console.log('ingredient sources:', srcCounts);
-  console.log('sample:', JSON.stringify(out.find((r) => r.food_buff) || out[0], null, 1));
+  const subRows = [...subcraftIds]
+    .map((id) => recipeByResult.get(id))
+    .filter(Boolean)
+    .map((r) => ({
+      name: nameOf(r.result),
+      job: JOB_ABBR[r.job] || String(r.job),
+      item_level: ilvls[r.result] ?? null,
+      stars: r.stars || 0,
+      food_buff: null, // subcrafts are not foods
+      is_subcraft: true,
+      ingredients: mapIngredients(r),
+      expansion: expansionFor(r.result),
+    }));
+
+  const out = [...dishRows, ...subRows]
+    .filter((r) => !r.name.startsWith('#')) // skip unresolved/deprecated results
+    .sort((a, b) => (a.is_subcraft - b.is_subcraft) || (a.item_level - b.item_level) || a.name.localeCompare(b.name));
+
+  // ---- summary + invariant check ----------------------------------------
+  const dishExp = {};
+  dishRows.forEach((r) => (dishExp[r.expansion] = (dishExp[r.expansion] || 0) + 1));
+  const recipeNames = new Set(out.map((r) => norm(r.name)));
+  const broken = new Set();
+  out.forEach((r) => r.ingredients.forEach((i) => { if (i.subcraft && !recipeNames.has(norm(i.name))) broken.add(i.name); }));
+
+  console.log(`\nFood dishes:   ${dishRows.length}  ${JSON.stringify(dishExp)}`);
+  console.log(`Subcraft rows: ${subRows.length} (jobs: ${JSON.stringify([...new Set(subRows.map((r) => r.job))])})`);
+  console.log(`Total rows:    ${out.length}`);
+  console.log(`Broken subcraft chains after resolution: ${broken.size}${broken.size ? ' -> ' + [...broken].join(', ') : ' ✓'}`);
 
   const dest = path.join(__dirname, 'cooking-recipes.json');
   fs.writeFileSync(dest, JSON.stringify(out), 'utf8');
-  console.log(`\nWrote ${dest} (${out.length} recipes)`);
+  console.log(`\nWrote ${dest} (${out.length} rows)`);
 }
 
 main().catch((e) => { console.error(e); process.exit(1); });

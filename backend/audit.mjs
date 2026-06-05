@@ -93,7 +93,7 @@ async function main() {
   let overrides = [];
   if (pool) {
     try {
-      recipes = await q('SELECT id, name, job, item_level, stars, food_buff, ingredients, expansion FROM recipes ORDER BY item_level, name');
+      recipes = await q('SELECT id, name, job, item_level, stars, food_buff, ingredients, expansion, is_subcraft FROM recipes ORDER BY item_level, name');
       try { overrides = await q('SELECT item_id, item_name, source, node_name, zone, coords, notes FROM ingredient_overrides'); }
       catch (e) { overrides = null; out('[warn] ingredient_overrides not readable: ' + e.message); }
       dbOk = true;
@@ -117,15 +117,19 @@ async function main() {
 
   // recipe-name index (normalized) for subcraft chain resolution
   const recipeNames = new Set(recipes.map((r) => norm(r.name)));
+  let requiredIndexesOk = false; // set in §7c-verify
 
   // ======================================================================
   h1('1 · RECIPE AUDIT (CUL — Dawntrail + Endwalker)');
+  const dishes = recipes.filter((r) => !r.is_subcraft);
+  const subcrafts = recipes.filter((r) => r.is_subcraft);
   const byExp = {};
-  for (const r of recipes) byExp[r.expansion] = (byExp[r.expansion] || 0) + 1;
-  out(`Total recipes in DB: ${recipes.length}`);
-  out('By expansion: ' + JSON.stringify(byExp));
-  out('By job: ' + JSON.stringify(recipes.reduce((a, r) => ((a[r.job] = (a[r.job] || 0) + 1), a), {})));
-  if (!byExp['Endwalker']) out('  ⚠ FINDING: 0 Endwalker CUL recipes in DB (only Dawntrail seeded). Endwalker food tier is absent.');
+  for (const r of dishes) byExp[r.expansion] = (byExp[r.expansion] || 0) + 1;
+  out(`Total recipe rows in DB: ${recipes.length}  (food dishes: ${dishes.length}, subcrafts: ${subcrafts.length})`);
+  out('Dishes by expansion: ' + JSON.stringify(byExp));
+  out('Rows by job: ' + JSON.stringify(recipes.reduce((a, r) => ((a[r.job] = (a[r.job] || 0) + 1), a), {})));
+  if (!byExp['Endwalker']) out('  ⚠ FINDING: 0 Endwalker CUL food dishes in DB.');
+  else out(`  ✓ Endwalker CUL food dishes present: ${byExp['Endwalker']}`);
 
   // 1c · recipes with 0 ingredients
   h2('1a · Recipes with 0 ingredients (failed import)');
@@ -145,22 +149,12 @@ async function main() {
   out(`Duplicate groups: ${dups.length}`);
   list(dups, (g) => `${g[0].name} [${g[0].job} ilvl ${g[0].item_level}] ×${g.length} (ids ${g.map((x) => x.id).join(', ')})`);
 
-  // 1e · missing food buff
-  h2('1c · Recipes missing food buff data');
-  const noBuff = recipes.filter((r) => !r.food_buff || (Array.isArray(r.food_buff) && r.food_buff.length === 0));
-  out(`Count: ${noBuff.length} of ${recipes.length}`);
-  out('INTERPRETATION: food_buff is null only when the result is NOT in Teamcraft foods.json,');
-  out('i.e. the item is not an actual consumable meal. These are non-food CUL crafts that the');
-  out('ilvl>=640 scraper filter swept in (collectables, Cosmic Exploration mission turn-ins,');
-  out('intermediate goods). The buff absence is EXPECTED; the real issue is their presence in a');
-  out('cooking/food recipe list. Split below by heuristic:');
-  const NONFOOD_RE = /^Rarefied |Kit$|Supplies$|Packaging|Billboard|Printing|Repair|Dark Matter|Aetherocatalyst|Essentials|Tin$|Mezcal$|\bOil\b|\bSalt\b|\bSyrup\b|\bPulp\b/i;
-  const likelyNonFood = noBuff.filter((r) => NONFOOD_RE.test(r.name));
-  const unexplained = noBuff.filter((r) => !NONFOOD_RE.test(r.name));
-  out(`  • Likely non-food (collectable/mission/intermediate): ${likelyNonFood.length}`);
-  list(likelyNonFood, (r) => `${r.name} [ilvl ${r.item_level}] (id ${r.id})`);
-  out(`  • Other no-buff recipes worth a manual look: ${unexplained.length}`);
-  list(unexplained, (r) => `${r.name} [ilvl ${r.item_level}] (id ${r.id})`);
+  // 1e · missing food buff (FOOD DISHES only; subcrafts are expected null)
+  h2('1c · Food dishes missing food buff data');
+  const noBuff = dishes.filter((r) => !r.food_buff || (Array.isArray(r.food_buff) && r.food_buff.length === 0));
+  out(`Food dishes with NULL food_buff (must be 0): ${noBuff.length}`);
+  list(noBuff, (r) => `${r.name} [${r.expansion} ilvl ${r.item_level}] (id ${r.id})`);
+  out(`(Subcrafts with null food_buff: ${subcrafts.length} — EXPECTED; they are intermediates, not meals.)`);
 
   // 1f · missing difficulty / star rating
   h2('1d · Recipes missing star rating / item level');
@@ -212,8 +206,12 @@ async function main() {
   const broken = [...brokenMap.values()].sort((a, b) => b.count - a.count);
   out(`Ingredients flagged subcraft=true: ${subcraftCount}`);
   out(`Distinct subcraft items WITHOUT a matching recipe in DB: ${broken.length}`);
-  out('⚠ These are broken subcraft chains — the UI flags them as crafted but cannot show a recipe:');
-  list(broken, (b) => `${b.name} (id ${b.id}) — used in ${b.count} recipe(s): ${[...b.recipes].slice(0, 4).join(', ')}${b.recipes.size > 4 ? '…' : ''}`, 100);
+  if (broken.length) {
+    out('⚠ Broken subcraft chains — the UI flags them as crafted but cannot show a recipe:');
+    list(broken, (b) => `${b.name} (id ${b.id}) — used in ${b.count} recipe(s): ${[...b.recipes].slice(0, 4).join(', ')}${b.recipes.size > 4 ? '…' : ''}`, 100);
+  } else {
+    out('✓ All subcraft-flagged ingredients resolve to a recipe row. No broken chains.');
+  }
 
   // ======================================================================
   h1('3 · FISHING SPOTS AUDIT');
@@ -295,6 +293,19 @@ async function main() {
       out(`  ${t}:`);
       arr.forEach((i) => out(`      ${i.indexname}  ${i.indexdef.replace(/^.*USING /, 'USING ')}`));
     }
+    // explicit verification of the three audit-mandated indexes
+    h2('7c-verify · Required indexes (audit Fix 4)');
+    const REQUIRED = [
+      ['recipes', 'idx_recipes_job_expansion'],
+      ['submissions', 'idx_submissions_user_id'],
+      ['ai_queries', 'idx_ai_queries_created_at'],
+    ];
+    requiredIndexesOk = REQUIRED.every(([, name]) => idx.some((i) => i.indexname === name));
+    for (const [tbl, name] of REQUIRED) {
+      const present = idx.some((i) => i.indexname === name);
+      out(`    ${present ? '✓' : '✗ MISSING'}  ${name} on ${tbl}`);
+    }
+
     // heuristic gaps
     h2('7c-gaps · Likely-missing indexes (heuristic)');
     const allDefs = idx.map((i) => i.indexdef.toLowerCase());
@@ -337,10 +348,10 @@ async function main() {
 
   // ======================================================================
   h1('AUDIT SUMMARY');
-  out(`Recipes: ${recipes.length} (${Object.keys(byExp).join(', ') || 'none'})`);
+  out(`Recipe rows: ${recipes.length}  (food dishes: ${dishes.length} [${Object.entries(byExp).map(([k, v]) => k + ' ' + v).join(', ') || 'none'}], subcrafts: ${subcrafts.length})`);
   out(`  • 0-ingredient recipes ......... ${emptyRecipes.length}`);
   out(`  • duplicate groups ............. ${dups.length}`);
-  out(`  • missing food buff ............ ${noBuff.length}`);
+  out(`  • dishes missing food buff ..... ${noBuff.length}`);
   out(`  • missing star rating (null) ... ${noStars.length}`);
   out(`  • MARKET_BOARD→gather mismatches  ${misUniq.length} distinct`);
   out(`  • broken subcraft chains ....... ${broken.length} distinct items`);
@@ -348,8 +359,20 @@ async function main() {
   out(`Mining:  ${MINING_NODES.length} nodes (see §4 for breakdown)`);
   out(`Botany:  ${BOTANY_NODES.length} nodes (see §5 for breakdown)`);
   if (dbOk) out(`DB integrity: checked (orphans, indexes, overrides) — see §7`);
+
+  // ---- explicit post-fix verification gate ----
+  h2('POST-FIX VERIFICATION (audit Fixes 1–4)');
+  const checks = [
+    ['Fix 1', 'Zero non-food (null-buff, non-subcraft) recipes', noBuff.length === 0],
+    ['Fix 2', 'Zero broken subcraft chains', broken.length === 0],
+    ['Fix 3', 'Endwalker CUL food dishes present', (byExp['Endwalker'] || 0) > 0],
+    ['Fix 4', 'All 3 required indexes present', requiredIndexesOk],
+  ];
+  for (const [fix, desc, ok] of checks) out(`    ${ok ? '✅ PASS' : '❌ FAIL'}  ${fix}: ${desc}`);
   out('');
-  out('Reminder: nothing was auto-fixed. Review findings before acting.');
+  out('Reminder: data fixes were applied via scrape-cooking.js + migrate-cooking.js (this');
+  out('re-run only READS to verify). Other findings (timed-node windows, thin fishing zones)');
+  out('were out of scope for this fix pass.');
 
   if (pool) await pool.end();
   return LINES.join('\n');

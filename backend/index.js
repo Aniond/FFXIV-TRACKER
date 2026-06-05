@@ -343,10 +343,13 @@ app.get('/api/recipes', async (req, res) => {
   const params = [];
   if (req.query.job) { params.push(String(req.query.job).toUpperCase()); where.push(`job = $${params.length}`); }
   if (req.query.expansion) { params.push(String(req.query.expansion)); where.push(`expansion = $${params.length}`); }
+  // Subcrafts (intermediate crafted ingredients) are excluded by default — the
+  // cooking page lists food dishes only. Pass ?include_subcraft=1 to fetch them.
+  if (!('include_subcraft' in req.query)) where.push('is_subcraft = false');
   const clause = where.length ? `WHERE ${where.join(' AND ')}` : '';
   try {
     const result = await pool.query(
-      `SELECT id, name, job, item_level, stars, food_buff, ingredients, expansion
+      `SELECT id, name, job, item_level, stars, food_buff, ingredients, expansion, is_subcraft
        FROM recipes ${clause} ORDER BY item_level, name`,
       params
     );

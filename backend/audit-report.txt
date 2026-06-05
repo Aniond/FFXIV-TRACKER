@@ -2,17 +2,17 @@
 ========================================================================
 ffxivlog.com DATA & FEATURE AUDIT
 ========================================================================
-Generated: 2026-06-04T23:46:51Z UTC
+Generated: 2026-06-05T00:04:00Z UTC
 Scope: recipes, gathering (fishing/mining/botany), DB integrity.
 Hunt marks: SKIPPED (confirmed accurate).
 
 ========================================================================
 1 · RECIPE AUDIT (CUL — Dawntrail + Endwalker)
 ========================================================================
-Total recipes in DB: 110
-By expansion: {"Dawntrail":110}
-By job: {"CUL":110}
-  ⚠ FINDING: 0 Endwalker CUL recipes in DB (only Dawntrail seeded). Endwalker food tier is absent.
+Total recipe rows in DB: 122  (food dishes: 99, subcrafts: 23)
+Dishes by expansion: {"Endwalker":24,"Dawntrail":75}
+Rows by job: {"CUL":122}
+  ✓ Endwalker CUL food dishes present: 24
 
 --- 1a · Recipes with 0 ingredients (failed import) ---
 Count: 0
@@ -20,50 +20,9 @@ Count: 0
 --- 1b · Duplicate recipes (same name + job + item_level) ---
 Duplicate groups: 0
 
---- 1c · Recipes missing food buff data ---
-Count: 35 of 110
-INTERPRETATION: food_buff is null only when the result is NOT in Teamcraft foods.json,
-i.e. the item is not an actual consumable meal. These are non-food CUL crafts that the
-ilvl>=640 scraper filter swept in (collectables, Cosmic Exploration mission turn-ins,
-intermediate goods). The buff absence is EXPECTED; the real issue is their presence in a
-cooking/food recipe list. Split below by heuristic:
-  • Likely non-food (collectable/mission/intermediate): 20
-    • Aunt Tii's Billboard [ilvl 645] (id 653)
-    • Cooking Mezcal [ilvl 650] (id 655)
-    • Map Printing Essentials [ilvl 650] (id 656)
-    • Rarefied Boiled Alpaca Steak [ilvl 650] (id 658)
-    • Trusty Taco Tin [ilvl 650] (id 660)
-    • Engineer's Supply Kit [ilvl 653] (id 662)
-    • Mountain Salt [ilvl 653] (id 665)
-    • Railroad Repair Kit [ilvl 656] (id 670)
-    • Rarefied Banana Ponzecake [ilvl 656] (id 671)
-    • Royal Maple Syrup [ilvl 656] (id 672)
-    • Turali Corn Oil [ilvl 660] (id 678)
-    • Aunt Tii's Tunic Supplies [ilvl 665] (id 679)
-    • Kukuru Pulp Juice [ilvl 665] (id 681)
-    • Rarefied Turali Pineapple Ponzecake [ilvl 665] (id 682)
-    • Rarefied Salmon Jerky [ilvl 675] (id 691)
-    • Shaco Packaging [ilvl 675] (id 692)
-    • Rarefied Stuffed Peppers [ilvl 685] (id 701)
-    • Rarefied Tacos de Carne Asada [ilvl 690] (id 711)
-    • Synthetic Dark Matter Gamma [ilvl 740] (id 736)
-    • Aspected Aetherocatalyst [ilvl 770] (id 740)
-  • Other no-buff recipes worth a manual look: 15
-    • Connoisseur's Crab Cakes [ilvl 642] (id 651)
-    • Connoisseur's Chili Crab [ilvl 643] (id 652)
-    • Ut'ohmu Chili Sauce [ilvl 650] (id 661)
-    • Neomasher [ilvl 655] (id 666)
-    • Fermented Aloe Juice [ilvl 656] (id 668)
-    • Ja Tiika Juice [ilvl 665] (id 680)
-    • Whipped Cream [ilvl 665] (id 683)
-    • Prickly Pear Juice [ilvl 680] (id 697)
-    • Boonewa Soda [ilvl 690] (id 702)
-    • Kugane-yaki [ilvl 690] (id 705)
-    • Leg of Prosciutto [ilvl 690] (id 706)
-    • Mug of Cocoa [ilvl 690] (id 708)
-    • Old Fishwife's Paella [ilvl 690] (id 709)
-    • Popoto Chips [ilvl 690] (id 710)
-    • Steaming Stew Bowl [ilvl 690] (id 712)
+--- 1c · Food dishes missing food buff data ---
+Food dishes with NULL food_buff (must be 0): 0
+(Subcrafts with null food_buff: 23 — EXPECTED; they are intermediates, not meals.)
 
 --- 1d · Recipes missing star rating / item level ---
 stars IS NULL: 0   (note: stars=0 is valid = "no star", not reported)
@@ -73,39 +32,19 @@ item_level IS NULL: 0
 Distinct mis-sourced ingredients: 0 (occurrences: 0)
 
 --- 1f · Ingredient source distribution (after overrides) ---
-Total ingredient rows: 521
-    MARKET_BOARD   331
-    BOTANY         145
-    MINING         19
-    FISHING        16
-    VENDOR         10
+Total ingredient rows: 599
+    MARKET_BOARD   375
+    BOTANY         180
+    MINING         21
+    FISHING        18
+    VENDOR         5
 
 ========================================================================
 2 · SUBCRAFT CHAIN COMPLETENESS
 ========================================================================
-Ingredients flagged subcraft=true: 182
-Distinct subcraft items WITHOUT a matching recipe in DB: 20
-⚠ These are broken subcraft chains — the UI flags them as crafted but cannot show a recipe:
-    • Upland Wheat Flour (id 27841) — used in 21 recipe(s): Broccoflower Stew, Caviar Canapes, Caviar Sandwich, Banana Ponzecake…
-    • Palm Sugar (id 36080) — used in 11 recipe(s): Honeyed Dragonfruit, Gateau au Chocolat, Creamy Hot Chocolate, Tender Shortcake…
-    • Frantoio Oil (id 27838) — used in 10 recipe(s): Baked Eggplant, Tandoori Raptor, Spaghetti al Olio e Peperoncino, Acqua Pazza…
-    • Dark Rye Flour (id 36077) — used in 9 recipe(s): Maple Teriyaki, Sweetmuffin, Tacos Al Pastor, Tart Turali Tart…
-    • Garlean Cheese (id 36081) — used in 8 recipe(s): Baked Eggplant, Caviar Canapes, Turali Pineapple Ponzecake, Rarefied Turali Pineapple Ponzecake…
-    • Fermented Butter (id 12895) — used in 8 recipe(s): Omelette Rice, Maple Teriyaki, Royal Toast, Gateau au Chocolat…
-    • Perilla Oil (id 36079) — used in 7 recipe(s): Baba Ghanoush, Marinated Broccoflower, Mezcal-marinated Swampmonk, Nasi Goreng…
-    • Northern Sea Salt (id 36078) — used in 7 recipe(s): Broccoflower Stew, Caviar Sandwich, Spicy Stellar Soup, Tandoori Raptor…
-    • Night Vinegar (id 27843) — used in 5 recipe(s): Marinated Broccoflower, Roast Rroneek, Rroneek Steak, Lomo Saltado…
-    • Coconut Milk (id 36082) — used in 3 recipe(s): Dragonfruit Blend, Moqueca, Sweet Maple Mate
-    • Gelatin (id 4863) — used in 2 recipe(s): Fruit and Aloe Jelly, Pineapple Orange Jelly
-    • Algae Salt (id 19848) — used in 1 recipe(s): Baba Ghanoush
-    • Garden Beet Sugar (id 27839) — used in 1 recipe(s): Dragonfruit Blend
-    • Golden Honey (id 27842) — used in 1 recipe(s): Honeyed Dragonfruit
-    • Sour Cream (id 12894) — used in 1 recipe(s): Spicy Stellar Soup
-    • Grade 1 Gemsap of Dexterity (id 44045) — used in 1 recipe(s): Fermented Aloe Juice
-    • Grade 1 Gemsap of Vitality (id 44046) — used in 1 recipe(s): Ja Tiika Juice
-    • Sanctified Water (id 44051) — used in 1 recipe(s): Prickly Pear Juice
-    • Ginseng Lumber (id 44019) — used in 1 recipe(s): Leg of Prosciutto
-    • Vermicelli (id 12908) — used in 1 recipe(s): Chicken Pasta
+Ingredients flagged subcraft=true: 196
+Distinct subcraft items WITHOUT a matching recipe in DB: 0
+✓ All subcraft-flagged ingredients resolve to a recipe row. No broken chains.
 
 ========================================================================
 3 · FISHING SPOTS AUDIT
@@ -207,27 +146,27 @@ Timed nodes: 18; missing window: 9
 ========================================================================
 6 · CROSS-REFERENCE SPOT-CHECK (20 sampled ingredients)
 ========================================================================
-Distinct ingredients: 130; sampling 20 (even spread by item id).
+Distinct ingredients: 138; sampling 20 (even spread by item id).
     Raptor Shank               src=MARKET_BOARD  ✓ ok (no gather match)
-    Galago Mint                src=BOTANY        ? unverified (not found in local BOTANY dataset)
-    Sour Cream                 src=MARKET_BOARD  ✓ ok (no gather match)
-    Koshu Pork                 src=MARKET_BOARD  ✓ ok (no gather match)
-    Upland Wheat               src=BOTANY        ? unverified (not found in local BOTANY dataset)
-    Upland Wheat Flour         src=MARKET_BOARD  ✓ ok (no gather match)
-    Garlean Cheese             src=MARKET_BOARD  ✓ ok (no gather match)
-    Eblan Lentils              src=BOTANY        ? unverified (not found in local BOTANY dataset)
-    Bird of Elpis Breast       src=MARKET_BOARD  ✓ ok (no gather match)
-    Broccoflower               src=MARKET_BOARD  ✓ ok (no gather match)
-    Yok Kukuru Pod             src=MARKET_BOARD  ✓ ok (no gather match)
-    Turali Corn Oil            src=MARKET_BOARD  ✓ ok (no gather match)
-    Broccoli                   src=BOTANY        ? unverified (not found in local BOTANY dataset)
-    Turali Aloe                src=BOTANY        ? unverified (not found in local BOTANY dataset)
-    Grade 1 Gemsap of Dexterity src=MARKET_BOARD  ✓ ok (no gather match)
+    Midland Basil              src=BOTANY        ? unverified (not found in local BOTANY dataset)
+    Highland Wheat             src=BOTANY        ? unverified (not found in local BOTANY dataset)
+    Vermicelli                 src=MARKET_BOARD  ✓ ok (no gather match)
+    Royal Grapes               src=BOTANY        ? unverified (not found in local BOTANY dataset)
+    Lemonette                  src=BOTANY        ? unverified (not found in local BOTANY dataset)
+    Dark Rye Flour             src=MARKET_BOARD  ✓ ok (no gather match)
+    Sharlayan Rock Salt        src=MINING        ✓ confirmed in MINING data
+    Cucumber                   src=BOTANY        ? unverified (not found in local BOTANY dataset)
+    Butterbeef                 src=MARKET_BOARD  ✓ ok (no gather match)
+    Ovibos Milk                src=MARKET_BOARD  ✓ ok (no gather match)
+    Sunset Carrot              src=MARKET_BOARD  ✓ ok (no gather match)
+    Dark Eggplant              src=BOTANY        ? unverified (not found in local BOTANY dataset)
+    Shaaloani Salmon           src=FISHING       ✓ confirmed in FISHING data
+    Mountain Salt              src=MARKET_BOARD  ✓ ok (no gather match)
+    Bell Pepper                src=BOTANY        ? unverified (not found in local BOTANY dataset)
+    Sweet Kukuru Bean          src=BOTANY        ? unverified (not found in local BOTANY dataset)
     Nopalitender Tuna          src=MARKET_BOARD  ✓ ok (no gather match)
     Royal Lobster              src=MARKET_BOARD  ✓ ok (no gather match)
-    Fulgurite                  src=MINING        ? unverified (not found in local MINING dataset)
-    Levinchrome Aethersand     src=MARKET_BOARD  ✓ ok (no gather match)
-    Rock-fist Popoto           src=MARKET_BOARD  ✓ ok (no gather match)
+    Goldentail                 src=FISHING       ? unverified (not found in local FISHING dataset)
 
 Spot-check misclassifications: 0 of 20
 
@@ -247,6 +186,7 @@ Orphaned ai_queries rows: 0
 --- 7c · Indexes (frequently-queried columns) ---
   ai_queries:
       ai_queries_pkey  USING btree (id)
+      idx_ai_queries_created_at  USING btree (created_at)
   feature_flags:
       feature_flags_pkey  USING btree (key)
   hunts:
@@ -260,8 +200,10 @@ Orphaned ai_queries rows: 0
       progress_pkey  USING btree (id)
       progress_user_id_hunt_id_key  USING btree (user_id, hunt_id)
   recipes:
+      idx_recipes_job_expansion  USING btree (job, expansion)
       recipes_pkey  USING btree (id)
   submissions:
+      idx_submissions_user_id  USING btree (user_id)
       submissions_pkey  USING btree (id)
   user_jobs:
       user_jobs_pkey  USING btree (id)
@@ -274,11 +216,13 @@ Orphaned ai_queries rows: 0
       users_pkey  USING btree (id)
       users_slug_unique  USING btree (slug) WHERE (slug IS NOT NULL)
 
---- 7c-gaps · Likely-missing indexes (heuristic) ---
+--- 7c-verify · Required indexes (audit Fix 4) ---
+    ✓  idx_recipes_job_expansion on recipes
+    ✓  idx_submissions_user_id on submissions
+    ✓  idx_ai_queries_created_at on ai_queries
 
-    • recipes(job, expansion) — /api/recipes filters on these; currently full-scan (small table, low impact).
-    • submissions(user_id) — admin/user submission lookups.
-    • ai_queries(created_at) — usage reporting by date.
+--- 7c-gaps · Likely-missing indexes (heuristic) ---
+  None detected beyond existing coverage.
   NOTE: UNIQUE(user_id, hunt_id)/(user_id, job_abbr) constraints already provide a leading-column index on user_id.
 
 --- 7d · ingredient_overrides table ---
@@ -293,16 +237,24 @@ Rows: 2
 ========================================================================
 AUDIT SUMMARY
 ========================================================================
-Recipes: 110 (Dawntrail)
+Recipe rows: 122  (food dishes: 99 [Endwalker 24, Dawntrail 75], subcrafts: 23)
   • 0-ingredient recipes ......... 0
   • duplicate groups ............. 0
-  • missing food buff ............ 35
+  • dishes missing food buff ..... 0
   • missing star rating (null) ... 0
   • MARKET_BOARD→gather mismatches  0 distinct
-  • broken subcraft chains ....... 20 distinct items
+  • broken subcraft chains ....... 0 distinct items
 Fishing: 79 spots — 0 empty, 0 no-bait, 0 no-coords
 Mining:  51 nodes (see §4 for breakdown)
 Botany:  43 nodes (see §5 for breakdown)
 DB integrity: checked (orphans, indexes, overrides) — see §7
 
-Reminder: nothing was auto-fixed. Review findings before acting.
+--- POST-FIX VERIFICATION (audit Fixes 1–4) ---
+    ✅ PASS  Fix 1: Zero non-food (null-buff, non-subcraft) recipes
+    ✅ PASS  Fix 2: Zero broken subcraft chains
+    ✅ PASS  Fix 3: Endwalker CUL food dishes present
+    ✅ PASS  Fix 4: All 3 required indexes present
+
+Reminder: data fixes were applied via scrape-cooking.js + migrate-cooking.js (this
+re-run only READS to verify). Other findings (timed-node windows, thin fishing zones)
+were out of scope for this fix pass.

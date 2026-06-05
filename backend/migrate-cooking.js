@@ -22,10 +22,20 @@ async function migrate() {
       food_buff   JSONB,
       ingredients JSONB,
       expansion   VARCHAR(50) DEFAULT 'Dawntrail',
+      is_subcraft BOOLEAN NOT NULL DEFAULT false,
       created_at  TIMESTAMPTZ DEFAULT NOW()
     );
   `);
+  // is_subcraft distinguishes intermediate crafted ingredients (any DoH job,
+  // no food buff) from actual food dishes. Added for existing deployments.
+  await pool.query(`ALTER TABLE recipes ADD COLUMN IF NOT EXISTS is_subcraft BOOLEAN NOT NULL DEFAULT false`);
   console.log('  recipes table ready');
+
+  // Indexes on frequently-queried columns (audit Fix 4).
+  await pool.query(`CREATE INDEX IF NOT EXISTS idx_recipes_job_expansion ON recipes(job, expansion)`);
+  await pool.query(`CREATE INDEX IF NOT EXISTS idx_submissions_user_id ON submissions(user_id)`);
+  await pool.query(`CREATE INDEX IF NOT EXISTS idx_ai_queries_created_at ON ai_queries(created_at)`);
+  console.log('  indexes ready (recipes job/expansion, submissions user_id, ai_queries created_at)');
 
   // Manual ingredient source/location overrides — take precedence over the
   // baked Teamcraft data at request time (see /api/recipes). Patch any gap by
@@ -53,22 +63,27 @@ async function migrate() {
 
   const seed = JSON.parse(fs.readFileSync(path.join(__dirname, 'cooking-recipes.json'), 'utf8'));
 
-  await pool.query("DELETE FROM recipes WHERE job = 'CUL' AND expansion = 'Dawntrail'");
+  // The recipes table is fully managed by this seed (food dishes + subcrafts,
+  // multiple jobs/expansions), so clear it entirely for a clean reseed.
+  await pool.query('DELETE FROM recipes');
   let n = 0;
   for (const r of seed) {
     await pool.query(
-      `INSERT INTO recipes (name, job, item_level, stars, food_buff, ingredients, expansion)
-       VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+      `INSERT INTO recipes (name, job, item_level, stars, food_buff, ingredients, expansion, is_subcraft)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
       [
         r.name, r.job, r.item_level, r.stars,
         r.food_buff ? JSON.stringify(r.food_buff) : null,
         JSON.stringify(r.ingredients),
         r.expansion,
+        !!r.is_subcraft,
       ]
     );
     n++;
   }
-  console.log(`  seeded ${n} CUL Dawntrail recipes`);
+  const dishes = seed.filter((r) => !r.is_subcraft).length;
+  const subs = seed.length - dishes;
+  console.log(`  seeded ${n} recipes (${dishes} food dishes + ${subs} subcrafts)`);
   console.log('Cooking migration complete.');
   await pool.end();
 }
