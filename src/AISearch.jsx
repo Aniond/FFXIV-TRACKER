@@ -47,14 +47,15 @@ const I = {
 
 // ── Ingredient sourcing: badge / icon / colour / deep-link page per source ──
 const norm = (s) => String(s || '').trim().toLowerCase()
+// Source colours per the design brief (design_handoff_aisearch §1).
 const SOURCE_META = {
-  scrip:    { badge: 'Scrip',         icon: 'scrip', color: '#2dd4bf', page: null },
+  scrip:    { badge: 'Scrip',         icon: 'scrip', color: '#c9a35b', page: null },
   gemstone: { badge: 'Gemstone',      icon: 'gem',   color: '#c06ad4', page: null },
-  market:   { badge: 'Market Board',  icon: 'cart',  color: '#9a9aa8', page: null },
+  market:   { badge: 'Market Board',  icon: 'cart',  color: '#7a7a8a', page: null },
   vendor:   { badge: 'Vendor',        icon: 'coin',  color: '#d4a84a', page: null },
-  botany:   { badge: 'Botany',        icon: 'leaf',  color: '#6fc08a', page: '/gathering/foraging' },
-  mining:   { badge: 'Mining',        icon: 'pick',  color: '#e0b252', page: '/gathering/mining' },
-  fishing:  { badge: 'Fishing',       icon: 'fish',  color: '#58c4e8', page: '/gathering/fishing' },
+  botany:   { badge: 'Botany',        icon: 'leaf',  color: '#6fc08a', page: '/gathering/botany' },
+  mining:   { badge: 'Mining',        icon: 'pick',  color: '#a07848', page: '/gathering/mining' },
+  fishing:  { badge: 'Fishing',       icon: 'fish',  color: '#38b8c0', page: '/gathering/fishing' },
 }
 const SRC_KEY = {
   SCRIP_EXCHANGE: 'scrip', GEMSTONE: 'gemstone', MARKET_BOARD: 'market', VENDOR: 'vendor',
@@ -109,38 +110,41 @@ function IngredientRow({ ing, recipeByName, onCopy, onNav, depth = 0 }) {
   const Ico = ing.subcraft ? I.knife : I[m.icon]
   const ws = ing.window ? windowState(ing.window) : null
   const accent = ing.subcraft ? '#7c93e8' : m.color
+  const isMarket = !ing.subcraft && ing.source === 'MARKET_BOARD'
+  // Scrip / gemstone / vendor show their cost inline.
+  const cost = (ing.source === 'SCRIP_EXCHANGE' || ing.source === 'GEMSTONE') && ing.currency
+      ? `${ing.currency} × ${ing.price}`
+    : (ing.source === 'VENDOR' && ing.price != null) ? `${ing.price} gil`
+    : null
 
-  // Where tapping the chip goes.
+  // Where tapping the row goes.
   function act() {
     if (canExpand) { setOpen((o) => !o); return }
     if (ing.subcraft) return // craftable but no sub-recipe to expand
     if (m.page) { onNav(`${m.page}?highlight=${encodeURIComponent(ing.name)}`); return }
-    if (ing.source === 'MARKET_BOARD' && ing.id) { window.open(`https://universalis.app/market/${ing.id}`, '_blank', 'noopener'); return }
-    setOpen((o) => !o) // scrip / gemstone / vendor → flash the vendor tooltip
+    if (isMarket && ing.id) window.open(`https://universalis.app/market/${ing.id}`, '_blank', 'noopener')
   }
+  // Market rows read as "buy it" — dim, no nav glyph (per brief).
   const goGlyph = canExpand ? <I.chevron className={open ? 'is-open' : ''} />
-    : m.page ? <I.arrow />
-    : ing.source === 'MARKET_BOARD' ? <I.ext />
-    : null
-
-  const tip = ing.subcraft ? null
-    : (ing.source === 'SCRIP_EXCHANGE' || ing.source === 'GEMSTONE')
-      ? `${ing.source === 'GEMSTONE' ? 'Bicolor Gemstone Trader' : 'Scrip Exchange'} · ${ing.currency || ''} × ${ing.price}`.replace(' ·  ×', ' ·')
-    : ing.source === 'VENDOR' && ing.price != null ? `Vendor · ${ing.price} gil`
+    : (m.page && !ing.subcraft) ? <I.arrow />
     : null
 
   return (
     <div className="airow-wrap">
-      <div className="airow" role="button" tabIndex={0} style={{ '--ic': accent }}
+      <div className={`airow${isMarket ? ' airow--market' : ''}`} role="button" tabIndex={0} style={{ '--ic': accent }}
         onClick={act} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); act() } }}>
         <span className="airow__ico"><Ico /></span>
         <span className="airow__name">{ing.name}<span className="airow__qty">×{ing.amount}</span></span>
         {ing.subcraft && <span className="airow__tag">Craft</span>}
-        {ws && <span className={`airow__timer is-${ws.state}`}>{ws.state === 'up' ? 'Open' : 'In'} {fmtDur(ws.ms)}</span>}
-        {ing.coords && (
-          <button type="button" className="airow__coords" title="Tap to copy"
-            onClick={(e) => { e.stopPropagation(); onCopy(ing.coords) }}>{ing.coords}</button>
-        )}
+        <div className="airow__meta">
+          {!ing.subcraft && <span className="airow__src" style={{ '--ic': accent }}><Ico />{m.badge}</span>}
+          {cost && <span className="airow__cost">{cost}</span>}
+          {ws && <span className={`airow__timer is-${ws.state}`}>{ws.pre} {fmtDur(ws.ms)}</span>}
+          {ing.coords && (
+            <button type="button" className="airow__coords" title="Tap to copy"
+              onClick={(e) => { e.stopPropagation(); onCopy(ing.coords) }}>{ing.coords}</button>
+          )}
+        </div>
         {goGlyph && <span className="airow__go">{goGlyph}</span>}
       </div>
       {open && canExpand && (
@@ -150,43 +154,50 @@ function IngredientRow({ ing, recipeByName, onCopy, onNav, depth = 0 }) {
           ))}
         </div>
       )}
-      {open && tip && <div className="airow__tip">{tip}</div>}
     </div>
   )
 }
 
-/* ── Recipe card (name + badge, ilvl/stars, buff chips, ingredient chips) ──── */
+/* ── Recipe card (crest + name, CUL/ilvl/stars, buff chips, ingredient rows) ─ */
 function RecipeCard({ recipe, recipeByName, onCopy, onNav }) {
   const [open, setOpen] = useState(false)
   const buffs = recipe.food_buff || []
+  const accent = STAT_TYPES[STAT_KEY[buffs[0]?.stat]]?.color || 'var(--gold)'
+  const hasTimed = recipe.ingredients.some((i) => i.window)
+  // Timed gathering ingredients first (matches the cooking page ordering).
+  const sorted = [...recipe.ingredients].sort((a, b) => (b.window ? 1 : 0) - (a.window ? 1 : 0))
   return (
-    <article className={`aicard aicard--recipe airecipe${open ? ' is-open' : ''}`}>
+    <article className={`aicard aicard--recipe airecipe${open ? ' is-open' : ''}`} style={{ '--cat': accent }}>
       <div className="airecipe__head" role="button" tabIndex={0}
-        onClick={() => setOpen((o) => !o)} onKeyDown={(e) => { if (e.key === 'Enter') setOpen((o) => !o) }}>
-        <div className="aicard__head">
-          <h3 className="aicard__name">{recipe.name}</h3>
-          <span className="aicard__cat aicard__cat--recipe">Recipe</span>
-        </div>
-        <div className="airecipe__meta">
-          <span>iLvl {recipe.item_level}</span>
-          {recipe.stars > 0 && <span className="airecipe__stars">{'★'.repeat(recipe.stars)}</span>}
-          <span className="airecipe__dot">·</span>
-          <span>{recipe.ingredients.length} ingredients</span>
-          <I.chevron className="airecipe__chev" />
-        </div>
-        {buffs.length > 0 && (
-          <div className="aibuffs">
-            {buffs.map((b, i) => {
-              const color = STAT_TYPES[STAT_KEY[b.stat]]?.color || 'var(--gold)'
-              const val = b.relative ? `+${b.valueHQ}%` : `+${b.valueHQ}`
-              return <span key={i} className="aibuff" style={{ '--bc': color }}>{b.stat} {val}</span>
-            })}
+        onClick={() => setOpen((o) => !o)}
+        onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setOpen((o) => !o) } }}>
+        <span className="airecipe__crest"><I.knife /></span>
+        <div className="airecipe__info">
+          <h3 className="airecipe__name">{recipe.name}</h3>
+          <div className="airecipe__meta">
+            <span className="airecipe__job">CUL</span>
+            <span>ilvl {recipe.item_level}</span>
+            {recipe.stars > 0 && <><span className="airecipe__dot">·</span><span className="airecipe__stars">{'★'.repeat(recipe.stars)}</span></>}
           </div>
-        )}
+          {buffs.length > 0 && (
+            <div className="aibuffs">
+              {buffs.map((b, i) => {
+                const color = STAT_TYPES[STAT_KEY[b.stat]]?.color || 'var(--gold)'
+                const val = b.relative ? `+${b.valueHQ}%` : `+${b.valueHQ}`
+                return <span key={i} className="aibuff" style={{ '--bc': color }}>{b.stat} {val}</span>
+              })}
+            </div>
+          )}
+        </div>
+        <span className={`airecipe__chev${open ? ' is-open' : ''}`}><I.chevron /></span>
       </div>
       {open && (
         <div className="airecipe__body">
-          {recipe.ingredients.map((ing, i) => (
+          <div className="airecipe__ing-hd">
+            Ingredients ({recipe.ingredients.length})
+            {hasTimed && <span className="airecipe__timed">⏱ timed</span>}
+          </div>
+          {sorted.map((ing, i) => (
             <IngredientRow key={i} ing={ing} recipeByName={recipeByName} onCopy={onCopy} onNav={onNav} />
           ))}
         </div>
@@ -195,8 +206,9 @@ function RecipeCard({ recipe, recipeByName, onCopy, onNav }) {
   )
 }
 
-/* ── Ingredient / scrip card (Flint Corn etc.) ───────────────────────────── */
+/* ── Ingredient / scrip card (Flint Corn etc.) — collapsible ─────────────── */
 function IngredientCard({ r, meta, onCopy, onNav }) {
+  const [open, setOpen] = useState(false)
   const source = meta?.source || (r.category === 'scrip' ? 'SCRIP_EXCHANGE' : 'MARKET_BOARD')
   const m = metaForSource(source)
   const Ico = I[m.icon]
@@ -204,30 +216,44 @@ function IngredientCard({ r, meta, onCopy, onNav }) {
   const note = scripNote(meta?.currency)
   const usedIn = meta?.usedIn || []
   const detail = cleanDetail(r.detail)
+
   return (
-    <article className="aicard airing" style={{ '--cat': m.color }}>
-      <div className="aicard__head">
-        <h3 className="aicard__name airing__name">{r.name}</h3>
-        <span className="aicard__cat" style={{ color: m.color, borderColor: m.color }}>{m.badge}</span>
+    <article className={`aicard airing${open ? ' is-open' : ''}`} style={{ '--cat': m.color }}>
+      <div className="airing__head" role="button" tabIndex={0}
+        onClick={() => setOpen((o) => !o)}
+        onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setOpen((o) => !o) } }}>
+        <div className="airing__head-main">
+          <h3 className="aicard__name airing__name">{r.name}</h3>
+          {!open && (cost || detail) && <div className="airing__summary">{cost || detail}</div>}
+        </div>
+        <div className="airing__head-right">
+          <span className="aicard__cat" style={{ color: m.color, borderColor: m.color }}>{m.badge}</span>
+          <span className={`airing__chev${open ? ' is-open' : ''}`}><I.chevron /></span>
+        </div>
       </div>
-      {cost
-        ? <div className="airing__cost"><span className="airing__cost-ico"><Ico /></span>{cost}</div>
-        : (detail && <p className="aicard__detail">{detail}</p>)}
-      {note && <div className="airing__note">{note}</div>}
-      <div className="aicard__foot">
-        {source === 'MARKET_BOARD' && meta?.id && (
-          <button type="button" className="airing__link"
-            onClick={() => window.open(`https://universalis.app/market/${meta.id}`, '_blank', 'noopener')}>
-            Universalis<I.ext />
-          </button>
-        )}
-        {usedIn.length > 0 && (
-          <button type="button" className="airing__used"
-            onClick={() => onNav(`/crafting/cooking?ingredient=${encodeURIComponent(r.name)}`)}>
-            Used in {usedIn.length} recipe{usedIn.length !== 1 ? 's' : ''}<I.arrow />
-          </button>
-        )}
-      </div>
+
+      {open && (
+        <div className="airing__body">
+          {cost
+            ? <div className="airing__cost"><span className="airing__cost-ico"><Ico /></span>{cost}</div>
+            : (detail && <p className="aicard__detail">{detail}</p>)}
+          {note && <div className="airing__note">{note}</div>}
+          <div className="aicard__foot">
+            {source === 'MARKET_BOARD' && meta?.id && (
+              <button type="button" className="airing__link"
+                onClick={(e) => { e.stopPropagation(); window.open(`https://universalis.app/market/${meta.id}`, '_blank', 'noopener') }}>
+                Universalis<I.ext />
+              </button>
+            )}
+            {usedIn.length > 0 && (
+              <button type="button" className="airing__used"
+                onClick={(e) => { e.stopPropagation(); onNav(`/crafting/cooking?ingredient=${encodeURIComponent(r.name)}`) }}>
+                Used in {usedIn.length} recipe{usedIn.length !== 1 ? 's' : ''}<I.arrow />
+              </button>
+            )}
+          </div>
+        </div>
+      )}
     </article>
   )
 }
