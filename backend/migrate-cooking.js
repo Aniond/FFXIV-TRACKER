@@ -51,15 +51,10 @@ async function migrate() {
       notes     TEXT
     );
   `);
-  // Seed known Dawntrail gaps missing from Teamcraft's open dataset.
-  // ON CONFLICT DO NOTHING so manual edits to existing rows are preserved.
-  await pool.query(`
-    INSERT INTO ingredient_overrides (item_id, item_name, source, node_name, zone, coords, notes) VALUES
-      (49233, 'Quahog',       'Fishing', NULL, NULL, NULL, 'Dawntrail coastal fishing — missing from Teamcraft open data'),
-      (39865, 'Dark Eggplant','Botany',  NULL, NULL, NULL, 'Dawntrail botany — missing from Teamcraft open data')
-    ON CONFLICT (item_id) DO NOTHING;
-  `);
-  console.log('  ingredient_overrides table ready + seeded');
+  // Override ROWS are owned by migrate-overrides.js (authoritative, re-runnable
+  // with DO UPDATE). Run that separately to seed/refresh them; this migration
+  // only guarantees the table exists so /api/recipes never errors.
+  console.log('  ingredient_overrides table ready (rows seeded by migrate-overrides.js)');
 
   const seed = JSON.parse(fs.readFileSync(path.join(__dirname, 'cooking-recipes.json'), 'utf8'));
 

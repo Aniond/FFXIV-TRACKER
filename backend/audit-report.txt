@@ -2,7 +2,7 @@
 ========================================================================
 ffxivlog.com DATA & FEATURE AUDIT
 ========================================================================
-Generated: 2026-06-05T00:04:00Z UTC
+Generated: 2026-06-05T00:16:18Z UTC
 Scope: recipes, gathering (fishing/mining/botany), DB integrity.
 Hunt marks: SKIPPED (confirmed accurate).
 
@@ -226,13 +226,16 @@ Orphaned ai_queries rows: 0
   NOTE: UNIQUE(user_id, hunt_id)/(user_id, job_abbr) constraints already provide a leading-column index on user_id.
 
 --- 7d · ingredient_overrides table ---
-Rows: 2
+Rows: 5
     • Quahog (id 49233) → Fishing  — Dawntrail coastal fishing — missing from Teamcraft open data
     • Dark Eggplant (id 39865) → Botany  — Dawntrail botany — missing from Teamcraft open data
+    • Flint Corn (id 49229) → Market Board  — Not gatherable — purchase from Market Board only
+    • Ut'ohmu Tomato (id 43978) → Botany  — Level 95 regular node. Found via Ut'ohmu Chili Sauce subcraft chain (Nachos). No timer needed.
+    • Levinchrome Aethersand (id 46246) → Market Board  — Aetherial reduction byproduct — not directly gatherable. Purchase from Market Board.
     seed check: Quahog (id 49233) → Fishing
     seed check: Dark Eggplant (id 39865) → Botany
     overrides not referenced by any recipe ingredient: 0
-    ingredient occurrences corrected at request-time by an override: 4
+    ingredient occurrences corrected at request-time by an override: 24
 
 ========================================================================
 AUDIT SUMMARY
