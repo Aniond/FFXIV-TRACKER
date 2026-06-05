@@ -21,8 +21,8 @@ const pool = require('./db');
  */
 const OVERRIDES = [
   // item_id, item_name, source, node_name, zone, coords, notes
-  [49233, 'Quahog', 'Fishing', null, null, null,
-    'Dawntrail coastal fishing — missing from Teamcraft open data'],
+  [49233, 'Quahog', 'Market Board', null, null, null,
+    "Not gathered — purchased from the Orange Scrip Exchange for 15 Orange Crafters' Scrip, or bought on the Market Board."],
   [39865, 'Dark Eggplant', 'Botany', null, null, null,
     'Dawntrail botany — missing from Teamcraft open data'],
 
