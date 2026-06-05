@@ -86,10 +86,10 @@ const SYSTEM_PROMPT =
   `- Never invent spots, nodes, coordinates, items, or recipes not present in the data. ` +
   `If nothing matches, set type "none", results [], and say so in the summary.\n` +
   `- When a gatherable item's exact location is not in the data, leave zone and coords as ` +
-  `empty strings and do NOT explain or speculate. Never output phrases like "check gathering ` +
-  `database", "not listed with explicit node coords", "check Garland Tools", "check a ` +
-  `gathering site", or "Source: <X> — check ...". The UI shows "Location not yet mapped" on ` +
-  `its own — add nothing. Keep "detail" to genuinely useful facts (level, amount, buff); omit it otherwise.\n` +
+  `empty strings and set "detail" to genuinely useful facts only (level, amount, buff) or omit ` +
+  `it. Do NOT explain the gap, speculate, point at any external tool/site/database, or otherwise ` +
+  `comment on the missing location anywhere (summary, detail, or tips). The UI shows "Location ` +
+  `not yet mapped" on its own — add nothing.\n` +
   `- INGREDIENT SOURCE OVERRIDES: the player turn may include an "AUTHORITATIVE INGREDIENT ` +
   `SOURCE OVERRIDES" list. Any ingredient named there MUST use that source, zone, and coords, ` +
   `overriding every other classification in this prompt (it is the authoritative source).\n\n` +
@@ -189,6 +189,67 @@ function withSourceUrls(answer) {
   return answer;
 }
 
+// ── Deterministic override enforcement ──────────────────────────────────────
+// The prompt text asks the model to honour ingredient_overrides, but the model
+// can ignore it. This pass is the real enforcement: any result whose name
+// matches an override row is rewritten to that authoritative source/zone/coords,
+// overriding whatever the model classified. Mutates and returns `answer`.
+const SOURCE_CATEGORY = {
+  fishing: 'fishing',
+  mining: 'mining',
+  botany: 'botany',
+  'market board': 'item',
+  market_board: 'item',
+};
+function applyOverrides(answer, overrides) {
+  if (!answer || !Array.isArray(answer.results) || !overrides || !overrides.length) return answer;
+  const byName = new Map(
+    overrides.filter((o) => o.item_name).map((o) => [o.item_name.trim().toLowerCase(), o])
+  );
+  for (const r of answer.results) {
+    const o = r.name && byName.get(r.name.trim().toLowerCase());
+    if (!o) continue;
+    const cat = SOURCE_CATEGORY[String(o.source || '').trim().toLowerCase()];
+    if (cat) r.category = cat;
+    // Override is authoritative for location — replace, don't merge. Empty
+    // zone/coords (e.g. Quahog: fishing, no mapped node) clears any model guess
+    // so the card falls back to "Location not yet mapped".
+    r.zone = o.zone || '';
+    r.coords = o.coords || '';
+    r.timed = false;
+    r.window = '';
+  }
+  return answer;
+}
+
+// ── Strip external-reference hints ──────────────────────────────────────────
+// Despite the system prompt, the model still sometimes points at gathering
+// databases / external tools or narrates a missing location. We scrub those
+// clauses from every user-visible text field on the backend so they can never
+// reach the client, the cache, or a future UI — the card shows "Location not
+// yet mapped" on its own.
+const LOCATION_HINT = /(garland\s*tools?|gathering\s*(?:site|database|log)|explicit\s+node\s+coords?|not\s+(?:individually\s+)?listed|node\s+(?:location|coords?)|current\s+data|not\s+yet\s+mapped|third-?party|check\s+(?:the\s+)?gathering)/i;
+function scrubHints(text) {
+  if (!text) return '';
+  // Split into clauses on sentence enders, dashes, and newlines; drop any clause
+  // that mentions a location hint, then tidy leftover punctuation/whitespace.
+  const clauses = String(text).split(/(?<=[.;!?])\s+|\s*[—–-]\s+|\n+/);
+  let t = clauses.filter((c) => c.trim() && !LOCATION_HINT.test(c)).join(' ');
+  t = t.replace(/\bSource:\s*[A-Za-z _/]+?(?=$|[.;,])/gi, '');
+  return t.replace(/\s{2,}/g, ' ').replace(/\s+([.,;!?])/g, '$1').replace(/^[\s.,;:—–-]+|[\s—–:-]+$/g, '').trim();
+}
+function sanitizeAnswer(answer) {
+  if (!answer) return answer;
+  if (typeof answer.summary === 'string') answer.summary = scrubHints(answer.summary);
+  if (Array.isArray(answer.tips)) answer.tips = answer.tips.map(scrubHints).filter(Boolean);
+  if (Array.isArray(answer.results)) {
+    for (const r of answer.results) {
+      if (typeof r.detail === 'string') r.detail = scrubHints(r.detail);
+    }
+  }
+  return answer;
+}
+
 router.post('/', authenticate, async (req, res) => {
   const query = typeof req.body.query === 'string' ? req.body.query.trim() : '';
   if (!query) return res.status(400).json({ error: 'query is required' });
@@ -220,6 +281,10 @@ router.post('/', authenticate, async (req, res) => {
 
     const queryNorm = normalize(query);
 
+    // Authoritative ingredient overrides — fetched up front so both the cached
+    // and fresh paths can enforce them deterministically (BUG 1).
+    const overrides = await getOverrides();
+
     // 60s identical-query cache.
     const cached = await pool.query(
       `SELECT response FROM user_searches
@@ -232,7 +297,9 @@ router.post('/', authenticate, async (req, res) => {
         'INSERT INTO ai_usage (user_id, query_text, tokens_in, tokens_out, cached) VALUES ($1, $2, 0, 0, true)',
         [req.user.id, query]
       );
-      return res.json({ ...withSourceUrls(cached.rows[0].response), cached: true });
+      // Re-apply enforcement in case the row was cached before these fixes.
+      const answer = withSourceUrls(sanitizeAnswer(applyOverrides(cached.rows[0].response, overrides)));
+      return res.json({ ...answer, cached: true });
     }
 
     // Live hunt data goes in the (uncached) user turn so the big static
@@ -241,8 +308,8 @@ router.post('/', authenticate, async (req, res) => {
       'SELECT name, rank, type, zone, area, coords, coords_note AS note, reward FROM hunts ORDER BY id'
     );
 
-    // Authoritative ingredient overrides — checked BEFORE any other classification.
-    const overrides = await getOverrides();
+    // Authoritative ingredient overrides — also surfaced to the model as a hint
+    // (the deterministic applyOverrides pass below is what actually enforces them).
     const overridesText = overrides.length
       ? `AUTHORITATIVE INGREDIENT SOURCE OVERRIDES — for any ingredient named here, use THIS ` +
         `source, zone, and coords and ignore every other source/location in this prompt:\n` +
@@ -284,7 +351,9 @@ router.post('/', authenticate, async (req, res) => {
     } catch {
       return res.status(502).json({ error: 'AI returned an unparseable response' });
     }
-    withSourceUrls(answer); // add deep-link source_url to gatherable results (stored + returned)
+    applyOverrides(answer, overrides); // BUG 1: force authoritative ingredient source/location
+    sanitizeAnswer(answer);            // BUG 2: strip external-reference / missing-location hints
+    withSourceUrls(answer);            // add deep-link source_url to gatherable results (stored + returned)
 
     const usage = message.usage || {};
     const tokensIn =
