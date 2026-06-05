@@ -84,7 +84,10 @@ const SYSTEM_PROMPT =
   `for level, rank, reward, bait, weather, yield items, quantity, or other useful specifics.\n` +
   `- tips[]: 0-4 short, actionable tips (routes, timing, what to bring). Omit if none.\n` +
   `- Never invent spots, nodes, coordinates, items, or recipes not present in the data. ` +
-  `If nothing matches, set type "none", results [], and say so in the summary.\n\n` +
+  `If nothing matches, set type "none", results [], and say so in the summary.\n` +
+  `- Never tell the player to consult external tools or websites (Garland Tools, ` +
+  `gathering databases, third-party sites, etc.). If a gatherable ingredient's exact ` +
+  `node is not in the data, simply state that its precise location is unknown.\n\n` +
   `CROSS-REFERENCING RECIPES & INGREDIENTS:\n` +
   `Each recipe lists its ingredients with an obtain "source":\n` +
   `- FISHING / MINING / BOTANY = gatherable. Look the ingredient name up in the ` +
@@ -148,6 +151,23 @@ async function isFlagEnabled(key) {
 
 const normalize = (q) => q.trim().replace(/\s+/g, ' ').toLowerCase();
 
+// Deep-link enrichment: every gatherable result gets a source_url pointing at
+// the matching gathering log, pre-filtered to highlight the item/node by name
+// (e.g. /gathering/botany?highlight=Palm+Syrup). Applied to both fresh and
+// cached responses so older cache rows also gain the field. Idempotent.
+const GATHER_CATEGORIES = new Set(['mining', 'botany', 'fishing']);
+function withSourceUrls(answer) {
+  if (answer && Array.isArray(answer.results)) {
+    for (const r of answer.results) {
+      if (GATHER_CATEGORIES.has(r.category) && r.name) {
+        const highlight = encodeURIComponent(r.name).replace(/%20/g, '+');
+        r.source_url = `/gathering/${r.category}?highlight=${highlight}`;
+      }
+    }
+  }
+  return answer;
+}
+
 router.post('/', authenticate, async (req, res) => {
   const query = typeof req.body.query === 'string' ? req.body.query.trim() : '';
   if (!query) return res.status(400).json({ error: 'query is required' });
@@ -191,7 +211,7 @@ router.post('/', authenticate, async (req, res) => {
         'INSERT INTO ai_usage (user_id, query_text, tokens_in, tokens_out, cached) VALUES ($1, $2, 0, 0, true)',
         [req.user.id, query]
       );
-      return res.json({ ...cached.rows[0].response, cached: true });
+      return res.json({ ...withSourceUrls(cached.rows[0].response), cached: true });
     }
 
     // Live hunt data goes in the (uncached) user turn so the big static
@@ -231,6 +251,7 @@ router.post('/', authenticate, async (req, res) => {
     } catch {
       return res.status(502).json({ error: 'AI returned an unparseable response' });
     }
+    withSourceUrls(answer); // add deep-link source_url to gatherable results (stored + returned)
 
     const usage = message.usage || {};
     const tokensIn =

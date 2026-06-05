@@ -36,6 +36,20 @@ const I = {
 
 const normCoords = (c) => String(c || '').replace(/~/g, '').replace(/\s+/g, '').toLowerCase()
 
+const GATHER_CATS = new Set(['mining', 'botany', 'fishing'])
+
+// Strip "check Garland Tools / a gathering site" style hints from AI detail text.
+// If we don't have a location we say "Location unknown" plainly instead.
+function cleanDetail(text) {
+  if (!text) return ''
+  let t = String(text)
+  // remove parenthetical asides that mention external tools/sites
+  t = t.replace(/\s*\([^)]*\b(?:garland\s*tools?|gathering\s*site|gathering\s*database)\b[^)]*\)/gi, '')
+  // remove standalone clauses/sentences that mention them
+  t = t.replace(/[^.;]*\b(?:garland\s*tools?|gathering\s*site|gathering\s*database)\b[^.;]*[.;]?/gi, '')
+  return t.replace(/\s{2,}/g, ' ').replace(/\s+([.,;])/g, '$1').replace(/\(\s*\)/g, '').trim()
+}
+
 // Recent-search history powers the dashboard's "Recent" chips.
 const HISTORY_KEY = 'ffxiv-search-history'
 function pushHistory(text) {
@@ -64,14 +78,23 @@ function ResultCard({ r, onCopy }) {
     ? { state: win.state, head: win.state === 'up' ? 'Active' : win.state === 'soon' ? 'Soon' : 'Closed', sub: `${win.pre} ${fmtDur(win.ms)}`, title: node.time }
     : (r.timed && r.window ? { state: 'timed', head: 'Timed', sub: r.window, title: r.window } : null)
 
+  const detail = cleanDetail(r.detail)
+  const zone = r.zone && r.zone.trim().toLowerCase() !== 'unknown' ? r.zone : null
+  const isGather = GATHER_CATS.has(r.category)
+  // Deep-link straight to the highlighted item/node in the gathering log when the
+  // API provided one; otherwise fall back to the plain gathering-log landing page.
+  const href = r.source_url || link?.href
+
   return (
     <article className={`aicard aicard--${r.category}`}>
       <div className="aicard__head">
         <h3 className="aicard__name">{r.name}</h3>
         <span className={`aicard__cat aicard__cat--${r.category}`}>{r.category}</span>
       </div>
-      {r.zone && <div className="aicard__zone"><I.pin />{r.zone}</div>}
-      {r.detail && <p className="aicard__detail">{r.detail}</p>}
+      {zone
+        ? <div className="aicard__zone"><I.pin />{zone}</div>
+        : (isGather && !r.coords && <div className="aicard__zone aicard__zone--unknown"><I.pin />Location unknown</div>)}
+      {detail && <p className="aicard__detail">{detail}</p>}
 
       <div className="aicard__foot">
         {r.coords && (
@@ -84,7 +107,12 @@ function ResultCard({ r, onCopy }) {
             <I.clock /><b>{badge.head}</b><span className="aicard__timer-sub">{badge.sub}</span>
           </span>
         )}
-        {link && <a className="aicard__link" href={link.href}>{link.label}<I.arrow /></a>}
+        {link && (
+          <button type="button" className="aicard__link" onClick={() => { window.location.href = href }}
+            title={`Open ${link.label}`}>
+            {link.label}<I.arrow />
+          </button>
+        )}
       </div>
     </article>
   )

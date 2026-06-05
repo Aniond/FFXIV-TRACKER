@@ -185,10 +185,14 @@
 .aicard__coords:hover { filter: brightness(1.15); }
 .aicard__coords svg { width: 12px; height: 12px; }
 
+.aicard__zone--unknown { color: var(--ink-faint, var(--ink-dim)); font-style: italic; opacity: .8; }
+
 .aicard__link {
   margin-left: auto;
   display: inline-flex; align-items: center; gap: 3px;
   font-size: 12px; color: var(--ink-dim); text-decoration: none;
+  /* button reset (was an <a>) */
+  background: none; border: 0; padding: 0; cursor: pointer; font: inherit;
 }
 .aicard__link svg { width: 13px; height: 13px; }
 .aicard__link:hover { color: var(--gold-bright); }

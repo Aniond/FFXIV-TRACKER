@@ -39,12 +39,17 @@ const RARITY_WORD = { common: 'Common', rare: 'Rare', legendary: 'Legendary' }
 
 const fishKey = (spotId, fishName) => `${spotId}::${fishName}`
 
-function SpotCard({ spot, caught, onToggleFish, onToggleAll, onCopy }) {
+function SpotCard({ spot, caught, onToggleFish, onToggleAll, onCopy, highlighted }) {
   const total = spot.fish.length
   const got = spot.fish.filter((f) => caught[fishKey(spot.id, f.name)]).length
   const allDone = got === total
+  const ref = useRef(null)
+  // Deep-link target: scroll the card into view when it becomes highlighted.
+  useEffect(() => {
+    if (highlighted && ref.current) ref.current.scrollIntoView({ behavior: 'smooth', block: 'center' })
+  }, [highlighted])
   return (
-    <article className={`spot${allDone ? ' is-done' : ''}`}>
+    <article ref={ref} className={`spot${allDone ? ' is-done' : ''}${highlighted ? ' is-highlight' : ''}`}>
       <div className="spot__head">
         <div className="spot__head-main">
           <h2 className="spot__name">{spot.name}</h2>
@@ -122,6 +127,7 @@ export default function Fishing({ spots = FISHING_SPOTS }) {
   const [exp, setExp] = useState('All')
   const [zone, setZone] = useState('All zones')
   const [toast, setToast] = useState(null)
+  const [highlightId, setHighlightId] = useState(null)
   const toastTimer = useRef(null)
 
   // Scope the fishing page's CSS tokens to body so they don't bleed into the hunt board
@@ -156,6 +162,23 @@ export default function Fishing({ spots = FISHING_SPOTS }) {
   const caughtCount = Object.values(caught).filter(Boolean).length
 
   const [view, setView] = useState('spots') // 'spots' | 'bait'
+
+  // Deep-link from AI search (?highlight=<spot, zone, or fish name>): switch to
+  // the spots view, find the matching spot, glow it gold for 3s. Cards are always
+  // expanded, so the catch list shows immediately.
+  useEffect(() => {
+    const h = new URLSearchParams(window.location.search).get('highlight')
+    if (!h) return
+    const norm = (s) => String(s || '').trim().toLowerCase()
+    const target = spots.find((s) =>
+      norm(s.name) === norm(h) || norm(s.zone) === norm(h) || s.fish.some((f) => norm(f.name) === norm(h)))
+    if (!target) return
+    setView('spots')
+    setHighlightId(target.id)
+    const t = setTimeout(() => setHighlightId(null), 3000)
+    return () => clearTimeout(t)
+  }, [spots])
+
   const baitFiltered = useMemo(() => {
     const query = q.trim().toLowerCase()
     if (!query) return BAIT_TACKLE
@@ -267,7 +290,7 @@ export default function Fishing({ spots = FISHING_SPOTS }) {
           ) : (
             <div className="spots">
               {filtered.map((s) => (
-                <SpotCard key={s.id} spot={s} caught={caught} onToggleFish={toggleFish} onToggleAll={toggleAll} onCopy={copyCoords} />
+                <SpotCard key={s.id} spot={s} caught={caught} highlighted={s.id === highlightId} onToggleFish={toggleFish} onToggleAll={toggleAll} onCopy={copyCoords} />
               ))}
             </div>
           )}

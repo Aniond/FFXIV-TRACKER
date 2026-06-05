@@ -31,15 +31,20 @@ const I = {
 const itemKey = (nodeId, itemName) => `${nodeId}::${itemName}`
 const nodeVars = (type) => ({ '--nc': NODE_TYPES[type].color })
 
-function NodeCard({ node, collected, onToggleItem, onToggleAll, onCopy }) {
+function NodeCard({ node, collected, onToggleItem, onToggleAll, onCopy, highlighted }) {
   const t = NODE_TYPES[node.type]
   const total = node.items.length
   const got = node.items.filter((it) => collected[itemKey(node.id, it.name)]).length
   const allDone = got === total
   const win = windowState(node.window)
   const expLabel = node.expansion === 'Dawntrail' ? 'DT' : 'EW'
+  const ref = useRef(null)
+  // Deep-link target: scroll the card into view when it becomes highlighted.
+  useEffect(() => {
+    if (highlighted && ref.current) ref.current.scrollIntoView({ behavior: 'smooth', block: 'center' })
+  }, [highlighted])
   return (
-    <article className={`node${allDone ? ' is-done' : ''}`} style={nodeVars(node.type)}>
+    <article ref={ref} className={`node${allDone ? ' is-done' : ''}${highlighted ? ' is-highlight' : ''}`} style={nodeVars(node.type)}>
       <div className="node__head">
         <div className="node__head-main">
           <h2 className="node__name">{node.name}</h2>
@@ -110,11 +115,25 @@ export default function Botany({ nodes = BOTANY_NODES }) {
   const [zone, setZone] = useState('All zones')
   const [toast, setToast] = useState(null)
   const [, setTick] = useState(0)
+  const [highlightId, setHighlightId] = useState(null)
   const toastTimer = useRef(null)
 
   useEffect(() => { localStorage.setItem(COLLECT_KEY, JSON.stringify(collected)) }, [collected])
   // re-render each second so spawn-window countdowns stay live
   useEffect(() => { const id = setInterval(() => setTick((t) => t + 1), 1000); return () => clearInterval(id) }, [])
+
+  // Deep-link from AI search (?highlight=<item or node name>): find the matching
+  // node, glow it gold for 3s. Cards are always expanded, so details show at once.
+  useEffect(() => {
+    const h = new URLSearchParams(window.location.search).get('highlight')
+    if (!h) return
+    const norm = (s) => String(s || '').trim().toLowerCase()
+    const target = nodes.find((n) => norm(n.name) === norm(h) || n.items.some((it) => norm(it.name) === norm(h)))
+    if (!target) return
+    setHighlightId(target.id)
+    const t = setTimeout(() => setHighlightId(null), 3000)
+    return () => clearTimeout(t)
+  }, [nodes])
 
   const zones = useMemo(() => {
     const list = nodes.filter((n) => type === 'All' || n.type === type).map((n) => n.zone)
@@ -198,7 +217,7 @@ export default function Botany({ nodes = BOTANY_NODES }) {
       ) : (
         <div className="nodes">
           {filtered.map((n) => (
-            <NodeCard key={n.id} node={n} collected={collected}
+            <NodeCard key={n.id} node={n} collected={collected} highlighted={n.id === highlightId}
               onToggleItem={toggleItem} onToggleAll={toggleAll} onCopy={copyCoords} />
           ))}
         </div>
