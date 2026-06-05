@@ -17,7 +17,7 @@ const pool = require('./db');
  *   railway link --project ffxivlog-backend --environment production --service Postgres
  *   railway run sh -c 'DATABASE_URL=$DATABASE_PUBLIC_URL NODE_ENV=production node migrate-overrides.js'
  *
- * source ∈ 'Fishing' | 'Mining' | 'Botany' | 'Market Board'
+ * source ∈ 'Fishing' | 'Mining' | 'Botany' | 'Market Board' | 'Scrip Exchange'
  */
 const OVERRIDES = [
   // item_id, item_name, source, node_name, zone, coords, notes
@@ -37,6 +37,13 @@ const OVERRIDES = [
     'Level 88 regular Botany node in Elpis.'],
   [36089, 'Giant Popoto', 'Botany', 'Regular Node', 'Labyrinthos', 'X:29.5, Y:19.8',
     'Level 83 regular Botany node in Labyrinthos.'],
+
+  // Scrip Exchange examples — bought from Scrip Exchange NPCs with crafter/gatherer
+  // scrips, NOT the Market Board. (item_id is the table PK; the AI matches by name.)
+  [38932, "Craftsman's Alkahest", 'Scrip Exchange', 'Scrip Exchange NPC', 'Multiple Cities', null,
+    "Purchased with White Crafters' Scrips from the Scrip Exchange in Limsa/Gridania/Ul'dah/Ishgard/Radz-at-Han/Old Sharlayan."],
+  [41780, "Craftsman's Command Materia", 'Scrip Exchange', 'Scrip Exchange NPC', 'Multiple Cities', null,
+    "Purchased with Purple Crafters' Scrips."],
 ];
 
 async function migrate() {
@@ -47,7 +54,7 @@ async function migrate() {
     CREATE TABLE IF NOT EXISTS ingredient_overrides (
       item_id   INTEGER PRIMARY KEY,
       item_name VARCHAR(255),
-      source    VARCHAR(20),  -- 'Fishing' | 'Mining' | 'Botany' | 'Market Board'
+      source    VARCHAR(20),  -- 'Fishing' | 'Mining' | 'Botany' | 'Market Board' | 'Scrip Exchange'
       node_name VARCHAR(255),
       zone      VARCHAR(100),
       coords    VARCHAR(50),

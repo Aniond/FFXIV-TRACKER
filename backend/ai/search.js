@@ -99,6 +99,9 @@ const SYSTEM_PROMPT =
   `gathering database below and report the exact zone, coords, level, and (if timed) ` +
   `the spawn window so the player knows where to get it. Use category fishing/mining/botany.\n` +
   `- MARKET_BOARD = bought from the market board or a vendor (no gather location). Use category "item".\n` +
+  `- SCRIP_EXCHANGE / Scrip Exchange = purchased from Scrip Exchange NPCs in major cities using ` +
+  `Crafters' or Gatherers' Scrips — NOT from the Market Board. Use category "scrip" and name the ` +
+  `scrip currency in "detail". Always distinguish between Scrip Exchange and Market Board sources.\n` +
   `- subcraft=true = the ingredient is itself a crafted item; note that it must be crafted.\n` +
   `For "how do I make X" list each ingredient (amount + where to get it). You can also answer ` +
   `the reverse ("which recipes use Megamaguey Pineapple?") and recommend food by its buff ` +
@@ -122,7 +125,7 @@ const RESPONSE_SCHEMA = {
         additionalProperties: false,
         properties: {
           name: { type: 'string', description: 'Hunt mark, fish, item, ingredient, recipe, or node name' },
-          category: { type: 'string', enum: ['hunt', 'fishing', 'mining', 'botany', 'recipe', 'item'] },
+          category: { type: 'string', enum: ['hunt', 'fishing', 'mining', 'botany', 'recipe', 'item', 'scrip'] },
           zone: { type: 'string' },
           coords: { type: 'string', description: 'Verbatim coordinates, e.g. "X:21.4, Y:9.2"; "" if none' },
           timed: { type: 'boolean', description: 'true for Unspoiled/Ephemeral/Legendary timed nodes' },
@@ -200,7 +203,10 @@ const SOURCE_CATEGORY = {
   botany: 'botany',
   'market board': 'item',
   market_board: 'item',
+  'scrip exchange': 'scrip',
+  scrip_exchange: 'scrip',
 };
+const GATHER_SOURCE_CATS = new Set(['fishing', 'mining', 'botany']);
 // Alternative-source clauses the model tacks on ("Can also be sourced from the
 // Market Board", "available from a vendor"). Harmless on a genuine Market Board
 // item, but on an item we've overridden to a gathering source they contradict
@@ -230,7 +236,8 @@ function applyOverrides(answer, overrides) {
     r.timed = false;
     r.window = '';
     // Gathering override: strip any contradicting "also on the Market Board" line.
-    if (cat && cat !== 'item' && typeof r.detail === 'string') r.detail = dropAltSourceClauses(r.detail);
+    // (Not for scrip items — there the "purchased with ... Scrips" text is the point.)
+    if (GATHER_SOURCE_CATS.has(cat) && typeof r.detail === 'string') r.detail = dropAltSourceClauses(r.detail);
   }
   return answer;
 }

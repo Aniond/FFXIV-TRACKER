@@ -157,6 +157,7 @@
 .aicard--mining  { --cat: #e0b252; }
 .aicard--botany  { --cat: #6fc08a; }
 .aicard--recipe  { --cat: #c79be0; }
+.aicard--scrip   { --cat: #2dd4bf; } /* teal — Scrip Exchange, distinct from Market Board */
 
 .aicard__head { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
 .aicard__name { margin: 0; font-size: 15px; color: var(--parchment); font-weight: 700; line-height: 1.3; }
