@@ -38,16 +38,19 @@ const normCoords = (c) => String(c || '').replace(/~/g, '').replace(/\s+/g, '').
 
 const GATHER_CATS = new Set(['mining', 'botany', 'fishing'])
 
-// Strip "check Garland Tools / a gathering site" style hints from AI detail text.
-// If we don't have a location we say "Location unknown" plainly instead.
+// Strip every "where to find it" hint the model sometimes tacks on — we never
+// suggest external tools or explain a missing location. Any clause mentioning
+// one of these is dropped; if that empties the detail, the card just shows the
+// category badge + "Location not yet mapped".
+const LOCATION_HINT = /(garland\s*tools?|gathering\s*(?:site|database|log)|explicit\s+node\s+coords?|not\s+(?:individually\s+)?listed|node\s+(?:location|coords?)|current\s+data|not\s+yet\s+mapped|third-?party)/i
 function cleanDetail(text) {
   if (!text) return ''
-  let t = String(text)
-  // remove parenthetical asides that mention external tools/sites
-  t = t.replace(/\s*\([^)]*\b(?:garland\s*tools?|gathering\s*site|gathering\s*database)\b[^)]*\)/gi, '')
-  // remove standalone clauses/sentences that mention them
-  t = t.replace(/[^.;]*\b(?:garland\s*tools?|gathering\s*site|gathering\s*database)\b[^.;]*[.;]?/gi, '')
-  return t.replace(/\s{2,}/g, ' ').replace(/\s+([.,;])/g, '$1').replace(/\(\s*\)/g, '').trim()
+  // Split into clauses on sentence enders, dashes, and newlines; drop hint clauses.
+  const clauses = String(text).split(/(?<=[.;!?])\s+|\s*[—–-]\s+|\n+/)
+  let t = clauses.filter((c) => c.trim() && !LOCATION_HINT.test(c)).join(' ')
+  // Drop a now-redundant "Source: <Category>" lead-in (the badge already shows it).
+  t = t.replace(/\bSource:\s*[A-Za-z _/]+?(?=$|[.;,])/gi, '')
+  return t.replace(/\s{2,}/g, ' ').replace(/\s+([.,;!?])/g, '$1').replace(/^[\s.,;:—–-]+|[\s—–:-]+$/g, '').trim()
 }
 
 // Recent-search history powers the dashboard's "Recent" chips.
@@ -93,7 +96,7 @@ function ResultCard({ r, onCopy }) {
       </div>
       {zone
         ? <div className="aicard__zone"><I.pin />{zone}</div>
-        : (isGather && !r.coords && <div className="aicard__zone aicard__zone--unknown"><I.pin />Location unknown</div>)}
+        : (isGather && !r.coords && <div className="aicard__zone aicard__zone--unknown"><I.pin />Location not yet mapped</div>)}
       {detail && <p className="aicard__detail">{detail}</p>}
 
       <div className="aicard__foot">

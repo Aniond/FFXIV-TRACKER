@@ -85,9 +85,14 @@ const SYSTEM_PROMPT =
   `- tips[]: 0-4 short, actionable tips (routes, timing, what to bring). Omit if none.\n` +
   `- Never invent spots, nodes, coordinates, items, or recipes not present in the data. ` +
   `If nothing matches, set type "none", results [], and say so in the summary.\n` +
-  `- Never tell the player to consult external tools or websites (Garland Tools, ` +
-  `gathering databases, third-party sites, etc.). If a gatherable ingredient's exact ` +
-  `node is not in the data, simply state that its precise location is unknown.\n\n` +
+  `- When a gatherable item's exact location is not in the data, leave zone and coords as ` +
+  `empty strings and do NOT explain or speculate. Never output phrases like "check gathering ` +
+  `database", "not listed with explicit node coords", "check Garland Tools", "check a ` +
+  `gathering site", or "Source: <X> — check ...". The UI shows "Location not yet mapped" on ` +
+  `its own — add nothing. Keep "detail" to genuinely useful facts (level, amount, buff); omit it otherwise.\n` +
+  `- INGREDIENT SOURCE OVERRIDES: the player turn may include an "AUTHORITATIVE INGREDIENT ` +
+  `SOURCE OVERRIDES" list. Any ingredient named there MUST use that source, zone, and coords, ` +
+  `overriding every other classification in this prompt (it is the authoritative source).\n\n` +
   `CROSS-REFERENCING RECIPES & INGREDIENTS:\n` +
   `Each recipe lists its ingredients with an obtain "source":\n` +
   `- FISHING / MINING / BOTANY = gatherable. Look the ingredient name up in the ` +
@@ -150,6 +155,22 @@ async function isFlagEnabled(key) {
 }
 
 const normalize = (q) => q.trim().replace(/\s+/g, ' ').toLowerCase();
+
+// ── ingredient_overrides: authoritative ingredient source/location ──────────
+// These manual rows take precedence over the baked Teamcraft classification.
+// Injected into the (uncached) player turn so the model honours them without a
+// backend restart. Cached in-process for 60s to avoid a DB hit per request.
+let OVERRIDES_CACHE = { at: 0, rows: [] };
+async function getOverrides() {
+  if (OVERRIDES_CACHE.rows.length && Date.now() - OVERRIDES_CACHE.at < 60000) return OVERRIDES_CACHE.rows;
+  try {
+    const r = await pool.query('SELECT item_name, source, node_name, zone, coords, notes FROM ingredient_overrides');
+    OVERRIDES_CACHE = { at: Date.now(), rows: r.rows };
+  } catch (err) {
+    console.error('[ai/search] ingredient_overrides query failed:', err.message);
+  }
+  return OVERRIDES_CACHE.rows;
+}
 
 // Deep-link enrichment: every gatherable result gets a source_url pointing at
 // the matching gathering log, pre-filtered to highlight the item/node by name
@@ -219,8 +240,20 @@ router.post('/', authenticate, async (req, res) => {
     const hunts = await pool.query(
       'SELECT name, rank, type, zone, area, coords, coords_note AS note, reward FROM hunts ORDER BY id'
     );
+
+    // Authoritative ingredient overrides — checked BEFORE any other classification.
+    const overrides = await getOverrides();
+    const overridesText = overrides.length
+      ? `AUTHORITATIVE INGREDIENT SOURCE OVERRIDES — for any ingredient named here, use THIS ` +
+        `source, zone, and coords and ignore every other source/location in this prompt:\n` +
+        JSON.stringify(overrides.map((o) => ({
+          name: o.item_name, source: o.source, zone: o.zone || '', coords: o.coords || '', notes: o.notes || '',
+        }))) + `\n\n`
+      : '';
+
     const userContent =
       `HUNTS DATABASE as JSON:\n${JSON.stringify(hunts.rows)}\n\n` +
+      overridesText +
       `PLAYER QUERY: ${query}`;
 
     const message = await anthropic.messages.create({

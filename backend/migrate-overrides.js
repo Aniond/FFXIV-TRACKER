@@ -30,6 +30,10 @@ const OVERRIDES = [
     'Level 95 regular node. Found via Ut\'ohmu Chili Sauce subcraft chain (Nachos). No timer needed.'],
   [46246, 'Levinchrome Aethersand', 'Market Board', null, null, null,
     'Aetherial reduction byproduct — not directly gatherable. Purchase from Market Board.'],
+  [36097, 'Alien Onion', 'Botany', 'Regular Node', 'Elpis', 'X:26.1, Y:27.3',
+    'Level 88 regular Botany node in Elpis.'],
+  [36089, 'Giant Popoto', 'Botany', 'Regular Node', 'Labyrinthos', 'X:29.5, Y:19.8',
+    'Level 83 regular Botany node in Labyrinthos.'],
 ];
 
 async function migrate() {
