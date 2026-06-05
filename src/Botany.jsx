@@ -130,6 +130,10 @@ export default function Botany({ nodes = BOTANY_NODES }) {
     const norm = (s) => String(s || '').trim().toLowerCase()
     const target = nodes.find((n) => norm(n.name) === norm(h) || n.items.some((it) => norm(it.name) === norm(h)))
     if (!target) return
+    // Clear any active filters so the target node is guaranteed to be in the rendered list.
+    setZone('All zones')
+    setType('All')
+    setQ('')
     setHighlightId(target.id)
     const t = setTimeout(() => setHighlightId(null), 3000)
     return () => clearTimeout(t)

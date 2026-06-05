@@ -131,6 +131,10 @@ export default function Mining({ nodes = MINING_NODES }) {
     const norm = (s) => String(s || '').trim().toLowerCase()
     const target = nodes.find((n) => norm(n.name) === norm(h) || n.items.some((it) => norm(it.name) === norm(h)))
     if (!target) return
+    setZone('All zones')
+    setType('All')
+    setGatherType('All')
+    setQ('')
     setHighlightId(target.id)
     const t = setTimeout(() => setHighlightId(null), 3000)
     return () => clearTimeout(t)
