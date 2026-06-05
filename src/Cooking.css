@@ -453,3 +453,14 @@ body.cooking-page .chip__craft {
   color: var(--dot-craft); background: rgba(106,140,212,.13);
   border: 1px solid rgba(106,140,212,.4); border-radius: 5px; padding: 1px 6px;
 }
+
+/* Ingredient deep-link filter chip (from Centurio AI "Used in N recipes"). */
+body.cooking-page .ing-filter-chip {
+  display: inline-flex; align-items: center; gap: 5px; margin-left: 10px;
+  font: 600 11px var(--fb); color: var(--dot-scrip);
+  background: rgba(45,212,191,.1); border: 1px solid rgba(45,212,191,.4);
+  border-radius: 999px; padding: 3px 10px; cursor: pointer; transition: filter .15s;
+}
+body.cooking-page .ing-filter-chip b { color: var(--parchment); font-weight: 700; }
+body.cooking-page .ing-filter-chip__x { font-size: 13px; line-height: 1; opacity: .8; }
+body.cooking-page .ing-filter-chip:hover { filter: brightness(1.15); }

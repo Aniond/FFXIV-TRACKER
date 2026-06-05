@@ -129,10 +129,11 @@ async function aiSearch(query) {
 // ── Recipes ──────────────────────────────────────────────────────────────────
 
 // Public crafting recipes (currently Dawntrail Culinarian). No auth required.
-async function fetchRecipes({ job = 'CUL', expansion = 'Dawntrail' } = {}) {
+async function fetchRecipes({ job = 'CUL', expansion = 'Dawntrail', includeSubcraft = false } = {}) {
   const qs = new URLSearchParams()
   if (job) qs.set('job', job)
   if (expansion) qs.set('expansion', expansion)
+  if (includeSubcraft) qs.set('include_subcraft', '1')
   const r = await apiFetch(`/api/recipes?${qs.toString()}`)
   if (!r.ok) return []
   return r.json().catch(() => [])

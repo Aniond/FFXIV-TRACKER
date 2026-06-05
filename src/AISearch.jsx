@@ -4,7 +4,8 @@ import EorzeaClock from './EorzeaClock'
 import { windowState, fmtDur } from './etWindow'
 import { MINING_NODES } from './miningData'
 import { BOTANY_NODES } from './botanyData'
-import { API, getToken, fetchMe, fetchFlags, aiSearch } from './api'
+import { API, getToken, fetchMe, fetchFlags, aiSearch, fetchRecipes } from './api'
+import { STAT_TYPES, STAT_KEY } from './cookingData'
 import './AISearch.css'
 
 /* ============================================================
@@ -32,6 +33,203 @@ const I = {
   clock: (p) => (<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" {...p}><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>),
   bulb: (p) => (<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" {...p}><path d="M9 18h6M10 21h4M12 3a6 6 0 0 0-4 10.5c.7.7 1 1.2 1 2.5h6c0-1.3.3-1.8 1-2.5A6 6 0 0 0 12 3Z"/></svg>),
   arrow: (p) => (<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...p}><path d="M5 12h14M13 6l6 6-6 6"/></svg>),
+  chevron: (p) => (<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" {...p}><path d="m6 9 6 6 6-6"/></svg>),
+  ext: (p) => (<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" {...p}><path d="M15 3h6v6"/><path d="M10 14 21 3"/><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/></svg>),
+  leaf: (p) => (<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" {...p}><path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10Z"/><path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12"/></svg>),
+  pick: (p) => (<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" {...p}><path d="M3 21 13 11"/><path d="M4 9c4-4 12-5 16-2-3-1-7 0-9 2 3-1 6 0 7 2-4-3-11-2-14-2Z"/><path d="m12.5 11.5 2 2"/></svg>),
+  fish: (p) => (<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" {...p}><path d="M3 12c3-5 8-6 12-6 3 0 5 2 6 6-1 4-3 6-6 6-4 0-9-1-12-6Z"/><path d="M3 12c-1 1.5-1 3 0 4.5M3 12c-1-1.5-1-3 0-4.5"/><circle cx="15" cy="11" r="1" fill="currentColor" stroke="none"/></svg>),
+  cart: (p) => (<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" {...p}><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>),
+  coin: (p) => (<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" {...p}><circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="4"/></svg>),
+  scrip: (p) => (<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" {...p}><path d="M6 3h8l5 5v11a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2Z"/><path d="M14 3v5h5"/><path d="M8.5 13h7M8.5 16.5h5"/></svg>),
+  gem: (p) => (<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" {...p}><path d="m12 21-9-12 3-6h12l3 6-9 12Z"/><path d="M3 9h18M9 3 6 9l6 12 6-12-3-6"/></svg>),
+  knife: (p) => (<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" {...p}><path d="M6 22 17.5 4"/><path d="M17.5 4c1.5 2.5 2 5 0 9s-2 6-1.5 9"/></svg>),
+}
+
+// ── Ingredient sourcing: badge / icon / colour / deep-link page per source ──
+const norm = (s) => String(s || '').trim().toLowerCase()
+const SOURCE_META = {
+  scrip:    { badge: 'Scrip',         icon: 'scrip', color: '#2dd4bf', page: null },
+  gemstone: { badge: 'Gemstone',      icon: 'gem',   color: '#c06ad4', page: null },
+  market:   { badge: 'Market Board',  icon: 'cart',  color: '#9a9aa8', page: null },
+  vendor:   { badge: 'Vendor',        icon: 'coin',  color: '#d4a84a', page: null },
+  botany:   { badge: 'Botany',        icon: 'leaf',  color: '#6fc08a', page: '/gathering/foraging' },
+  mining:   { badge: 'Mining',        icon: 'pick',  color: '#e0b252', page: '/gathering/mining' },
+  fishing:  { badge: 'Fishing',       icon: 'fish',  color: '#58c4e8', page: '/gathering/fishing' },
+}
+const SRC_KEY = {
+  SCRIP_EXCHANGE: 'scrip', GEMSTONE: 'gemstone', MARKET_BOARD: 'market', VENDOR: 'vendor',
+  BOTANY: 'botany', MINING: 'mining', FISHING: 'fishing',
+}
+const metaForSource = (source) => SOURCE_META[SRC_KEY[source] || 'market']
+
+// Short tier note from the scrip/gemstone currency name (Orange = Lv 100, Purple = Lv 90).
+function scripNote(currency) {
+  if (!currency) return null
+  if (/orange crafters/i.test(currency)) return 'Lv 100 Materials · Scrip Exchange'
+  if (/purple crafters/i.test(currency)) return 'Lv 90 Materials · Scrip Exchange'
+  if (/orange gatherers/i.test(currency)) return 'Lv 100 · Scrip Exchange'
+  if (/purple gatherers/i.test(currency)) return 'Lv 90 · Scrip Exchange'
+  if (/bicolor gemstone/i.test(currency)) return 'Bicolor Gemstone Trader'
+  if (/scrip/i.test(currency)) return 'Scrip Exchange'
+  return null
+}
+// One clean cost line from a recipe-ingredient record.
+function costLabel(ing) {
+  if (!ing) return null
+  if ((ing.source === 'SCRIP_EXCHANGE' || ing.source === 'GEMSTONE') && ing.currency) return `${ing.currency} × ${ing.price}`
+  if (ing.source === 'VENDOR' && ing.price != null) return `${ing.price} gil`
+  if (ing.source === 'MARKET_BOARD') return 'Market Board'
+  return null
+}
+
+// Build lookup maps from the full /api/recipes payload (dishes + subcrafts, all
+// expansions). recipeByName resolves recipe + subcraft cards; ingredientIndex
+// carries each ingredient's source/cost plus the Dawntrail dishes that use it.
+function buildIndexes(recipes) {
+  const recipeByName = new Map()
+  const ingredientIndex = new Map()
+  for (const r of recipes || []) recipeByName.set(norm(r.name), r)
+  for (const r of recipes || []) {
+    for (const ing of (r.ingredients || [])) {
+      const k = norm(ing.name)
+      let e = ingredientIndex.get(k)
+      if (!e) { e = { ...ing, usedIn: [] }; ingredientIndex.set(k, e) }
+      if (!r.is_subcraft && r.expansion === 'Dawntrail') e.usedIn.push(r.name)
+    }
+  }
+  return { recipeByName, ingredientIndex }
+}
+
+/* ── Actionable ingredient chip (used inside recipe cards) ────────────────── */
+function IngredientRow({ ing, recipeByName, onCopy, onNav, depth = 0 }) {
+  const [open, setOpen] = useState(false)
+  const m = metaForSource(ing.source)
+  const sub = ing.subcraft ? recipeByName?.get(norm(ing.name)) : null
+  const canExpand = !!(ing.subcraft && sub && depth < 2)
+  const Ico = ing.subcraft ? I.knife : I[m.icon]
+  const ws = ing.window ? windowState(ing.window) : null
+  const accent = ing.subcraft ? '#7c93e8' : m.color
+
+  // Where tapping the chip goes.
+  function act() {
+    if (canExpand) { setOpen((o) => !o); return }
+    if (ing.subcraft) return // craftable but no sub-recipe to expand
+    if (m.page) { onNav(`${m.page}?highlight=${encodeURIComponent(ing.name)}`); return }
+    if (ing.source === 'MARKET_BOARD' && ing.id) { window.open(`https://universalis.app/market/${ing.id}`, '_blank', 'noopener'); return }
+    setOpen((o) => !o) // scrip / gemstone / vendor → flash the vendor tooltip
+  }
+  const goGlyph = canExpand ? <I.chevron className={open ? 'is-open' : ''} />
+    : m.page ? <I.arrow />
+    : ing.source === 'MARKET_BOARD' ? <I.ext />
+    : null
+
+  const tip = ing.subcraft ? null
+    : (ing.source === 'SCRIP_EXCHANGE' || ing.source === 'GEMSTONE')
+      ? `${ing.source === 'GEMSTONE' ? 'Bicolor Gemstone Trader' : 'Scrip Exchange'} · ${ing.currency || ''} × ${ing.price}`.replace(' ·  ×', ' ·')
+    : ing.source === 'VENDOR' && ing.price != null ? `Vendor · ${ing.price} gil`
+    : null
+
+  return (
+    <div className="airow-wrap">
+      <div className="airow" role="button" tabIndex={0} style={{ '--ic': accent }}
+        onClick={act} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); act() } }}>
+        <span className="airow__ico"><Ico /></span>
+        <span className="airow__name">{ing.name}<span className="airow__qty">×{ing.amount}</span></span>
+        {ing.subcraft && <span className="airow__tag">Craft</span>}
+        {ws && <span className={`airow__timer is-${ws.state}`}>{ws.state === 'up' ? 'Open' : 'In'} {fmtDur(ws.ms)}</span>}
+        {ing.coords && (
+          <button type="button" className="airow__coords" title="Tap to copy"
+            onClick={(e) => { e.stopPropagation(); onCopy(ing.coords) }}>{ing.coords}</button>
+        )}
+        {goGlyph && <span className="airow__go">{goGlyph}</span>}
+      </div>
+      {open && canExpand && (
+        <div className="airow__sub">
+          {sub.ingredients.map((si, i) => (
+            <IngredientRow key={i} ing={si} recipeByName={recipeByName} onCopy={onCopy} onNav={onNav} depth={depth + 1} />
+          ))}
+        </div>
+      )}
+      {open && tip && <div className="airow__tip">{tip}</div>}
+    </div>
+  )
+}
+
+/* ── Recipe card (name + badge, ilvl/stars, buff chips, ingredient chips) ──── */
+function RecipeCard({ recipe, recipeByName, onCopy, onNav }) {
+  const [open, setOpen] = useState(false)
+  const buffs = recipe.food_buff || []
+  return (
+    <article className={`aicard aicard--recipe airecipe${open ? ' is-open' : ''}`}>
+      <div className="airecipe__head" role="button" tabIndex={0}
+        onClick={() => setOpen((o) => !o)} onKeyDown={(e) => { if (e.key === 'Enter') setOpen((o) => !o) }}>
+        <div className="aicard__head">
+          <h3 className="aicard__name">{recipe.name}</h3>
+          <span className="aicard__cat aicard__cat--recipe">Recipe</span>
+        </div>
+        <div className="airecipe__meta">
+          <span>iLvl {recipe.item_level}</span>
+          {recipe.stars > 0 && <span className="airecipe__stars">{'★'.repeat(recipe.stars)}</span>}
+          <span className="airecipe__dot">·</span>
+          <span>{recipe.ingredients.length} ingredients</span>
+          <I.chevron className="airecipe__chev" />
+        </div>
+        {buffs.length > 0 && (
+          <div className="aibuffs">
+            {buffs.map((b, i) => {
+              const color = STAT_TYPES[STAT_KEY[b.stat]]?.color || 'var(--gold)'
+              const val = b.relative ? `+${b.valueHQ}%` : `+${b.valueHQ}`
+              return <span key={i} className="aibuff" style={{ '--bc': color }}>{b.stat} {val}</span>
+            })}
+          </div>
+        )}
+      </div>
+      {open && (
+        <div className="airecipe__body">
+          {recipe.ingredients.map((ing, i) => (
+            <IngredientRow key={i} ing={ing} recipeByName={recipeByName} onCopy={onCopy} onNav={onNav} />
+          ))}
+        </div>
+      )}
+    </article>
+  )
+}
+
+/* ── Ingredient / scrip card (Flint Corn etc.) ───────────────────────────── */
+function IngredientCard({ r, meta, onCopy, onNav }) {
+  const source = meta?.source || (r.category === 'scrip' ? 'SCRIP_EXCHANGE' : 'MARKET_BOARD')
+  const m = metaForSource(source)
+  const Ico = I[m.icon]
+  const cost = costLabel(meta)
+  const note = scripNote(meta?.currency)
+  const usedIn = meta?.usedIn || []
+  const detail = cleanDetail(r.detail)
+  return (
+    <article className="aicard airing" style={{ '--cat': m.color }}>
+      <div className="aicard__head">
+        <h3 className="aicard__name airing__name">{r.name}</h3>
+        <span className="aicard__cat" style={{ color: m.color, borderColor: m.color }}>{m.badge}</span>
+      </div>
+      {cost
+        ? <div className="airing__cost"><span className="airing__cost-ico"><Ico /></span>{cost}</div>
+        : (detail && <p className="aicard__detail">{detail}</p>)}
+      {note && <div className="airing__note">{note}</div>}
+      <div className="aicard__foot">
+        {source === 'MARKET_BOARD' && meta?.id && (
+          <button type="button" className="airing__link"
+            onClick={() => window.open(`https://universalis.app/market/${meta.id}`, '_blank', 'noopener')}>
+            Universalis<I.ext />
+          </button>
+        )}
+        {usedIn.length > 0 && (
+          <button type="button" className="airing__used"
+            onClick={() => onNav(`/crafting/cooking?ingredient=${encodeURIComponent(r.name)}`)}>
+            Used in {usedIn.length} recipe{usedIn.length !== 1 ? 's' : ''}<I.arrow />
+          </button>
+        )}
+      </div>
+    </article>
+  )
 }
 
 const normCoords = (c) => String(c || '').replace(/~/g, '').replace(/\s+/g, '').toLowerCase()
@@ -72,7 +270,20 @@ const TIMED_BY_COORDS = (() => {
   return m
 })()
 
-function ResultCard({ r, onCopy }) {
+// Dispatcher: rich Recipe / Ingredient cards when we have the data, else the
+// standard gather/hunt card.
+function ResultCard({ r, recipeByName, ingredientIndex, onCopy, onNav }) {
+  if (r.category === 'recipe' && recipeByName) {
+    const recipe = recipeByName.get(norm(r.name))
+    if (recipe) return <RecipeCard recipe={recipe} recipeByName={recipeByName} onCopy={onCopy} onNav={onNav} />
+  }
+  if (r.category === 'scrip' || r.category === 'item') {
+    return <IngredientCard r={r} meta={ingredientIndex?.get(norm(r.name))} onCopy={onCopy} onNav={onNav} />
+  }
+  return <GatherCard r={r} onCopy={onCopy} />
+}
+
+function GatherCard({ r, onCopy }) {
   const link = PAGE_LINK[r.category]
   const node = (r.category === 'mining' || r.category === 'botany') ? TIMED_BY_COORDS.get(normCoords(r.coords)) : null
   const win = node ? windowState(node.window) : null
@@ -130,6 +341,7 @@ export default function AISearch() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
   const [result, setResult] = useState(null)
+  const [recipeData, setRecipeData] = useState(null) // { recipeByName, ingredientIndex }
   const [toast, setToast] = useState(null)
   const [, setTick] = useState(0)
   const toastTimer = useRef(null)
@@ -165,8 +377,18 @@ export default function AISearch() {
     if (iq && iq.trim()) { didAuto.current = true; setQ(iq.trim()); run(iq.trim()) }
   }, [ready, canUse]) // eslint-disable-line react-hooks/exhaustive-deps
 
+  // Pull the full recipe catalog (dishes + subcrafts) once the page is usable so
+  // recipe / ingredient result cards can render their rich detail client-side.
+  useEffect(() => {
+    if (!canUse || recipeData) return
+    fetchRecipes({ expansion: null, includeSubcraft: true })
+      .then((rs) => { if (rs?.length) setRecipeData(buildIndexes(rs)) })
+      .catch(() => {})
+  }, [canUse, recipeData])
+
   function showToast(m) { setToast(m); clearTimeout(toastTimer.current); toastTimer.current = setTimeout(() => setToast(null), 1500) }
   function copyCoords(text) { navigator.clipboard?.writeText(String(text).replace(/^~/, '')).catch(() => {}); showToast(`Copied ${text}`) }
+  function navTo(url) { window.location.href = url }
 
   async function run(query) {
     const text = (query ?? q).trim()
@@ -252,7 +474,11 @@ export default function AISearch() {
 
               {result.results?.length > 0 && (
                 <div className="ai-cards">
-                  {result.results.map((r, i) => <ResultCard key={`${r.name}-${i}`} r={r} onCopy={copyCoords} />)}
+                  {result.results.map((r, i) => (
+                    <ResultCard key={`${r.name}-${i}`} r={r}
+                      recipeByName={recipeData?.recipeByName} ingredientIndex={recipeData?.ingredientIndex}
+                      onCopy={copyCoords} onNav={navTo} />
+                  ))}
                 </div>
               )}
 

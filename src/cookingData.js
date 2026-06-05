@@ -35,7 +35,7 @@ export const SRC = {
 }
 
 // Backend stat abbreviation -> filter category key, and -> full display name.
-const STAT_KEY = {
+export const STAT_KEY = {
   CRT: 'crt', DET: 'det', DH: 'dh', SKS: 'sks', SPS: 'sps', TEN: 'ten', PIE: 'pie', VIT: 'vit',
   CP: 'cp', CMS: 'cp', CTL: 'cp', GP: 'gp', GAT: 'gp', PER: 'gp',
 }

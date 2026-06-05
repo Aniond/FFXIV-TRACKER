@@ -225,3 +225,105 @@
 .ai-tips__hd svg { width: 15px; height: 15px; }
 .ai-tips ul { margin: 0; padding-left: 18px; }
 .ai-tips li { font-size: 13px; line-height: 1.6; color: var(--ink); }
+
+/* ════════════════════════════════════════════════════════════
+   Rich result cards — Ingredient / Scrip + Recipe
+   ════════════════════════════════════════════════════════════ */
+
+/* ── Ingredient / scrip card ──────────────────────────────── */
+.airing__name { font-size: 16px; }
+.airing__cost {
+  display: inline-flex; align-items: center; gap: 7px;
+  font-size: 14px; font-weight: 600; color: var(--parchment);
+}
+.airing__cost-ico { display: inline-flex; color: var(--cat); }
+.airing__cost-ico svg { width: 16px; height: 16px; }
+.airing__note { font-size: 12px; color: var(--ink-dim); margin-top: -2px; }
+.airing__link, .airing__used {
+  display: inline-flex; align-items: center; gap: 4px;
+  font-size: 12px; font-weight: 600; font-family: inherit;
+  background: none; border: 0; padding: 0; cursor: pointer;
+}
+.airing__link { color: var(--ink-dim); }
+.airing__used { color: var(--cat, var(--gold)); }
+.airing__link svg, .airing__used svg { width: 13px; height: 13px; }
+.airing__link:hover { color: var(--gold-bright); }
+.airing__used:hover { filter: brightness(1.2); text-decoration: underline; }
+
+/* ── Recipe card ──────────────────────────────────────────── */
+.airecipe { padding: 0; gap: 0; }
+.airecipe__head {
+  display: flex; flex-direction: column; gap: 8px;
+  padding: 12px 14px; cursor: pointer;
+}
+.airecipe__head:focus-visible { outline: 2px solid var(--gold-dim); outline-offset: -2px; }
+.airecipe__meta {
+  display: flex; align-items: center; gap: 8px;
+  font-size: 12px; color: var(--ink-dim); font-variant-numeric: tabular-nums;
+}
+.airecipe__stars { color: #e8c878; letter-spacing: 1px; }
+.airecipe__dot { opacity: 0.5; }
+.airecipe__chev { width: 16px; height: 16px; margin-left: auto; color: var(--ink-dim); transition: transform 0.18s; }
+.airecipe.is-open .airecipe__chev { transform: rotate(180deg); }
+
+.aibuffs { display: flex; flex-wrap: wrap; gap: 6px; }
+.aibuff {
+  font-size: 11px; font-weight: 700; letter-spacing: 0.02em;
+  color: var(--bc); border: 1px solid var(--bc);
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 6px; padding: 2px 8px;
+}
+.airecipe__body {
+  display: flex; flex-direction: column; gap: 6px;
+  padding: 4px 12px 12px; border-top: 1px solid var(--bill-edge);
+}
+
+/* ── Actionable ingredient chip (inside recipe cards) ─────── */
+.airow-wrap { display: flex; flex-direction: column; gap: 4px; }
+.airow {
+  --ic: var(--gold);
+  display: flex; align-items: center; gap: 8px;
+  padding: 8px 10px; border-radius: 8px;
+  background: var(--board-2); border: 1px solid var(--bill-edge);
+  border-left: 3px solid var(--ic);
+  cursor: pointer; transition: border-color 0.15s, background 0.15s;
+}
+.airow:hover { border-color: var(--ic); background: var(--bill); }
+.airow:focus-visible { outline: 2px solid var(--ic); outline-offset: -2px; }
+.airow__ico { flex: 0 0 auto; width: 18px; height: 18px; color: var(--ic); display: inline-flex; }
+.airow__ico svg { width: 18px; height: 18px; }
+.airow__name {
+  flex: 1; min-width: 0; font-size: 13px; color: var(--parchment);
+  display: flex; align-items: baseline; gap: 6px; flex-wrap: wrap;
+}
+.airow__qty { font-size: 11px; color: var(--ink-dim); font-variant-numeric: tabular-nums; }
+.airow__tag {
+  flex: 0 0 auto; font-size: 9px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase;
+  color: var(--ic); border: 1px solid var(--ic); border-radius: 4px; padding: 1px 5px;
+}
+.airow__timer {
+  flex: 0 0 auto; font-size: 10px; padding: 1px 6px; border-radius: 5px;
+  border: 1px solid var(--bill-edge); color: var(--ink-dim); font-variant-numeric: tabular-nums;
+}
+.airow__timer.is-up { color: #6fc08a; border-color: #6fc08a; }
+.airow__timer.is-soon { color: #e0b252; border-color: #e0b252; }
+.airow__timer.is-closed { color: var(--ink-faint); border-color: var(--ink-faint); }
+.airow__coords {
+  flex: 0 0 auto; font-size: 11px; font-variant-numeric: tabular-nums;
+  color: var(--gold-bright); background: var(--gold-faint);
+  border: 1px solid var(--gold-dim); border-radius: 5px; padding: 2px 7px;
+  cursor: pointer; font-family: inherit;
+}
+.airow__coords:hover { filter: brightness(1.15); }
+.airow__go { flex: 0 0 auto; display: inline-flex; color: var(--ink-dim); }
+.airow__go svg { width: 15px; height: 15px; transition: transform 0.18s; }
+.airow__go .is-open { transform: rotate(180deg); }
+.airow__sub {
+  display: flex; flex-direction: column; gap: 4px;
+  margin-left: 14px; padding-left: 8px; border-left: 1px dashed var(--bill-edge);
+}
+.airow__tip {
+  margin-left: 14px; font-size: 11px; color: var(--ink-dim);
+  background: var(--bill); border: 1px solid var(--bill-edge);
+  border-radius: 6px; padding: 5px 9px;
+}

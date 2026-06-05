@@ -418,6 +418,11 @@ export default function Cooking() {
   const [q, setQ]                   = useState('')
   const [statFilter, setStatFilter] = useState('all')
   const [diffFilter, setDiffFilter] = useState(0)
+  // Deep-link from Centurio AI: /crafting/cooking?ingredient=Flint+Corn shows
+  // only dishes that use that ingredient.
+  const [ingFilter, setIngFilter]   = useState(() => {
+    try { return new URLSearchParams(window.location.search).get('ingredient') || '' } catch { return '' }
+  })
   const [sortBy, setSortBy]         = useState('ilvl')
   const [sheetOpen, setSheetOpen]   = useState(false)
   const [toast, setToast]           = useState(null)
@@ -444,9 +449,11 @@ export default function Cooking() {
 
   const filtered = useMemo(() => {
     const query = q.trim().toLowerCase()
+    const ingNeedle = ingFilter.trim().toLowerCase()
     let result = recipeList.filter(r => {
       if (statFilter !== 'all' && r.primaryStat !== statFilter) return false
       if (diffFilter !== 0     && r.stars !== diffFilter)       return false
+      if (ingNeedle && !r.ingredients.some(i => i.name.toLowerCase() === ingNeedle)) return false
       if (query) {
         const hay = [r.name, STAT_TYPES[r.primaryStat]?.label, ...r.ingredients.map(i => i.name)]
           .join(' ').toLowerCase()
@@ -459,7 +466,7 @@ export default function Cooking() {
     if (sortBy === 'stat')  result = [...result].sort((a, b) =>
       STAT_ORDER.indexOf(a.primaryStat) - STAT_ORDER.indexOf(b.primaryStat))
     return result
-  }, [q, statFilter, diffFilter, sortBy, recipeList])
+  }, [q, statFilter, diffFilter, ingFilter, sortBy, recipeList])
 
   const shoppingList = useMemo(() => {
     const items = {}
@@ -557,6 +564,11 @@ export default function Cooking() {
           <span className="filtrow__count">
             <b>{filtered.length}</b> recipe{filtered.length !== 1 ? 's' : ''}
           </span>
+          {ingFilter && (
+            <button className="ing-filter-chip" onClick={() => setIngFilter('')} title="Clear ingredient filter">
+              using <b>{ingFilter}</b><span className="ing-filter-chip__x">×</span>
+            </button>
+          )}
         </div>
       </div>
 
