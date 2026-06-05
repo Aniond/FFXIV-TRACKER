@@ -11,7 +11,10 @@ const pool = require('./db');
  *
  * Re-runnable: ON CONFLICT (item_id) DO UPDATE so edits here are pushed on
  * re-run. To patch a new gap, add a row below (resolve the item_id from the
- * recipe ingredients) and re-run against prod:
+ * recipe ingredients) and re-run against prod. NOTE: link the *Postgres*
+ * service, not FFXIV-TRACKER — DATABASE_PUBLIC_URL only exists on Postgres
+ * (the app service's DATABASE_URL is the internal host, unreachable locally):
+ *   railway link --project ffxivlog-backend --environment production --service Postgres
  *   railway run sh -c 'DATABASE_URL=$DATABASE_PUBLIC_URL NODE_ENV=production node migrate-overrides.js'
  *
  * source ∈ 'Fishing' | 'Mining' | 'Botany' | 'Market Board'
