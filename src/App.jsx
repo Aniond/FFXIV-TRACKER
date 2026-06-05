@@ -9,14 +9,10 @@ import ActivityNav from './ActivityNav'
 
 const DONE_KEY = 'ffxiv-hunt-done'
 
+// Initial paint only — App fetches /api/hunts on mount (see effect below) and
+// replaces this. Empty so an unreachable API never shows stale/retired hunts.
 const SEED = {
-  hunts: [
-    { id:1, name:"Mourner", rank:"B", type:"Intermediate Dawn Hunt", billNumber:"1/5", zone:"Yak T'el", area:"The Ja Tiika Heartland", coords:"~X:22, Y:28", coordsNote:"Roams central forest area", targets:2, reward:"1,000 Gil · 4 Sacks of Nuts · 471,744 EXP", authority:"Dawn Hunt", tips:["2 targets — kill both to complete.","Found in the lower Ja Tiika Heartland jungle.","Roaming mob — patrol until you find both."], status:"done" },
-    { id:2, name:"Blue Morpho", rank:"B", type:"Intermediate Dawn Hunt", billNumber:"2/5", zone:"Yak T'el", area:"The Cerulean Cexudross", coords:"~X:18, Y:32", coordsNote:"Roams lower forest area", targets:3, reward:"1,000 Gil · 4 Sacks of Nuts · 471,744 EXP", authority:"Dawn Hunt", tips:["3 targets — kill all 3 to complete.","Large blue butterflies in the lower Yak T'el forest.","Same lower forest tier as Mourner — do both together."], status:"done" },
-    { id:3, name:"Balyaborr", rank:"B", type:"Intermediate Dawn Hunt", billNumber:"3/5", zone:"Yak T'el", area:"The Ut'ohmu Horizon", coords:"~X:31, Y:11", coordsNote:"Roams — NE of map", targets:1, reward:"1,000 Gil · 4 Sacks of Nuts · 471,744 EXP", authority:"Dawn Hunt", tips:["B ranks roam continuously — no fixed spawn timer.","Teleport to Dirigible Landing aetheryte and sweep open ground north.","Single-target kill — soloable."], status:"todo" },
-    { id:4, name:"Aspis", rank:"B", type:"Intermediate Dawn Hunt", billNumber:"4/5", zone:"Shaaloani", area:"Eshceyaani Wilds", coords:"~X:26, Y:10", coordsNote:"Roams the wilds — snake-heavy area", targets:3, reward:"1,000 Gil · 4 Sacks of Nuts · 471,744 EXP", authority:"Dawn Hunt", tips:["3 targets — kill all 3 Aspis to complete.","Common open-world snakes — easy to spot.","Plentiful in the area — shouldn't take long."], status:"todo" },
-    { id:5, name:"Horned Lizard", rank:"B", type:"Intermediate Dawn Hunt", billNumber:"5/5", zone:"Shaaloani", area:"Eshceyaani Wilds", coords:"X:11.7, Y:13.7", coordsNote:"Roams — same area as Aspis", targets:2, reward:"1,000 Gil · 4 Sacks of Nuts · 471,744 EXP", authority:"Dawn Hunt", tips:["2 targets — kill both to complete.","Same area as Aspis — do both in one run.","Aggressive — will attack on sight."], status:"todo" },
-  ],
+  hunts: [],
 }
 
 const CATEGORIES = [
