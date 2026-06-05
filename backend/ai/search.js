@@ -201,6 +201,17 @@ const SOURCE_CATEGORY = {
   'market board': 'item',
   market_board: 'item',
 };
+// Alternative-source clauses the model tacks on ("Can also be sourced from the
+// Market Board", "available from a vendor"). Harmless on a genuine Market Board
+// item, but on an item we've overridden to a gathering source they contradict
+// the authoritative classification, so we drop them for gathering overrides only.
+const ALT_SOURCE_HINT = /(market\s*board|from\s+a\s+vendor|can\s+(?:also\s+)?be\s+(?:sourced|bought|purchased|obtained)|(?:purchas|bought|sourc|obtain)\w*\s+from|available\s+(?:from|on|at))/i;
+function dropAltSourceClauses(text) {
+  if (!text) return '';
+  const clauses = String(text).split(/(?<=[.;!?])\s+|\s*[—–-]\s+|\n+/);
+  return clauses.filter((c) => c.trim() && !ALT_SOURCE_HINT.test(c)).join(' ')
+    .replace(/\s{2,}/g, ' ').replace(/\s+([.,;!?])/g, '$1').trim();
+}
 function applyOverrides(answer, overrides) {
   if (!answer || !Array.isArray(answer.results) || !overrides || !overrides.length) return answer;
   const byName = new Map(
@@ -218,6 +229,8 @@ function applyOverrides(answer, overrides) {
     r.coords = o.coords || '';
     r.timed = false;
     r.window = '';
+    // Gathering override: strip any contradicting "also on the Market Board" line.
+    if (cat && cat !== 'item' && typeof r.detail === 'string') r.detail = dropAltSourceClauses(r.detail);
   }
   return answer;
 }
