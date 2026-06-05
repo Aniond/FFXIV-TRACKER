@@ -95,33 +95,104 @@ function EarliestCraftTime({ ingredients }) {
   )
 }
 
+/* ── Sub-recipe drill-down (craftable intermediates) ─────────
+   Raw /api/recipes ingredient shape (source is the API enum, e.g. BOTANY).
+   A craftable ingredient that has its own recipe in `recipeByName` expands to
+   reveal exactly what it needs; gatherable leaves link to the gathering log. */
+const norm = (s) => String(s || '').trim().toLowerCase()
+// Raw API source enum → cooking SRC key (mirrors cookingData's API_SRC).
+const RAW_SRC = {
+  FISHING: 'fishing', MINING: 'mining', BOTANY: 'botany', VENDOR: 'vendor',
+  SCRIP_EXCHANGE: 'scrip', GEMSTONE: 'gemstone', MARKET_BOARD: 'market',
+}
+
+function CraftRow({ ing, recipeByName, onNav, onCopy, depth }) {
+  const [open, setOpen] = useState(false)
+  const srcKey = RAW_SRC[ing.source] || 'market'
+  const meta = SRC[srcKey]
+  const sub = ing.subcraft ? recipeByName?.get(norm(ing.name)) : null
+  const canExpand = !!(sub && sub.ingredients?.length && depth < 4)
+  const navable = srcKey === 'botany' || srcKey === 'mining' || srcKey === 'fishing'
+  const Ico = ing.subcraft ? I.knife : I[meta.icon]
+  const ws = ing.window ? winState(ing.window) : null
+  const cost =
+      (ing.source === 'SCRIP_EXCHANGE' || ing.source === 'GEMSTONE') && ing.currency
+        ? `${ing.price} ${CUR_SHORT(ing.currency)}`
+    : (ing.source === 'VENDOR' && ing.price != null) ? `${ing.price} gil`
+    : null
+  const interactive = canExpand || navable
+
+  function act() {
+    if (canExpand) { setOpen(o => !o); return }
+    if (navable) onNav({ source: srcKey, name: ing.name })
+  }
+
+  return (
+    <div className="crow-wrap">
+      <div className={`crow${interactive ? ' is-act' : ''}`} style={{ '--ic': dotFor(srcKey, ws, ing) }}
+        role={interactive ? 'button' : undefined} tabIndex={interactive ? 0 : undefined}
+        onClick={interactive ? act : undefined}
+        onKeyDown={interactive ? (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); act() } } : undefined}>
+        <span className="crow__ico"><Ico/></span>
+        <span className="crow__name">{ing.name}<span className="crow__qty">×{ing.amount}</span></span>
+        {ing.subcraft && <span className="crow__tag">Craft</span>}
+        <span className="crow__src">{meta.label}</span>
+        {cost && <span className="crow__cost">{cost}</span>}
+        {ws && <span className={`crow__timer is-${ws.state}`}>{ws.pre} {fmtDur(ws.ms)}</span>}
+        {ing.coords && (
+          <button className="crow__coords" title="Tap to copy"
+            onClick={(e) => { e.stopPropagation(); onCopy(ing.coords) }}><I.copy/>{ing.coords}</button>
+        )}
+        {canExpand ? <span className="crow__go"><I.chevron style={{ transform: open ? 'rotate(180deg)' : 'none', transition: 'transform .18s' }}/></span>
+          : navable ? <span className="crow__go"><I.arrow/></span> : null}
+      </div>
+      {open && canExpand && (
+        <div className="crafttree">
+          {[...sub.ingredients].sort((a, b) => (b.window ? 1 : 0) - (a.window ? 1 : 0)).map((si, i) => (
+            <CraftRow key={(si.name || '') + i} ing={si} recipeByName={recipeByName}
+              onNav={onNav} onCopy={onCopy} depth={depth + 1}/>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
+// Source/window → accent colour (shared by chip dot and sub-row spine).
+function dotFor(srcKey, ws, ing) {
+  if (ing?.subcraft) return 'var(--dot-craft)'
+  if (srcKey === 'market')   return 'var(--dot-market)'
+  if (srcKey === 'vendor')   return '#d4a84a'
+  if (srcKey === 'scrip')    return 'var(--dot-scrip)'
+  if (srcKey === 'gemstone') return 'var(--dot-gem)'
+  if (!ws)                   return 'var(--dot-avail)'
+  if (ws.state === 'up')     return 'var(--dot-avail)'
+  if (ws.state === 'soon')   return 'var(--dot-soon)'
+  return 'var(--dot-closed)'
+}
+
 /* ── Ingredient Chip ─────────────────────────────────────── */
-function IngredientChip({ ing, onNav, onCopy, checked, onCheck }) {
+function IngredientChip({ ing, onNav, onCopy, checked, onCheck, recipeByName }) {
   const [tip, setTip] = useState(false)
+  const [open, setOpen] = useState(false)
   const ws = ing.window ? winState(ing.window) : null
   const canNav = !!ing.nodeId
+  // Craftable intermediates expand inline to show their own recipe (when we have it).
+  const subRecipe = ing.craftable ? recipeByName?.get(norm(ing.name)) : null
+  const canExpand = !!(subRecipe && subRecipe.ingredients?.length)
   // Craftable intermediates show the recipe (knife) icon; otherwise the source icon.
   const SrcIco = ing.craftable ? I.knife : I[SRC[ing.source].icon]
 
   // Non-gathering ingredients aren't on a map — explain where to get them.
   const costStr = ing.price != null && ing.currency ? `${ing.price} ${ing.currency}` : null
   const tipMsg =
-      ing.craftable             ? 'Craftable — this item has its own recipe'
+      ing.craftable             ? 'Craftable — recipe not yet in the catalog'
     : ing.source === 'scrip'    ? `Scrip Exchange · ${costStr || 'scrip purchase'}`
     : ing.source === 'gemstone' ? `Bicolor Gemstone Trader · ${costStr || 'gemstone purchase'}`
     : ing.source === 'vendor'   ? (ing.price != null ? `Buy from a vendor · ${ing.price} gil` : 'Available from a vendor')
     :                             'Available on Market Board'
 
-  let dc
-  if (ing.craftable)                  dc = 'var(--dot-craft)'
-  else if (ing.source === 'market')   dc = 'var(--dot-market)'
-  else if (ing.source === 'vendor')   dc = '#d4a84a'
-  else if (ing.source === 'scrip')    dc = 'var(--dot-scrip)'
-  else if (ing.source === 'gemstone') dc = 'var(--dot-gem)'
-  else if (!ing.window)         dc = 'var(--dot-avail)'
-  else if (ws.state === 'up')   dc = 'var(--dot-avail)'
-  else if (ws.state === 'soon') dc = 'var(--dot-soon)'
-  else                          dc = 'var(--dot-closed)'
+  const dc = dotFor(ing.source, ws, ing)
 
   // Auto-dismiss the market/vendor tooltip.
   useEffect(() => {
@@ -130,16 +201,20 @@ function IngredientChip({ ing, onNav, onCopy, checked, onCheck }) {
     return () => clearTimeout(t)
   }, [tip])
 
-  // Tap the chip: go to the gathering spot if it has one, else flash the tooltip.
+  // Tap the chip: expand a craftable's recipe, jump to a gathering spot, else flash the tooltip.
   function handleClick() {
+    if (canExpand) { setOpen(o => !o); return }
     if (canNav) onNav(ing)
     else setTip(true)
   }
+  const interactive = canExpand || canNav
+  const chipTitle = canExpand ? (open ? 'Hide recipe' : `Show ${ing.name} recipe`)
+    : canNav ? `Go to ${ing.nodeName}` : tipMsg
 
   return (
-    <div className={`chip${checked ? ' is-checked' : ''}${canNav ? ' is-nav' : ''}`} style={{ '--dc': dc }}
-      onClick={handleClick}
-      title={canNav ? `Go to ${ing.nodeName}` : tipMsg}>
+    <div className="chip-wrap">
+    <div className={`chip${checked ? ' is-checked' : ''}${interactive ? ' is-nav' : ''}`} style={{ '--dc': dc }}
+      onClick={handleClick} title={chipTitle}>
       <span className="chip__cb" role="checkbox" aria-checked={checked} title={checked ? 'Uncheck' : 'Check off'}
         onClick={e => { e.stopPropagation(); onCheck && onCheck(ing.name) }}>
         {checked
@@ -167,21 +242,45 @@ function IngredientChip({ ing, onNav, onCopy, checked, onCheck }) {
         </span>
       </span>
       <span className="chip__qty">×{ing.qty}</span>
-      {canNav && (
+      {canExpand ? (
+        <button className="chip__nav" title={open ? 'Hide recipe' : 'Show recipe'}
+          onClick={e => { e.stopPropagation(); setOpen(o => !o) }}>
+          <I.chevron style={{ transform: open ? 'rotate(180deg)' : 'none', transition: 'transform .18s' }}/>
+        </button>
+      ) : canNav ? (
         <button className="chip__nav" title={`Go to ${ing.nodeName}`}
           onClick={e => { e.stopPropagation(); onNav(ing) }}>
           <I.arrow/>
         </button>
-      )}
+      ) : null}
       {tip && <span className="chip__tip" role="status"><SrcIco/>{tipMsg}</span>}
+    </div>
+    {open && canExpand && (
+      <div className="crafttree crafttree--root">
+        {[...subRecipe.ingredients].sort((a, b) => (b.window ? 1 : 0) - (a.window ? 1 : 0)).map((si, i) => (
+          <CraftRow key={(si.name || '') + i} ing={si} recipeByName={recipeByName}
+            onNav={onNav} onCopy={onCopy} depth={1}/>
+        ))}
+      </div>
+    )}
     </div>
   )
 }
 
 /* ── Recipe Card ─────────────────────────────────────────── */
-function RecipeCard({ recipe, inList, isSaved, onToggleList, onToggleSave, onNav, onCopy }) {
-  const [expanded, setExpanded] = useState(false)
+function RecipeCard({ recipe, inList, isSaved, onToggleList, onToggleSave, onNav, onCopy, highlighted, recipeByName }) {
+  const [expanded, setExpanded] = useState(!!highlighted)
   const [checked, setChecked] = useState(() => new Set())
+  const cardRef = useRef(null)
+
+  // Deep-link from Centurio AI (?recipe=): scroll the matched card into view and
+  // open it so the ingredients are immediately visible.
+  useEffect(() => {
+    if (highlighted && cardRef.current) {
+      setExpanded(true)
+      cardRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' })
+    }
+  }, [highlighted])
 
   const st = STAT_TYPES[recipe.primaryStat]
   const primaryBuff = recipe.buffs.find(b => b.stat === st.statName) || recipe.buffs[0]
@@ -196,7 +295,8 @@ function RecipeCard({ recipe, inList, isSaved, onToggleList, onToggleSave, onNav
 
   return (
     <article
-      className={`recipe${expanded ? ' is-open' : ''}${inList ? ' is-listed' : ''}${isSaved ? ' is-saved' : ''}`}
+      ref={cardRef}
+      className={`recipe${expanded ? ' is-open' : ''}${inList ? ' is-listed' : ''}${isSaved ? ' is-saved' : ''}${highlighted ? ' is-highlight' : ''}`}
       style={{ '--rc': st.color }}
     >
       <div className="recipe__head" onClick={() => setExpanded(o => !o)} style={{ cursor: 'pointer' }}>
@@ -271,7 +371,8 @@ function RecipeCard({ recipe, inList, isSaved, onToggleList, onToggleSave, onNav
             <div className="chips">
               {sorted.map(ing => (
                 <IngredientChip key={ing.name + ing.source} ing={ing}
-                  onNav={onNav} onCopy={onCopy} checked={checked.has(ing.name)} onCheck={toggleCheck}/>
+                  onNav={onNav} onCopy={onCopy} checked={checked.has(ing.name)} onCheck={toggleCheck}
+                  recipeByName={recipeByName}/>
               ))}
             </div>
 
@@ -408,6 +509,9 @@ function ShoppingList({ list, isOpen, onOpen, onClose, onClear }) {
 export default function Cooking() {
   const [recipeList, setRecipeList] = useState([])
   const [loading, setLoading]       = useState(true)
+  // Full catalog (all jobs/expansions + subcrafts), keyed by name, so a craftable
+  // ingredient can expand to reveal its own recipe (e.g. Palm Sugar → Palm Syrup).
+  const [recipeByName, setRecipeByName] = useState(null)
 
   const [listIds, setListIds] = useState(() => {
     try { return new Set(JSON.parse(localStorage.getItem(LIST_KEY)) || []) } catch { return new Set() }
@@ -422,6 +526,11 @@ export default function Cooking() {
   // only dishes that use that ingredient.
   const [ingFilter, setIngFilter]   = useState(() => {
     try { return new URLSearchParams(window.location.search).get('ingredient') || '' } catch { return '' }
+  })
+  // Deep-link from Centurio AI: /crafting/cooking?recipe=Caramel+Popcorn scrolls
+  // to and opens that specific dish (set once from the URL; not a live filter).
+  const [recipeFocus] = useState(() => {
+    try { return new URLSearchParams(window.location.search).get('recipe') || '' } catch { return '' }
   })
   const [sortBy, setSortBy]         = useState('ilvl')
   const [sheetOpen, setSheetOpen]   = useState(false)
@@ -438,6 +547,19 @@ export default function Cooking() {
     fetchRecipes({ job: 'CUL', expansion: 'Dawntrail' })
       .then((rs) => setRecipeList(adaptRecipes(rs)))
       .finally(() => setLoading(false))
+  }, [])
+
+  // Pull the full recipe catalog once so craftable ingredients can drill into
+  // their own sub-recipes inline (any job/expansion, subcrafts included).
+  useEffect(() => {
+    fetchRecipes({ job: null, expansion: null, includeSubcraft: true })
+      .then((rs) => {
+        if (!rs?.length) return
+        const m = new Map()
+        for (const r of rs) m.set(r.name.trim().toLowerCase(), r)
+        setRecipeByName(m)
+      })
+      .catch(() => {})
   }, [])
 
   useEffect(() => { localStorage.setItem(LIST_KEY,  JSON.stringify([...listIds]))  }, [listIds])
@@ -583,6 +705,8 @@ export default function Cooking() {
           {filtered.map(r => (
             <RecipeCard key={r.id} recipe={r}
               inList={listIds.has(r.id)} isSaved={savedIds.has(r.id)}
+              highlighted={!!recipeFocus && r.name.toLowerCase() === recipeFocus.trim().toLowerCase()}
+              recipeByName={recipeByName}
               onToggleList={toggleList} onToggleSave={toggleSave} onNav={handleNav} onCopy={copyCoords}/>
           ))}
         </div>

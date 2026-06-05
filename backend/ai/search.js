@@ -177,15 +177,20 @@ async function getOverrides() {
 
 // Deep-link enrichment: every gatherable result gets a source_url pointing at
 // the matching gathering log, pre-filtered to highlight the item/node by name
-// (e.g. /gathering/botany?highlight=Palm+Syrup). Applied to both fresh and
-// cached responses so older cache rows also gain the field. Idempotent.
+// (e.g. /gathering/botany?highlight=Palm+Syrup). Hunt results point at the board
+// pre-focused on the mark (/hunts?hunt=Forgall — /hunts always renders the board).
+// Applied to both fresh and cached responses so older cache rows also gain the
+// field. Idempotent.
 const GATHER_CATEGORIES = new Set(['mining', 'botany', 'fishing']);
 function withSourceUrls(answer) {
   if (answer && Array.isArray(answer.results)) {
     for (const r of answer.results) {
-      if (GATHER_CATEGORIES.has(r.category) && r.name) {
-        const highlight = encodeURIComponent(r.name).replace(/%20/g, '+');
-        r.source_url = `/gathering/${r.category}?highlight=${highlight}`;
+      if (!r.name) continue;
+      const name = encodeURIComponent(r.name).replace(/%20/g, '+');
+      if (GATHER_CATEGORIES.has(r.category)) {
+        r.source_url = `/gathering/${r.category}?highlight=${name}`;
+      } else if (r.category === 'hunt') {
+        r.source_url = `/hunts?hunt=${name}`;
       }
     }
   }

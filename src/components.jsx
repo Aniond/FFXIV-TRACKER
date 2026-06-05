@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 
 const Icon = {
   search: (p) => (
@@ -104,11 +104,16 @@ function RankSeal({ rank }) {
   )
 }
 
-function BillCard({ hunt, done, onToggle, onCopy, q }) {
+function BillCard({ hunt, done, onToggle, onCopy, q, highlighted }) {
   const [open, setOpen] = useState(false)
   const hasTips = hunt.tips && hunt.tips.length > 0
+  const ref = useRef(null)
+  // Deep-link from Centurio AI (/?hunt=): scroll the matched mark into view.
+  useEffect(() => {
+    if (highlighted && ref.current) ref.current.scrollIntoView({ behavior: 'smooth', block: 'center' })
+  }, [highlighted])
   return (
-    <article className={`bill${done ? ' is-done' : ''}`} style={rankVars(hunt.rank)}>
+    <article ref={ref} className={`bill${done ? ' is-done' : ''}${highlighted ? ' is-highlight' : ''}`} style={rankVars(hunt.rank)}>
       <RankSeal rank={hunt.rank} />
 
       <div className="bill__body">
@@ -182,7 +187,12 @@ function BillCard({ hunt, done, onToggle, onCopy, q }) {
   )
 }
 
-function HuntTable({ hunts, doneMap, onToggle, onCopy, q }) {
+function HuntTable({ hunts, doneMap, onToggle, onCopy, q, highlightId }) {
+  const rowRef = useRef(null)
+  // Deep-link from Centurio AI (/?hunt=): scroll the matched row into view.
+  useEffect(() => {
+    if (highlightId && rowRef.current) rowRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' })
+  }, [highlightId])
   return (
     <div className="table-wrap">
       <table className="htable">
@@ -194,8 +204,10 @@ function HuntTable({ hunts, doneMap, onToggle, onCopy, q }) {
         <tbody>
           {hunts.map((h) => {
             const done = !!doneMap[h.id]
+            const isHl = h.id === highlightId
             return (
-              <tr key={h.id} className={done ? 'is-done' : ''} style={rankVars(h.rank)}>
+              <tr key={h.id} ref={isHl ? rowRef : null}
+                className={`${done ? 'is-done' : ''}${isHl ? ' is-highlight' : ''}`} style={rankVars(h.rank)}>
                 <td><div className="t-rank">{h.rank}</div></td>
                 <td>
                   <div className="t-name"><Highlight text={h.name} q={q} /></div>

@@ -200,11 +200,19 @@ function RecipeCard({ recipe, recipeByName, onCopy, onNav }) {
           {sorted.map((ing, i) => (
             <IngredientRow key={i} ing={ing} recipeByName={recipeByName} onCopy={onCopy} onNav={onNav} />
           ))}
+          <div className="aicard__foot">
+            <button type="button" className="airing__used"
+              onClick={(e) => { e.stopPropagation(); onNav(`/crafting/cooking?recipe=${encodeURIComponent(recipe.name)}`) }}>
+              Open in Cooking Log<I.arrow />
+            </button>
+          </div>
         </div>
       )}
     </article>
   )
 }
+
+const GATHER_PATH = { BOTANY: '/gathering/botany', MINING: '/gathering/mining', FISHING: '/gathering/fishing' }
 
 /* ── Ingredient / scrip card (Flint Corn etc.) — collapsible ─────────────── */
 function IngredientCard({ r, meta, onCopy, onNav }) {
@@ -216,6 +224,7 @@ function IngredientCard({ r, meta, onCopy, onNav }) {
   const note = scripNote(meta?.currency)
   const usedIn = meta?.usedIn || []
   const detail = cleanDetail(r.detail)
+  const gatherPath = GATHER_PATH[source]
 
   return (
     <article className={`aicard airing${open ? ' is-open' : ''}`} style={{ '--cat': m.color }}>
@@ -242,6 +251,12 @@ function IngredientCard({ r, meta, onCopy, onNav }) {
               <button type="button" className="airing__link"
                 onClick={(e) => { e.stopPropagation(); window.open(`https://universalis.app/market/${meta.id}`, '_blank', 'noopener') }}>
                 Universalis<I.ext />
+              </button>
+            )}
+            {gatherPath && (
+              <button type="button" className="airing__link"
+                onClick={(e) => { e.stopPropagation(); onNav(`${gatherPath}?highlight=${encodeURIComponent(r.name)}`) }}>
+                View in log<I.arrow />
               </button>
             )}
             {usedIn.length > 0 && (
@@ -322,7 +337,10 @@ function GatherCard({ r, onCopy }) {
   const isGather = GATHER_CATS.has(r.category)
   // Deep-link straight to the highlighted item/node in the gathering log when the
   // API provided one; otherwise fall back to the plain gathering-log landing page.
-  const href = r.source_url || link?.href
+  // Hunts have no source_url — focus the mark on the board via /hunts?hunt=<name>
+  // (/hunts always renders the board; "/" shows the personal dashboard when signed in).
+  const href = r.source_url
+    || (r.category === 'hunt' ? `/hunts?hunt=${encodeURIComponent(r.name)}` : link?.href)
 
   return (
     <article className={`aicard aicard--${r.category}`}>

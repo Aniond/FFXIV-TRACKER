@@ -132,6 +132,13 @@ body.cooking-page .recipe {
 body.cooking-page .recipe::before {content:"";position:absolute;left:0;right:0;top:0;height:2px;background:linear-gradient(90deg,transparent,var(--rc),transparent);opacity:.55;}
 body.cooking-page .recipe::after {content:"";position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--rc);opacity:.85;}
 body.cooking-page .recipe.is-listed {border-color:color-mix(in srgb,var(--rc) 35%,var(--bill-edge));}
+/* Deep-link highlight: gold glow that fades over 3s (AI search jump-to). */
+body.cooking-page .recipe.is-highlight {animation:recipeHighlight 3s ease-out forwards;z-index:1;}
+@keyframes recipeHighlight {
+  0%   {border-color:#ffd34d;box-shadow:0 0 0 1px #ffd34d,0 0 22px 4px rgba(255,211,77,.7);}
+  70%  {border-color:#ffd34d;box-shadow:0 0 0 1px #ffd34d,0 0 18px 3px rgba(255,211,77,.55);}
+  100% {border-color:var(--bill-edge);box-shadow:0 0 0 0 rgba(255,211,77,0);}
+}
 body.cooking-page .recipe.is-saved .recipe__crest {box-shadow:0 0 12px color-mix(in srgb,var(--rc) 45%,transparent);}
 body.cooking-page .recipe__head {display:flex;align-items:flex-start;gap:11px;padding:14px 14px 14px 17px;}
 body.cooking-page .recipe__crest {
@@ -290,6 +297,42 @@ body.cooking-page .chip__tip::after {
   border:5px solid transparent;border-top-color:var(--hearth-dim);
 }
 @keyframes chip-tip-in {from{opacity:0;transform:translateY(3px)}to{opacity:1;transform:translateY(0)}}
+
+/* ── Craftable drill-down: a subcraft chip expands to reveal its own recipe ── */
+body.cooking-page .chip-wrap {display:flex;flex-direction:column;}
+body.cooking-page .crafttree {
+  display:flex;flex-direction:column;gap:4px;
+  margin:5px 0 2px 16px;padding-left:11px;
+  border-left:2px solid color-mix(in srgb,var(--dot-craft) 40%,var(--bill-edge));
+  animation:chip-tip-in .16s ease-out;
+}
+body.cooking-page .crow {
+  position:relative;display:flex;align-items:center;gap:7px;padding:6px 9px;
+  border-radius:8px;background:rgba(0,0,0,.18);
+  border:1px solid var(--bill-edge);border-left:3px solid var(--ic,var(--bill-edge));
+  transition:background .12s,border-color .12s;
+}
+body.cooking-page .crow.is-act {cursor:pointer;user-select:none;}
+body.cooking-page .crow.is-act:hover {background:rgba(0,0,0,.3);border-left-color:var(--hearth-bright);}
+body.cooking-page .crow__ico {width:14px;height:14px;flex:0 0 14px;color:var(--ink-dim);}
+body.cooking-page .crow__ico svg {width:14px;height:14px;}
+body.cooking-page .crow__name {flex:1;min-width:0;font:600 12px var(--fb);color:var(--parchment);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+body.cooking-page .crow__qty {font:700 11px var(--fb);color:var(--ink-dim);margin-left:5px;}
+body.cooking-page .crow__tag {font:700 8.5px var(--fb);letter-spacing:.05em;color:var(--dot-craft);border:1px solid color-mix(in srgb,var(--dot-craft) 50%,transparent);border-radius:5px;padding:1px 4px;flex-shrink:0;}
+body.cooking-page .crow__src {font:700 9.5px var(--fb);letter-spacing:.04em;color:var(--ink-dim);white-space:nowrap;flex-shrink:0;}
+body.cooking-page .crow__cost {font:700 10px var(--fb);color:#d4a84a;white-space:nowrap;flex-shrink:0;}
+body.cooking-page .crow__coords {
+  display:inline-flex;align-items:center;gap:3px;font:700 10px var(--fb);
+  color:var(--hearth-dim);background:none;border:none;cursor:pointer;padding:0;flex-shrink:0;
+}
+body.cooking-page .crow__coords svg {width:11px;height:11px;}
+body.cooking-page .crow__coords:hover {color:var(--hearth-bright);}
+body.cooking-page .crow__timer {font:700 9.5px var(--fb);letter-spacing:.03em;white-space:nowrap;flex-shrink:0;color:var(--ink-dim);}
+body.cooking-page .crow__timer.is-up {color:var(--dot-avail);}
+body.cooking-page .crow__timer.is-soon {color:var(--dot-soon);}
+body.cooking-page .crow__timer.is-closed {color:var(--dot-closed);}
+body.cooking-page .crow__go {width:16px;height:16px;flex:0 0 16px;color:var(--hearth-dim);display:grid;place-items:center;}
+body.cooking-page .crow__go svg {width:14px;height:14px;}
 body.cooking-page .tbadge {
   display:inline-flex;align-items:center;gap:5px;
   font:700 9.5px var(--fb);letter-spacing:.06em;

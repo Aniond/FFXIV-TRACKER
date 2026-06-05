@@ -65,7 +65,11 @@ function App() {
   const [type, setType] = useState('all')
   const [toast, setToast] = useState(null)
   const [user, setUser] = useState(null)
-  const [page, setPage] = useState('overview')
+  // Deep-link from Centurio AI (/hunts?hunt=Forgall): open the board on that mark.
+  const [highlightHunt] = useState(() => {
+    try { return new URLSearchParams(window.location.search).get('hunt') || '' } catch { return '' }
+  })
+  const [page, setPage] = useState(highlightHunt ? 'board' : 'overview')
   const toastTimer = useRef(null)
   const prefsSynced = useRef(false)
 
@@ -153,6 +157,12 @@ function App() {
     [hunts]
   )
   const doneCount = hunts.filter((h) => doneMap[h.id]).length
+  // Resolve the deep-linked hunt name to an id once the data has loaded.
+  const highlightId = useMemo(() => {
+    if (!highlightHunt) return null
+    const needle = highlightHunt.trim().toLowerCase()
+    return hunts.find((h) => h.name.toLowerCase() === needle)?.id ?? null
+  }, [hunts, highlightHunt])
 
   function toggle(id) {
     const newDone = !doneMap[id]
@@ -320,7 +330,7 @@ function App() {
               <p>No hunts match the current filters. Try adjusting the rank, status, or type selection.</p>
             </div>
           ) : t.view === 'table' ? (
-            <HuntTable hunts={filtered} doneMap={doneMap} onToggle={toggle} onCopy={copyCoords} q={q} />
+            <HuntTable hunts={filtered} doneMap={doneMap} onToggle={toggle} onCopy={copyCoords} q={q} highlightId={highlightId} />
           ) : (
             <div className="bills">
               {filtered.map((h) => (
@@ -331,6 +341,7 @@ function App() {
                   onToggle={() => toggle(h.id)}
                   onCopy={copyCoords}
                   q={q}
+                  highlighted={h.id === highlightId}
                 />
               ))}
             </div>
