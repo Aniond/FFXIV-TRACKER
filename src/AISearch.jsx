@@ -174,13 +174,18 @@ function RecipeCard({ recipe, recipeByName, onCopy, onNav }) {
         <span className="airecipe__crest"><I.knife /></span>
         <div className="airecipe__info">
           <h3 className="airecipe__name">{recipe.name}</h3>
-          <div className="airecipe__meta">
+        </div>
+        <span className={`airecipe__chev${open ? ' is-open' : ''}`}><I.chevron /></span>
+      </div>
+      {open && (
+        <div className="airecipe__body">
+          <div className="airecipe__meta" style={{ marginBottom: 8 }}>
             <span className="airecipe__job">CUL</span>
             <span>ilvl {recipe.item_level}</span>
             {recipe.stars > 0 && <><span className="airecipe__dot">·</span><span className="airecipe__stars">{'★'.repeat(recipe.stars)}</span></>}
           </div>
           {buffs.length > 0 && (
-            <div className="aibuffs">
+            <div className="aibuffs" style={{ marginBottom: 10 }}>
               {buffs.map((b, i) => {
                 const color = STAT_TYPES[STAT_KEY[b.stat]]?.color || 'var(--gold)'
                 const val = b.relative ? `+${b.valueHQ}%` : `+${b.valueHQ}`
@@ -188,11 +193,6 @@ function RecipeCard({ recipe, recipeByName, onCopy, onNav }) {
               })}
             </div>
           )}
-        </div>
-        <span className={`airecipe__chev${open ? ' is-open' : ''}`}><I.chevron /></span>
-      </div>
-      {open && (
-        <div className="airecipe__body">
           <div className="airecipe__ing-hd">
             Ingredients ({recipe.ingredients.length})
             {hasTimed && <span className="airecipe__timed">⏱ timed</span>}
@@ -224,16 +224,15 @@ function IngredientCard({ r, meta, onCopy, onNav }) {
         onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setOpen((o) => !o) } }}>
         <div className="airing__head-main">
           <h3 className="aicard__name airing__name">{r.name}</h3>
-          {!open && (cost || detail) && <div className="airing__summary">{cost || detail}</div>}
         </div>
         <div className="airing__head-right">
-          <span className="aicard__cat" style={{ color: m.color, borderColor: m.color }}>{m.badge}</span>
           <span className={`airing__chev${open ? ' is-open' : ''}`}><I.chevron /></span>
         </div>
       </div>
 
       {open && (
         <div className="airing__body">
+          <span className="aicard__cat" style={{ color: m.color, borderColor: m.color }}>{m.badge}</span>
           {cost
             ? <div className="airing__cost"><span className="airing__cost-ico"><Ico /></span>{cost}</div>
             : (detail && <p className="aicard__detail">{detail}</p>)}
