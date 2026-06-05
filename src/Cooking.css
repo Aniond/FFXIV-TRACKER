@@ -232,6 +232,7 @@ body.cooking-page .ect__ico {width:14px;height:14px;flex:0 0 14px;color:var(--he
 @keyframes ect-pulse {0%,100%{opacity:.7}50%{opacity:1}}
 body.cooking-page .chips {display:flex;flex-direction:column;gap:5px;}
 body.cooking-page .chip {
+  position:relative;
   display:flex;align-items:center;gap:8px;padding:9px 11px;
   border-radius:10px;cursor:pointer;user-select:none;
   background:color-mix(in srgb,var(--dc) 6%,rgba(0,0,0,.22));
@@ -242,9 +243,10 @@ body.cooking-page .chip {
   transition:background .12s,opacity .18s;
 }
 body.cooking-page .chip:hover {background:color-mix(in srgb,var(--dc) 11%,rgba(0,0,0,.28));}
+body.cooking-page .chip.is-nav:hover {border-left-color:var(--hearth-bright);}
 body.cooking-page .chip.is-checked {opacity:.42;}
 body.cooking-page .chip.is-checked .chip__name {text-decoration:line-through;text-decoration-color:var(--ink-dim);}
-body.cooking-page .chip__cb {flex:0 0 18px;width:18px;height:18px;display:grid;place-items:center;}
+body.cooking-page .chip__cb {flex:0 0 18px;width:18px;height:18px;display:grid;place-items:center;cursor:pointer;}
 body.cooking-page .chip__cb-ring {
   width:13px;height:13px;border-radius:50%;
   border:1.5px solid var(--ink-faint);
@@ -272,6 +274,21 @@ body.cooking-page .chip__nav {
 }
 body.cooking-page .chip__nav svg {width:13px;height:13px;}
 body.cooking-page .chip__nav:hover {border-color:var(--hearth-dim);color:var(--hearth-bright);background:var(--hearth-faint);}
+body.cooking-page .chip__tip {
+  position:absolute;left:11px;bottom:calc(100% + 6px);z-index:5;
+  display:inline-flex;align-items:center;gap:6px;
+  font:700 10px var(--fb);letter-spacing:.04em;color:var(--parchment);
+  padding:6px 10px;border-radius:8px;white-space:nowrap;pointer-events:none;
+  background:rgba(20,12,6,.96);border:1px solid var(--hearth-dim);
+  box-shadow:0 4px 14px rgba(0,0,0,.5);
+  animation:chip-tip-in .14s ease-out;
+}
+body.cooking-page .chip__tip svg {width:13px;height:13px;color:var(--hearth);flex:0 0 13px;}
+body.cooking-page .chip__tip::after {
+  content:"";position:absolute;left:16px;top:100%;
+  border:5px solid transparent;border-top-color:var(--hearth-dim);
+}
+@keyframes chip-tip-in {from{opacity:0;transform:translateY(3px)}to{opacity:1;transform:translateY(0)}}
 body.cooking-page .tbadge {
   display:inline-flex;align-items:center;gap:5px;
   font:700 9.5px var(--fb);letter-spacing:.06em;
@@ -285,10 +302,10 @@ body.cooking-page .tbadge--avail {
 }
 body.cooking-page .tbadge--avail .tbadge__dot {background:var(--dot-avail);box-shadow:0 0 4px var(--dot-avail);}
 body.cooking-page .tbadge--up {
-  color:var(--dot-soon);
-  background:rgba(212,184,74,.1);border-color:rgba(212,184,74,.2);
+  color:var(--dot-avail);
+  background:rgba(90,170,114,.1);border-color:rgba(90,170,114,.2);
 }
-body.cooking-page .tbadge--up .tbadge__dot {background:var(--dot-soon);box-shadow:0 0 4px var(--dot-soon);}
+body.cooking-page .tbadge--up .tbadge__dot {background:var(--dot-avail);box-shadow:0 0 4px var(--dot-avail);}
 body.cooking-page .tbadge--closed {
   color:var(--dot-closed);
   background:rgba(212,96,96,.1);border-color:rgba(212,96,96,.2);

@@ -89,9 +89,15 @@ function EarliestCraftTime({ ingredients }) {
 
 /* ── Ingredient Chip ─────────────────────────────────────── */
 function IngredientChip({ ing, onNav, onCopy, checked, onCheck }) {
+  const [tip, setTip] = useState(false)
   const ws = ing.window ? winState(ing.window) : null
   const canNav = !!ing.nodeId
   const SrcIco = I[SRC[ing.source].icon]
+
+  // Market/vendor ingredients aren't on a gathering map — explain where to get them.
+  const tipMsg = ing.source === 'vendor'
+    ? (ing.price != null ? `Buy from a vendor · ${ing.price} gil` : 'Available from a vendor')
+    : 'Available on Market Board'
 
   let dc
   if (ing.source === 'market')  dc = 'var(--dot-market)'
@@ -101,10 +107,25 @@ function IngredientChip({ ing, onNav, onCopy, checked, onCheck }) {
   else if (ws.state === 'soon') dc = 'var(--dot-soon)'
   else                          dc = 'var(--dot-closed)'
 
+  // Auto-dismiss the market/vendor tooltip.
+  useEffect(() => {
+    if (!tip) return
+    const t = setTimeout(() => setTip(false), 1900)
+    return () => clearTimeout(t)
+  }, [tip])
+
+  // Tap the chip: go to the gathering spot if it has one, else flash the tooltip.
+  function handleClick() {
+    if (canNav) onNav(ing)
+    else setTip(true)
+  }
+
   return (
-    <div className={`chip${checked ? ' is-checked' : ''}`} style={{ '--dc': dc }}
-      onClick={() => onCheck && onCheck(ing.name)}>
-      <span className="chip__cb">
+    <div className={`chip${checked ? ' is-checked' : ''}${canNav ? ' is-nav' : ''}`} style={{ '--dc': dc }}
+      onClick={handleClick}
+      title={canNav ? `Go to ${ing.nodeName}` : tipMsg}>
+      <span className="chip__cb" role="checkbox" aria-checked={checked} title={checked ? 'Uncheck' : 'Check off'}
+        onClick={e => { e.stopPropagation(); onCheck && onCheck(ing.name) }}>
         {checked
           ? <span className="chip__cb-check"><I.check/></span>
           : <span className="chip__cb-ring"/>
@@ -132,6 +153,7 @@ function IngredientChip({ ing, onNav, onCopy, checked, onCheck }) {
           <I.arrow/>
         </button>
       )}
+      {tip && <span className="chip__tip" role="status"><SrcIco/>{tipMsg}</span>}
     </div>
   )
 }
@@ -433,7 +455,8 @@ export default function Cooking() {
   function handleNav(ing) {
     const src = SRC[ing.source]
     if (!src.path) return
-    window.location.href = ing.nodeId ? `${src.path}?node=${encodeURIComponent(ing.nodeId)}` : src.path
+    // Gathering pages match ?highlight= against the spot/node/item name (see Fishing/Mining/Botany).
+    window.location.href = `${src.path}?highlight=${encodeURIComponent(ing.name)}`
   }
   function copyCoords(text) {
     navigator.clipboard?.writeText(String(text).replace(/^~/, '')).catch(() => {})
