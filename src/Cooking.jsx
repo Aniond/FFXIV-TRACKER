@@ -14,6 +14,12 @@ import EorzeaClock from './EorzeaClock'
 
 const winState = windowState // repo exports `windowState`; alias for brevity
 
+// Compact a currency name for inline display: "Orange Crafters' Scrip" → "Orange
+// Scrip", "Bicolor Gemstone" → "Gemstone". Full name stays in the tooltip.
+const CUR_SHORT = (c) => !c ? '' : c
+  .replace(/\b(?:Crafters'|Gatherers') Scrip\b/, 'Scrip')
+  .replace('Bicolor Gemstone', 'Gemstone')
+
 const LIST_KEY  = 'ffxiv-cooking-list'
 const SAVED_KEY = 'ffxiv-saved-recipes'
 
@@ -28,6 +34,8 @@ const I = {
   fish:      p => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" {...p}><path d="M3 12c3-5 8-6 12-6 3 0 5 2 6 6-1 4-3 6-6 6-4 0-9-1-12-6Z"/><path d="M3 12c-1 1.5-1 3 0 4.5M3 12c-1-1.5-1-3 0-4.5"/><circle cx="15" cy="11" r="1" fill="currentColor" stroke="none"/></svg>,
   cart:      p => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" {...p}><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>,
   coin:      p => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" {...p}><circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="4"/></svg>,
+  scrip:     p => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" {...p}><path d="M6 3h8l5 5v11a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2Z"/><path d="M14 3v5h5"/><path d="M8.5 13h7M8.5 16.5h5"/></svg>,
+  gem:       p => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" {...p}><path d="m12 21-9-12 3-6h12l3 6-9 12Z"/><path d="M3 9h18M9 3 6 9l6 12 6-12-3-6"/></svg>,
   arrow:     p => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" {...p}><path d="m5 12 14 0M12 5l7 7-7 7"/></svg>,
   basket:    p => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" {...p}><path d="M5 11 7.5 4h9L19 11"/><path d="M3 11h18v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-8Z"/><path d="M12 11v8M8 15h8"/></svg>,
   hourglass: p => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" {...p}><path d="M6 3h12M6 21h12M7 3c0 5 5 6 5 9s-5 4-5 9M17 3c0 5-5 6-5 9s5 4 5 9"/></svg>,
@@ -40,7 +48,7 @@ const I = {
 
 /* ── Timer Badge ─────────────────────────────────────────── */
 function TimerBadge({ ing }) {
-  if (ing.source === 'market' || ing.source === 'vendor') return null
+  if (ing.craftable || ['market', 'vendor', 'scrip', 'gemstone'].includes(ing.source)) return null
   if (!ing.window) return (
     <span className="tbadge tbadge--avail"><span className="tbadge__dot"/>Always Available</span>
   )
@@ -92,16 +100,24 @@ function IngredientChip({ ing, onNav, onCopy, checked, onCheck }) {
   const [tip, setTip] = useState(false)
   const ws = ing.window ? winState(ing.window) : null
   const canNav = !!ing.nodeId
-  const SrcIco = I[SRC[ing.source].icon]
+  // Craftable intermediates show the recipe (knife) icon; otherwise the source icon.
+  const SrcIco = ing.craftable ? I.knife : I[SRC[ing.source].icon]
 
-  // Market/vendor ingredients aren't on a gathering map — explain where to get them.
-  const tipMsg = ing.source === 'vendor'
-    ? (ing.price != null ? `Buy from a vendor · ${ing.price} gil` : 'Available from a vendor')
-    : 'Available on Market Board'
+  // Non-gathering ingredients aren't on a map — explain where to get them.
+  const costStr = ing.price != null && ing.currency ? `${ing.price} ${ing.currency}` : null
+  const tipMsg =
+      ing.craftable             ? 'Craftable — this item has its own recipe'
+    : ing.source === 'scrip'    ? `Scrip Exchange · ${costStr || 'scrip purchase'}`
+    : ing.source === 'gemstone' ? `Bicolor Gemstone Trader · ${costStr || 'gemstone purchase'}`
+    : ing.source === 'vendor'   ? (ing.price != null ? `Buy from a vendor · ${ing.price} gil` : 'Available from a vendor')
+    :                             'Available on Market Board'
 
   let dc
-  if (ing.source === 'market')  dc = 'var(--dot-market)'
-  else if (ing.source === 'vendor') dc = '#d4a84a'
+  if (ing.craftable)                  dc = 'var(--dot-craft)'
+  else if (ing.source === 'market')   dc = 'var(--dot-market)'
+  else if (ing.source === 'vendor')   dc = '#d4a84a'
+  else if (ing.source === 'scrip')    dc = 'var(--dot-scrip)'
+  else if (ing.source === 'gemstone') dc = 'var(--dot-gem)'
   else if (!ing.window)         dc = 'var(--dot-avail)'
   else if (ws.state === 'up')   dc = 'var(--dot-avail)'
   else if (ws.state === 'soon') dc = 'var(--dot-soon)'
@@ -135,15 +151,19 @@ function IngredientChip({ ing, onNav, onCopy, checked, onCheck }) {
       <span className="chip__src"><SrcIco/></span>
       <span className="chip__main">
         <span className="chip__name">{ing.name}</span>
+        {ing.craftable && <span className="chip__craft">Craftable</span>}
         <TimerBadge ing={ing}/>
         <span className="chip__where">
-          {ing.coords && (
+          {/* scrip exchanges sit in every major city — a single coord would mislead */}
+          {ing.coords && ing.source !== 'scrip' && (
             <button className="chip__coords" title={ing.nodeName ? `Tap to copy · ${ing.nodeName}` : 'Tap to copy'}
               onClick={e => { e.stopPropagation(); onCopy(ing.coords) }}>
               <I.copy/>{ing.coords}
             </button>
           )}
-          {ing.price != null && <span className="chip__price">{ing.price} gil</span>}
+          {ing.source === 'vendor' && ing.price != null && <span className="chip__price">{ing.price} gil</span>}
+          {(ing.source === 'scrip' || ing.source === 'gemstone') && ing.price != null &&
+            <span className="chip__price">{ing.price} {CUR_SHORT(ing.currency)}</span>}
         </span>
       </span>
       <span className="chip__qty">×{ing.qty}</span>
@@ -290,21 +310,24 @@ function ShoppingList({ list, isOpen, onOpen, onClose, onClear }) {
   const count = Object.keys(list).length
 
   const groups = useMemo(() => {
-    const timed=[], botany=[], mining=[], fishing=[], vendor=[], market=[]
+    const craft=[], timed=[], botany=[], mining=[], fishing=[], vendor=[], scrip=[], gemstone=[], market=[]
     for (const item of Object.values(list)) {
-      if (item.window)               timed.push(item)
-      else if (item.source==='botany')  botany.push(item)
-      else if (item.source==='mining')  mining.push(item)
-      else if (item.source==='fishing') fishing.push(item)
-      else if (item.source==='vendor')  vendor.push(item)
-      else                              market.push(item)
+      if (item.craftable)            craft.push(item)
+      else if (item.window)          timed.push(item)
+      else if (item.source==='botany')   botany.push(item)
+      else if (item.source==='mining')   mining.push(item)
+      else if (item.source==='fishing')  fishing.push(item)
+      else if (item.source==='vendor')   vendor.push(item)
+      else if (item.source==='scrip')    scrip.push(item)
+      else if (item.source==='gemstone') gemstone.push(item)
+      else                               market.push(item)
     }
     const ord = { up:0, soon:1, closed:2 }
     timed.sort((a, b) => {
       const wa=winState(a.window), wb=winState(b.window)
       return (ord[wa?.state]??3) - (ord[wb?.state]??3)
     })
-    return { timed, botany, mining, fishing, vendor, market }
+    return { craft, timed, botany, mining, fishing, vendor, scrip, gemstone, market }
   }, [list])
 
   function ShopGroup({ label, iconName, items, isTimed=false }) {
@@ -314,14 +337,23 @@ function ShoppingList({ list, isOpen, onOpen, onClose, onClear }) {
         <div className={`slist__group-hd${isTimed ? ' is-timed' : ''}`}><IcoEl/>{label}</div>
         {items.map(item => {
           const ws = item.window ? winState(item.window) : null
-          let dc = item.source==='market' ? 'var(--dot-market)' : item.source==='vendor' ? '#d4a84a' : 'var(--dot-avail)'
+          let dc = item.craftable ? 'var(--dot-craft)'
+            : item.source==='market' ? 'var(--dot-market)'
+            : item.source==='vendor' ? '#d4a84a'
+            : item.source==='scrip' ? 'var(--dot-scrip)'
+            : item.source==='gemstone' ? 'var(--dot-gem)'
+            : 'var(--dot-avail)'
           if (ws) dc = ws.state==='up' ? 'var(--dot-avail)' : ws.state==='soon' ? 'var(--dot-soon)' : 'var(--dot-closed)'
           return (
             <div className="slist__item" key={item.name}>
               <span className="slist__item-dot" style={{ background:dc, boxShadow:`0 0 5px ${dc}` }}/>
               <span className="slist__item-name">{item.name}</span>
               {ws ? <span className="slist__item-cd">{ws.pre} {fmtDur(ws.ms)}</span>
-                : item.price != null ? <span className="slist__item-cd">{item.price} gil</span> : null}
+                : item.craftable ? <span className="slist__item-cd">craft</span>
+                : (item.source==='scrip' || item.source==='gemstone') && item.price != null
+                    ? <span className="slist__item-cd">{item.price} {CUR_SHORT(item.currency)}</span>
+                : item.source==='vendor' && item.price != null ? <span className="slist__item-cd">{item.price} gil</span>
+                : null}
               <span className="slist__item-qty">×{item.qty}</span>
             </div>
           )
@@ -353,12 +385,15 @@ function ShoppingList({ list, isOpen, onOpen, onClose, onClear }) {
                 <div className="slist__empty">Add recipes using the basket button on any card.</div>
               ) : (
                 <>
-                  {groups.timed.length   > 0 && <ShopGroup label="Timed — Gather First" iconName="hourglass" items={groups.timed}  isTimed/>}
-                  {groups.botany.length  > 0 && <ShopGroup label="Botany"               iconName="leaf"      items={groups.botany}/>}
-                  {groups.mining.length  > 0 && <ShopGroup label="Mining"               iconName="pick"      items={groups.mining}/>}
-                  {groups.fishing.length > 0 && <ShopGroup label="Fishing"              iconName="fish"      items={groups.fishing}/>}
-                  {groups.vendor.length  > 0 && <ShopGroup label="Vendor"               iconName="coin"      items={groups.vendor}/>}
-                  {groups.market.length  > 0 && <ShopGroup label="Market Board"         iconName="cart"      items={groups.market}/>}
+                  {groups.craft.length    > 0 && <ShopGroup label="Craft"               iconName="knife"     items={groups.craft}/>}
+                  {groups.timed.length    > 0 && <ShopGroup label="Timed — Gather First" iconName="hourglass" items={groups.timed}  isTimed/>}
+                  {groups.botany.length   > 0 && <ShopGroup label="Botany"               iconName="leaf"      items={groups.botany}/>}
+                  {groups.mining.length   > 0 && <ShopGroup label="Mining"               iconName="pick"      items={groups.mining}/>}
+                  {groups.fishing.length  > 0 && <ShopGroup label="Fishing"              iconName="fish"      items={groups.fishing}/>}
+                  {groups.vendor.length   > 0 && <ShopGroup label="Vendor"               iconName="coin"      items={groups.vendor}/>}
+                  {groups.scrip.length    > 0 && <ShopGroup label="Scrip Exchange"       iconName="scrip"     items={groups.scrip}/>}
+                  {groups.gemstone.length > 0 && <ShopGroup label="Bicolor Gemstone"     iconName="gem"       items={groups.gemstone}/>}
+                  {groups.market.length   > 0 && <ShopGroup label="Market Board"         iconName="cart"      items={groups.market}/>}
                 </>
               )}
             </div>

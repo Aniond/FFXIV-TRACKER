@@ -17,18 +17,22 @@ const pool = require('./db');
  *   railway link --project ffxivlog-backend --environment production --service Postgres
  *   railway run sh -c 'DATABASE_URL=$DATABASE_PUBLIC_URL NODE_ENV=production node migrate-overrides.js'
  *
- * source ∈ 'Fishing' | 'Mining' | 'Botany' | 'Market Board' | 'Scrip Exchange'
+ * source ∈ 'Fishing' | 'Mining' | 'Botany' | 'Market Board' | 'Scrip Exchange' | 'Gemstone'
  */
 const OVERRIDES = [
   // item_id, item_name, source, node_name, zone, coords, notes
-  [49233, 'Quahog', 'Market Board', null, null, null,
-    "Not gathered — purchased from the Orange Scrip Exchange for 15 Orange Crafters' Scrip, or bought on the Market Board."],
-  [39865, 'Dark Eggplant', 'Botany', null, null, null,
-    'Dawntrail botany — missing from Teamcraft open data'],
+  // NOTE: scrape-cooking.js now classifies Scrip Exchange / Bicolor Gemstone
+  // shops natively (buildSpecialShopIndex), so the baked source for these is
+  // already correct. These rows are kept only to UPDATE the previously-wrong
+  // prod rows on re-run (upsert-only migration won't delete them otherwise).
+  [49233, 'Quahog', 'Scrip Exchange', null, null, null,
+    "Orange Crafters' Scrip ×15 (Lv.100 Materials), or buy on the Market Board. Not gathered."],
+  [39865, 'Dark Eggplant', 'Scrip Exchange', null, null, null,
+    "Purple Crafters' Scrip ×10 (Lv.90 Materials), or Market Board. NOT gatherable — the prior 'Botany' label was wrong (verified via Lodestone/Teamcraft)."],
 
   // Added from in-game verification (cooking tips):
-  [49229, 'Flint Corn', 'Market Board', null, null, null,
-    'Not gatherable — purchase from Market Board only'],
+  [49229, 'Flint Corn', 'Scrip Exchange', null, null, null,
+    "Orange Crafters' Scrip ×15 (Lv.100 Materials), or Market Board. Not gatherable."],
   [43978, "Ut'ohmu Tomato", 'Botany', 'Regular Node', "Yak T'el", 'X:11.6, Y:19.3',
     'Level 95 regular node. Found via Ut\'ohmu Chili Sauce subcraft chain (Nachos). No timer needed.'],
   [46246, 'Levinchrome Aethersand', 'Market Board', null, null, null,
@@ -54,7 +58,7 @@ async function migrate() {
     CREATE TABLE IF NOT EXISTS ingredient_overrides (
       item_id   INTEGER PRIMARY KEY,
       item_name VARCHAR(255),
-      source    VARCHAR(20),  -- 'Fishing' | 'Mining' | 'Botany' | 'Market Board' | 'Scrip Exchange'
+      source    VARCHAR(20),  -- 'Fishing' | 'Mining' | 'Botany' | 'Market Board' | 'Scrip Exchange' | 'Gemstone'
       node_name VARCHAR(255),
       zone      VARCHAR(100),
       coords    VARCHAR(50),

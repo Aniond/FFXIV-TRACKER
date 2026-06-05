@@ -105,7 +105,7 @@ async function main() {
   }
 
   // Apply overrides into a normalized source on each ingredient (mirror endpoint logic)
-  const NORM = { Fishing: 'FISHING', Mining: 'MINING', Botany: 'BOTANY', 'Market Board': 'MARKET_BOARD' };
+  const NORM = { Fishing: 'FISHING', Mining: 'MINING', Botany: 'BOTANY', 'Market Board': 'MARKET_BOARD', 'Scrip Exchange': 'SCRIP_EXCHANGE', Gemstone: 'GEMSTONE' };
   const ovMap = new Map((overrides || []).map((o) => [o.item_id, o]));
   for (const r of recipes) {
     r.ingredients = (r.ingredients || []).map((ing) => {

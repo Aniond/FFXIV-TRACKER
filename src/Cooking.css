@@ -9,6 +9,7 @@ body.cooking-page {
   --buff-cp:#d4923a; --buff-gp:#5aaa72; --buff-str:#d46060;
   --buff-dex:#58c4e8; --buff-vit:#9a6ad4; --buff-crt:#e8608a;
   --dot-avail:#5aaa72; --dot-soon:#d4b84a; --dot-closed:#d46060; --dot-market:#6a6a7a;
+  --dot-scrip:#2dd4bf; --dot-gem:#c06ad4; --dot-craft:#6a8cd4;
   --parchment:#f0d9b8; --ink:#c8aa80; --ink-dim:#8a7050; --ink-faint:#4a3820;
   --day:#d4923a; --night:#5e87d4;
   --fd:'Cinzel',Georgia,serif; --fb:'Manrope',system-ui,sans-serif;
@@ -444,4 +445,11 @@ body.cooking-page .chip__price {
   font: 700 10px var(--fb); letter-spacing: .03em;
   color: #e8c878; background: rgba(212,168,74,.12);
   border: 1px solid rgba(212,168,74,.4); border-radius: 6px; padding: 2px 7px;
+}
+/* "Craftable" pill on intermediate ingredients that have their own recipe. */
+body.cooking-page .chip__craft {
+  display: inline-flex; align-items: center; margin-left: 6px;
+  font: 700 9px var(--fb); letter-spacing: .05em; text-transform: uppercase;
+  color: var(--dot-craft); background: rgba(106,140,212,.13);
+  border: 1px solid rgba(106,140,212,.4); border-radius: 5px; padding: 1px 6px;
 }

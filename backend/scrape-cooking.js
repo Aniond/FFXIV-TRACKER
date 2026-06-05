@@ -147,7 +147,71 @@ function buildVendorIndex(shops, npcs, places) {
   };
 }
 
-const MARKET = { source: 'MARKET_BOARD', node_name: null, zone: null, coords: null, node_type: null, window: null, price: null };
+// Special-currency shops (Scrip Exchange, Bicolor Gemstone Trader, …) — these
+// are NON-gil shops, so buildVendorIndex (GilShop only) misses them and every
+// scrip/gemstone-purchasable ingredient would fall through to MARKET_BOARD.
+// We classify the two player-facing sources we care about:
+//   SCRIP_EXCHANGE — bought with Crafters'/Gatherers' Scrip (Rowena/Scrip NPCs)
+//   GEMSTONE       — bought with Bicolor Gemstones (open-world Gemstone Traders)
+// Items here are usually ALSO on the Market Board, but the scrip/gemstone
+// vendor is the deterministic, farmable source — prefer it over MB.
+function buildSpecialShopIndex(shops, items, npcs, places) {
+  const nameOf = (id) => items[id]?.en || '';
+  // Rank the currencies we recognise; lower = preferred when a trade offers
+  // several (e.g. scrip OR cosmocredit → pick scrip). Returns null for
+  // currencies we deliberately ignore (gil is handled elsewhere; tribal/cosmo
+  // currencies belong to items already covered by a gather/MB source).
+  const classify = (curId) => {
+    const n = nameOf(curId);
+    if (/orange crafters'? scrip/i.test(n))  return { source: 'SCRIP_EXCHANGE', currency: n, rank: 0 };
+    if (/purple crafters'? scrip/i.test(n))  return { source: 'SCRIP_EXCHANGE', currency: n, rank: 1 };
+    if (/orange gatherers'? scrip/i.test(n)) return { source: 'SCRIP_EXCHANGE', currency: n, rank: 2 };
+    if (/purple gatherers'? scrip/i.test(n)) return { source: 'SCRIP_EXCHANGE', currency: n, rank: 3 };
+    if (/scrip/i.test(n))                    return { source: 'SCRIP_EXCHANGE', currency: n, rank: 4 };
+    if (/bicolor gemstone/i.test(n))         return { source: 'GEMSTONE',       currency: n, rank: 9 };
+    return null;
+  };
+
+  const byItem = new Map(); // itemId -> { source, currency, price, npcId, rank }
+  for (const shop of Object.values(shops)) {
+    const npcId = (shop.npcs || [])[0];
+    for (const t of (shop.trades || [])) {
+      const offers = (t.currencies || []).map((c) => ({ c, k: classify(c.id) })).filter((x) => x.k);
+      if (!offers.length) continue;
+      offers.sort((a, b) => a.k.rank - b.k.rank);
+      const best = offers[0];
+      for (const it of (t.items || [])) {
+        // Aethersands are aetherial-reduction byproducts traded mainly on the
+        // Market Board; their (steep) Gatherers'-Scrip price is a poor-value
+        // edge case, so leave them on MARKET_BOARD rather than mislabel them.
+        if (/aethersand/i.test(nameOf(it.id))) continue;
+        const prev = byItem.get(it.id);
+        if (!prev || best.k.rank < prev.rank)
+          byItem.set(it.id, { source: best.k.source, currency: best.k.currency, price: best.c.amount, npcId, rank: best.k.rank });
+      }
+    }
+  }
+
+  return (id) => {
+    const v = byItem.get(id);
+    if (!v) return null;
+    const npc = npcs[v.npcId];
+    const pos = npc?.position;
+    const label = v.source === 'GEMSTONE' ? 'Gemstone Trader' : 'Scrip Exchange';
+    return {
+      source: v.source,
+      node_name: npc?.en || label,
+      zone: pos ? (places[pos.zoneid]?.en || null) : null,
+      coords: pos && pos.x != null ? coordStr(pos.x, pos.y) : null,
+      node_type: label,
+      window: null,
+      price: v.price,
+      currency: v.currency,
+    };
+  };
+}
+
+const MARKET = { source: 'MARKET_BOARD', node_name: null, zone: null, coords: null, node_type: null, window: null, price: null, currency: null };
 
 function foodBuff(result, foodMap) {
   const f = foodMap.get(result);
@@ -194,8 +258,10 @@ async function main() {
   const gameLoc = buildGameLocations();
   const tcLoc = buildTeamcraftLocations(nodes, fspots, places);
   const vendorLoc = buildVendorIndex(shops, npcs, places);
-  // Gather/fish first; then NPC vendor; market board only if nothing else.
-  const resolveLoc = (id) => tcLoc(id) || gameLoc.get(norm(nameOf(id))) || vendorLoc(id) || null;
+  const specialLoc = buildSpecialShopIndex(shops, items, npcs, places);
+  // Gather/fish first; then gil NPC vendor; then scrip/gemstone exchange;
+  // market board only if nothing else resolves.
+  const resolveLoc = (id) => tcLoc(id) || gameLoc.get(norm(nameOf(id))) || vendorLoc(id) || specialLoc(id) || null;
 
   const mapIngredients = (r) => r.ingredients
     .filter((ing) => ing.id > 19) // drop base shards/crystals/clusters (ids 1-19)
@@ -213,6 +279,7 @@ async function main() {
         node_type: loc.node_type,
         window: loc.window,
         price: loc.price ?? null,
+        currency: loc.currency ?? null,
       };
     });
 

@@ -355,7 +355,10 @@ app.get('/api/recipes', async (req, res) => {
     );
 
     // Apply manual ingredient overrides (precedence over baked Teamcraft data).
-    const NORM = { Fishing: 'FISHING', Mining: 'MINING', Botany: 'BOTANY', 'Market Board': 'MARKET_BOARD' };
+    const NORM = {
+      Fishing: 'FISHING', Mining: 'MINING', Botany: 'BOTANY',
+      'Market Board': 'MARKET_BOARD', 'Scrip Exchange': 'SCRIP_EXCHANGE', Gemstone: 'GEMSTONE',
+    };
     let overrides = new Map();
     try {
       const ov = await pool.query('SELECT item_id, source, node_name, zone, coords, notes FROM ingredient_overrides');

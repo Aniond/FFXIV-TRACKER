@@ -25,11 +25,13 @@ export const STAT_TYPES = {
 export const STAT_ORDER = ['all', 'crt', 'det', 'dh', 'sks', 'sps', 'ten', 'pie', 'vit', 'cp', 'gp']
 
 export const SRC = {
-  botany:  { label: 'Botany',  icon: 'leaf', path: '/gathering/botany' },
-  mining:  { label: 'Mining',  icon: 'pick', path: '/gathering/mining' },
-  fishing: { label: 'Fishing', icon: 'fish', path: '/gathering/fishing' },
-  vendor:  { label: 'Vendor',  icon: 'coin', path: null },
-  market:  { label: 'Market',  icon: 'cart', path: null },
+  botany:   { label: 'Botany',           icon: 'leaf',  path: '/gathering/botany' },
+  mining:   { label: 'Mining',           icon: 'pick',  path: '/gathering/mining' },
+  fishing:  { label: 'Fishing',          icon: 'fish',  path: '/gathering/fishing' },
+  vendor:   { label: 'Vendor',           icon: 'coin',  path: null },
+  scrip:    { label: 'Scrip Exchange',   icon: 'scrip', path: null },
+  gemstone: { label: 'Bicolor Gemstone', icon: 'gem',   path: null },
+  market:   { label: 'Market',           icon: 'cart',  path: null },
 }
 
 // Backend stat abbreviation -> filter category key, and -> full display name.
@@ -42,7 +44,10 @@ const STAT_FULL = {
   TEN: 'Tenacity', PIE: 'Piety', VIT: 'Vitality', CP: 'CP', GP: 'GP',
   CMS: 'Craftsmanship', CTL: 'Control', GAT: 'Gathering', PER: 'Perception',
 }
-const API_SRC = { FISHING: 'fishing', MINING: 'mining', BOTANY: 'botany', VENDOR: 'vendor', MARKET_BOARD: 'market' }
+const API_SRC = {
+  FISHING: 'fishing', MINING: 'mining', BOTANY: 'botany', VENDOR: 'vendor',
+  SCRIP_EXCHANGE: 'scrip', GEMSTONE: 'gemstone', MARKET_BOARD: 'market',
+}
 
 /**
  * Adapt the /api/recipes payload to Cooking.jsx's recipe shape.
@@ -67,12 +72,17 @@ export function adaptRecipes(apiRecipes) {
       })),
       ingredients: r.ingredients.map((ing) => {
         const source = API_SRC[ing.source] || 'market'
-        // Only gathering sources link to a page; vendor/market show location inline.
+        // subcraft → this ingredient is itself crafted; show it as Craftable
+        // (it has its own recipe) regardless of where it can also be bought.
+        const craftable = !!ing.subcraft
+        // Only gathering sources link to a page; the rest show location/cost inline.
         const navable = source === 'fishing' || source === 'mining' || source === 'botany'
         return {
           name: ing.name,
           qty: ing.amount,
           source,
+          craftable,
+          currency: ing.currency || null, // scrip/gemstone label (e.g. "Orange Crafters' Scrip")
           nodeId: navable && (ing.coords || ing.zone) ? String(ing.id) : null,
           nodeName: ing.node_name || ing.zone || null,
           zone: ing.zone || null,
