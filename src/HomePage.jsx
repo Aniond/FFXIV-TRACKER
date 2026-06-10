@@ -123,11 +123,11 @@ function QuickTile({ tile }) {
   return <a href={tile.href} className="dh-tile" style={{ '--tc': tile.color }}>{inner}</a>
 }
 
-function AIHero() {
+function AIHero({ rev = 0 }) {
   const [q, setQ] = useState('')
   const [phIdx, setPhIdx] = useState(0)
   const [focused, setFocused] = useState(false)
-  const recent = useMemo(getHistory, [favRev]) // re-read after server hydration (favRev bumps on HYDRATED_EVENT)
+  const recent = useMemo(getHistory, [rev]) // re-read after server hydration (parent bumps rev on HYDRATED_EVENT)
 
   useEffect(() => {
     if (focused) return
@@ -251,7 +251,7 @@ export default function HomePage({ user }) {
         <CompactET />
       </header>
 
-      <AIHero />
+      <AIHero rev={favRev} />
 
       <div className="dh-shd"><span className="dh-shd__title">Quick Access</span></div>
       <div className="dh-grid">
