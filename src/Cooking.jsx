@@ -10,6 +10,7 @@ import ActivityNav from './ActivityNav'
 import { STAT_TYPES, STAT_ORDER, SRC, adaptRecipes } from './cookingData'
 import { windowState, fmtDur } from './etWindow'
 import { fetchRecipes } from './api'
+import { useSyncedState, SET_CODEC } from './syncedState'
 import EorzeaClock from './EorzeaClock'
 
 const winState = windowState // repo exports `windowState`; alias for brevity
@@ -520,12 +521,9 @@ export default function Cooking() {
   // ingredient can expand to reveal its own recipe (e.g. Palm Sugar → Palm Syrup).
   const [recipeByName, setRecipeByName] = useState(null)
 
-  const [listIds, setListIds] = useState(() => {
-    try { return new Set(JSON.parse(localStorage.getItem(LIST_KEY)) || []) } catch { return new Set() }
-  })
-  const [savedIds, setSavedIds] = useState(() => {
-    try { return new Set(JSON.parse(localStorage.getItem(SAVED_KEY)) || []) } catch { return new Set() }
-  })
+  // Account-synced (localStorage for guests, Postgres for logged-in users).
+  const [listIds, setListIds] = useSyncedState(LIST_KEY, [], SET_CODEC)
+  const [savedIds, setSavedIds] = useSyncedState(SAVED_KEY, [], SET_CODEC)
   const [q, setQ]                   = useState('')
   const [statFilter, setStatFilter] = useState('all')
   const [diffFilter, setDiffFilter] = useState(0)
@@ -571,8 +569,6 @@ export default function Cooking() {
       .catch(() => {})
   }, [])
 
-  useEffect(() => { localStorage.setItem(LIST_KEY,  JSON.stringify([...listIds]))  }, [listIds])
-  useEffect(() => { localStorage.setItem(SAVED_KEY, JSON.stringify([...savedIds])) }, [savedIds])
   // Does the dish need this ingredient anywhere in its craft chain? Direct
   // ingredients OR inside a craftable intermediate (so reverse links from the
   // gathering pages work for subcraft-only items like Dark Rye → Dark Rye Flour).

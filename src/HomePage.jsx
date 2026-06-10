@@ -3,6 +3,7 @@ import { windowState as winState, fmtDur } from './etWindow'
 import { MINING_NODES } from './miningData'
 import { BOTANY_NODES } from './botanyData'
 import { getFavNodes } from './favNodes'
+import { hydrateFromServer, HYDRATED_EVENT, readState } from './syncedState'
 import { clearToken } from './api'
 import './HomePage.css'
 
@@ -16,7 +17,8 @@ import './HomePage.css'
 const HISTORY_KEY = 'ffxiv-search-history'
 
 function getHistory() {
-  try { return (JSON.parse(localStorage.getItem(HISTORY_KEY)) || []).slice(0, 8) } catch { return [] }
+  const v = readState(HISTORY_KEY, [])
+  return (Array.isArray(v) ? v : []).slice(0, 8)
 }
 
 function greeting() {
@@ -125,7 +127,7 @@ function AIHero() {
   const [q, setQ] = useState('')
   const [phIdx, setPhIdx] = useState(0)
   const [focused, setFocused] = useState(false)
-  const recent = useMemo(getHistory, [])
+  const recent = useMemo(getHistory, [favRev]) // re-read after server hydration (favRev bumps on HYDRATED_EVENT)
 
   useEffect(() => {
     if (focused) return
@@ -169,7 +171,15 @@ export default function HomePage({ user }) {
   const [, setTick] = useState(0)
   const [menuOpen, setMenuOpen] = useState(false)
   const menuRef = useRef(null)
-  const favs = useMemo(() => getFavNodes().map((id) => NODE_INDEX.get(id)).filter(Boolean), [])
+  // Account-synced stars: bump once the server copy hydrates so the rail updates.
+  const [favRev, setFavRev] = useState(0)
+  useEffect(() => {
+    hydrateFromServer()
+    const onHydrated = () => setFavRev((n) => n + 1)
+    window.addEventListener(HYDRATED_EVENT, onHydrated)
+    return () => window.removeEventListener(HYDRATED_EVENT, onHydrated)
+  }, [])
+  const favs = useMemo(() => getFavNodes().map((id) => NODE_INDEX.get(id)).filter(Boolean), [favRev])
 
   // Live countdowns: re-render each second while any timer is shown.
   useEffect(() => {

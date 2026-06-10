@@ -121,6 +121,25 @@ async function saveJobs(jobs) {
   return r.json()
 }
 
+// ── Account-synced UI state (user_state table) ───────────────────────────────
+
+// All synced keys for the logged-in user: { key: value, ... }
+async function fetchUserState() {
+  const r = await apiFetch('/api/user/state')
+  if (!r.ok) throw new Error(`fetchUserState ${r.status}`)
+  return r.json()
+}
+
+// Upsert a batch: { 'ffxiv-fav-nodes': [...], ... }
+async function saveUserState(states) {
+  const r = await apiFetch('/api/user/state', {
+    method: 'PATCH',
+    body: JSON.stringify({ states }),
+  })
+  if (!r.ok) throw new Error(`saveUserState ${r.status}`)
+  return r.json()
+}
+
 // ── AI search ────────────────────────────────────────────────────────────────
 
 // Public feature flags (so the UI can decide whether to show the AI entry point).
@@ -226,6 +245,7 @@ async function adminApiUsage() {
 
 export {
   API, getToken, setToken, clearToken, consumeUrlToken, fetchMe,
+  fetchUserState, saveUserState,
   loadProgress, saveProgress, resetProgress, saveStash, savePreferences,
   fetchJobs, saveJobs, saveCharacterLink, refreshJobsFromLodestone,
   fetchFlags, aiSearch, fetchRecipes,

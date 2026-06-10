@@ -117,6 +117,62 @@ router.patch('/api/user/preferences', authenticate, async (req, res) => {
   }
 });
 
+// ── Account sync: per-user UI state (user_state table) ──────────────────────
+// Mirrors the frontend's localStorage keys so checklists/favorites follow the
+// account across devices. Guests keep using localStorage; this is additive.
+const STATE_KEYS = new Set([
+  'ffxiv-mining-collected',  // mining checklist
+  'ffxiv-botany-collected',  // botany checklist
+  'ffxiv-fish-caught',       // fishing log
+  'ffxiv-cooking-list',      // cooking shopping list
+  'ffxiv-saved-recipes',     // bookmarked recipes
+  'ffxiv-fav-nodes',         // starred nodes (dashboard timers)
+  'ffxiv-search-history',    // recent AI searches
+]);
+const STATE_VALUE_MAX = 64 * 1024; // bytes of JSON per key — plenty for checklists
+
+// All synced state for the logged-in user: { key: value, ... }
+router.get('/api/user/state', authenticate, async (req, res) => {
+  try {
+    const r = await pool.query('SELECT key, value FROM user_state WHERE user_id = $1', [req.user.id]);
+    res.json(Object.fromEntries(r.rows.map((row) => [row.key, row.value])));
+  } catch {
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+// Upsert one or more keys: body { states: { key: value, ... } }.
+router.patch('/api/user/state', authenticate, async (req, res) => {
+  const states = req.body?.states;
+  if (!states || typeof states !== 'object' || Array.isArray(states)) {
+    return res.status(400).json({ error: 'states object is required' });
+  }
+  const entries = Object.entries(states);
+  if (!entries.length) return res.status(400).json({ error: 'states is empty' });
+  for (const [key, value] of entries) {
+    if (!STATE_KEYS.has(key)) return res.status(400).json({ error: `unknown state key: ${key}` });
+    if (value === undefined) return res.status(400).json({ error: `missing value for ${key}` });
+    if (JSON.stringify(value).length > STATE_VALUE_MAX) {
+      return res.status(413).json({ error: `${key} exceeds the ${STATE_VALUE_MAX / 1024}KB limit` });
+    }
+  }
+  try {
+    for (const [key, value] of entries) {
+      await pool.query(
+        `INSERT INTO user_state (user_id, key, value, updated_at)
+         VALUES ($1, $2, $3, NOW())
+         ON CONFLICT (user_id, key) DO UPDATE SET value = $3, updated_at = NOW()`,
+        [req.user.id, key, JSON.stringify(value)]
+      );
+    }
+    res.json({ ok: true, saved: entries.map(([k]) => k) });
+  } catch (err) {
+    // 42P01 = table missing (migration not run yet) — fail soft so the UI
+    // keeps working on localStorage alone.
+    console.error('[user/state]', err.message);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
 
 module.exports = router;
 module.exports.USER_SELECT = USER_SELECT;

@@ -1,5 +1,6 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { isFav, toggleFav } from './favNodes'
+import { hydrateFromServer, HYDRATED_EVENT } from './syncedState'
 import './FavStar.css'
 
 /* Self-contained star toggle for a gathering node. Manages its own
@@ -7,6 +8,13 @@ import './FavStar.css'
    Stars surface on the dashboard's Favorited Timers rail. */
 export default function FavStar({ id, title = 'Favorite' }) {
   const [on, setOn] = useState(() => isFav(id))
+  // Stars are account-synced; re-read once the server copy hydrates.
+  useEffect(() => {
+    hydrateFromServer()
+    const onHydrated = () => setOn(isFav(id))
+    window.addEventListener(HYDRATED_EVENT, onHydrated)
+    return () => window.removeEventListener(HYDRATED_EVENT, onHydrated)
+  }, [id])
   return (
     <button
       type="button"

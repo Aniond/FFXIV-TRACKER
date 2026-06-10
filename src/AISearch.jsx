@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, useMemo } from 'react'
 import ActivityNav from './ActivityNav'
 import EorzeaClock from './EorzeaClock'
 import { windowState, fmtDur } from './etWindow'
+import { readState, writeState } from './syncedState'
 import { MINING_NODES } from './miningData'
 import { BOTANY_NODES } from './botanyData'
 import { API, getToken, fetchMe, fetchFlags, aiSearch, fetchRecipes } from './api'
@@ -294,11 +295,9 @@ function cleanDetail(text) {
 // Recent-search history powers the dashboard's "Recent" chips.
 const HISTORY_KEY = 'ffxiv-search-history'
 function pushHistory(text) {
-  try {
-    const cur = JSON.parse(localStorage.getItem(HISTORY_KEY)) || []
-    const next = [text, ...cur.filter((x) => x.toLowerCase() !== text.toLowerCase())].slice(0, 8)
-    localStorage.setItem(HISTORY_KEY, JSON.stringify(next))
-  } catch { /* ignore quota/parse errors */ }
+  const cur = readState(HISTORY_KEY, [])
+  const next = [text, ...(Array.isArray(cur) ? cur : []).filter((x) => x.toLowerCase() !== text.toLowerCase())].slice(0, 8)
+  writeState(HISTORY_KEY, next) // account-synced for logged-in users
 }
 
 // Map verbatim coords -> source node, but only for TIMED nodes (those carry a

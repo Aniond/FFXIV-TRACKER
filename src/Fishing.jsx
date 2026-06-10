@@ -4,6 +4,7 @@ import OceanFishing, { OCEAN_ROUTES } from './OceanFishing'
 import { FISHING_SPOTS, EXPANSIONS } from './fishingData'
 import { EXP_SHORT } from './crosslinkNodes.js'
 import { useRecipeUsage, usageFor, cookingLink } from './recipeLinks'
+import { useSyncedState } from './syncedState'
 import { BAIT_VENDORS } from './baitVendors'
 import { BAIT_TACKLE } from './baitTackleData'
 import ActivityNav from './ActivityNav'
@@ -134,9 +135,8 @@ function SpotCard({ spot, caught, onToggleFish, onToggleAll, onCopy, highlighted
 }
 
 export default function Fishing({ spots = FISHING_SPOTS }) {
-  const [caught, setCaught] = useState(() => {
-    try { return JSON.parse(localStorage.getItem(CATCH_KEY)) || {} } catch { return {} }
-  })
+  // Account-synced (localStorage for guests, Postgres for logged-in users).
+  const [caught, setCaught] = useSyncedState(CATCH_KEY, {})
   const [q, setQ] = useState('')
   const [exp, setExp] = useState('All')
   const [zone, setZone] = useState('All zones')
@@ -152,7 +152,6 @@ export default function Fishing({ spots = FISHING_SPOTS }) {
     return () => document.body.classList.remove('fishing-page')
   }, [])
 
-  useEffect(() => { localStorage.setItem(CATCH_KEY, JSON.stringify(caught)) }, [caught])
 
   const zones = useMemo(() => {
     const list = spots.filter((s) => exp === 'All' || s.expansion === exp).map((s) => s.zone)

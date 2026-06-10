@@ -4,6 +4,7 @@ import { windowState, fmtDur } from './etWindow'
 import { BOTANY_NODES, NODE_TYPES, TYPE_ORDER, ITEM_TAG, ITEM_COLOR } from './botanyData'
 import { EXP_SHORT } from './crosslinkNodes.js'
 import { useRecipeUsage, usageFor, cookingLink } from './recipeLinks'
+import { useSyncedState } from './syncedState'
 import FavStar from './FavStar'
 import './Botany.css'
 
@@ -119,9 +120,8 @@ function NodeCard({ node, collected, onToggleItem, onToggleAll, onCopy, highligh
 }
 
 export default function Botany({ nodes = BOTANY_NODES }) {
-  const [collected, setCollected] = useState(() => {
-    try { return JSON.parse(localStorage.getItem(COLLECT_KEY)) || {} } catch { return {} }
-  })
+  // Account-synced (localStorage for guests, Postgres for logged-in users).
+  const [collected, setCollected] = useSyncedState(COLLECT_KEY, {})
   const [q, setQ] = useState('')
   const [type, setType] = useState('All')
   const [zone, setZone] = useState('All zones')
@@ -132,7 +132,6 @@ export default function Botany({ nodes = BOTANY_NODES }) {
   const toastTimer = useRef(null)
   useEffect(() => () => clearTimeout(toastTimer.current), []) // drop pending toast on unmount
 
-  useEffect(() => { localStorage.setItem(COLLECT_KEY, JSON.stringify(collected)) }, [collected])
 
   // Deep-link from AI search (?highlight=<item or node name>): find the matching
   // node, glow it gold for 3s. Cards are always expanded, so details show at once.

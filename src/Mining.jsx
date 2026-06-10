@@ -4,6 +4,7 @@ import { windowState, fmtDur } from './etWindow'
 import { MINING_NODES, NODE_TYPES, TYPE_ORDER, ITEM_TAG, ITEM_COLOR } from './miningData'
 import { EXP_SHORT } from './crosslinkNodes.js'
 import { useRecipeUsage, usageFor, cookingLink } from './recipeLinks'
+import { useSyncedState } from './syncedState'
 import ActivityNav from './ActivityNav'
 import FavStar from './FavStar'
 import './Mining.css'
@@ -117,9 +118,8 @@ function NodeCard({ node, collected, onToggleItem, onToggleAll, onCopy, highligh
 }
 
 export default function Mining({ nodes = MINING_NODES }) {
-  const [collected, setCollected] = useState(() => {
-    try { return JSON.parse(localStorage.getItem(COLLECT_KEY)) || {} } catch { return {} }
-  })
+  // Account-synced (localStorage for guests, Postgres for logged-in users).
+  const [collected, setCollected] = useSyncedState(COLLECT_KEY, {})
   const [q, setQ] = useState('')
   const [type, setType] = useState('All')
   const [gatherType, setGatherType] = useState('All')
@@ -154,7 +154,6 @@ export default function Mining({ nodes = MINING_NODES }) {
     return () => clearTimeout(t)
   }, [nodes])
 
-  useEffect(() => { localStorage.setItem(COLLECT_KEY, JSON.stringify(collected)) }, [collected])
 
   const zones = useMemo(() => {
     const list = nodes
