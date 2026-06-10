@@ -1,0 +1,39 @@
+# CI safety net — push to main IS the production deploy (Vercel + Railway),
+# so this is the only gate between a bad commit and prod. It runs on every
+# push/PR: frontend build, the unit/invariant test suite, backend syntax
+# checks, and the recipe↔gathering cross-link integrity checker.
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  ci:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install frontend deps
+        run: npm ci
+
+      - name: Build frontend
+        run: npm run build
+
+      - name: Unit & data-invariant tests
+        run: npm test
+
+      - name: Backend syntax checks
+        run: |
+          for f in backend/*.js backend/ai/*.js; do
+            node --check "$f"
+          done
+
+      - name: Cross-link integrity (every ingredient resolves)
+        run: node backend/check-crosslinks.mjs

@@ -28,3 +28,7 @@ dist-ssr
 # Environment variables
 .env
 backend/.env
+
+# DB dumps + scratch data
+backend/backups/
+backend/gtmp/prod-recipes.json

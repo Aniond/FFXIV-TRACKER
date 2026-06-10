@@ -11,7 +11,7 @@
    /crafting/cooking?ingredient=<name>.
    ============================================================ */
 import { useEffect, useState } from 'react'
-import { fetchRecipes } from './api'
+import { fetchRecipes } from './api.js'
 
 const norm = (s) => String(s || '').trim().toLowerCase()
 const MAX_DEPTH = 4 // matches the cooking page's sub-recipe drill-down
