@@ -2,6 +2,8 @@ import { useState, useEffect, useMemo, useRef } from 'react'
 import EorzeaClock from './EorzeaClock'
 import { windowState, fmtDur } from './etWindow'
 import { BOTANY_NODES, NODE_TYPES, TYPE_ORDER, ITEM_TAG, ITEM_COLOR } from './botanyData'
+import { EXP_SHORT } from './crosslinkNodes.js'
+import { useRecipeUsage, usageFor, cookingLink } from './recipeLinks'
 import FavStar from './FavStar'
 import './Botany.css'
 
@@ -31,13 +33,13 @@ const I = {
 const itemKey = (nodeId, itemName) => `${nodeId}::${itemName}`
 const nodeVars = (type) => ({ '--nc': NODE_TYPES[type].color })
 
-function NodeCard({ node, collected, onToggleItem, onToggleAll, onCopy, highlighted }) {
+function NodeCard({ node, collected, onToggleItem, onToggleAll, onCopy, highlighted, usage }) {
   const t = NODE_TYPES[node.type]
   const total = node.items.length
   const got = node.items.filter((it) => collected[itemKey(node.id, it.name)]).length
   const allDone = got === total
   const win = windowState(node.window)
-  const expLabel = node.expansion === 'Dawntrail' ? 'DT' : 'EW'
+  const expLabel = EXP_SHORT[node.expansion] || 'EW'
   const ref = useRef(null)
   // Deep-link target: scroll the card into view when it becomes highlighted.
   useEffect(() => {
@@ -94,6 +96,16 @@ function NodeCard({ node, collected, onToggleItem, onToggleAll, onCopy, highligh
                 <span className="item__name">{it.name}</span>
                 <span className="item__meta">{ITEM_TAG[it.tag]}</span>
               </span>
+              {(() => { // cross-link: this item is a cooking ingredient
+                const u = usage && usageFor(usage, it.name)
+                return u ? (
+                  <a className="item__recipes" href={cookingLink(it.name)}
+                    title={`Used in: ${u.dishes.slice(0, 6).join(', ')}${u.dishes.length > 6 ? '…' : ''}`}
+                    onClick={(e) => e.stopPropagation()}>
+                    {u.count} recipe{u.count > 1 ? 's' : ''}
+                  </a>
+                ) : null
+              })()}
               <span className="item__tag">{ITEM_TAG[it.tag]}</span>
               <button className={`item__check${done ? ' is-done' : ''}`} onClick={() => onToggleItem(key)} title={done ? 'Gathered' : 'Mark gathered'}>
                 <I.check />
@@ -116,6 +128,7 @@ export default function Botany({ nodes = BOTANY_NODES }) {
   const [toast, setToast] = useState(null)
   const [, setTick] = useState(0)
   const [highlightId, setHighlightId] = useState(null)
+  const recipeUsage = useRecipeUsage() // item → dishes cross-links
   const toastTimer = useRef(null)
 
   useEffect(() => { localStorage.setItem(COLLECT_KEY, JSON.stringify(collected)) }, [collected])
@@ -222,7 +235,7 @@ export default function Botany({ nodes = BOTANY_NODES }) {
         <div className="nodes">
           {filtered.map((n) => (
             <NodeCard key={n.id} node={n} collected={collected} highlighted={n.id === highlightId}
-              onToggleItem={toggleItem} onToggleAll={toggleAll} onCopy={copyCoords} />
+              onToggleItem={toggleItem} onToggleAll={toggleAll} onCopy={copyCoords} usage={recipeUsage} />
           ))}
         </div>
       )}

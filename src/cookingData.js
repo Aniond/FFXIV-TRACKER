@@ -90,6 +90,7 @@ export function adaptRecipes(apiRecipes) {
           nodeType: ing.node_type || null,
           window: ing.window || null,
           price: ing.price ?? null,
+          notes: ing.notes || null, // override notes (e.g. aetherial-reduction sources, mob drops)
         }
       }),
     }))

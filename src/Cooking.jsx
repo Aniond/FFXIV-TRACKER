@@ -130,6 +130,7 @@ function CraftRow({ ing, recipeByName, onNav, onCopy, depth }) {
   return (
     <div className="crow-wrap">
       <div className={`crow${interactive ? ' is-act' : ''}`} style={{ '--ic': dotFor(srcKey, ws, ing) }}
+        title={ing.notes || undefined}
         role={interactive ? 'button' : undefined} tabIndex={interactive ? 0 : undefined}
         onClick={interactive ? act : undefined}
         onKeyDown={interactive ? (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); act() } } : undefined}>
@@ -185,21 +186,24 @@ function IngredientChip({ ing, onNav, onCopy, checked, onCheck, recipeByName }) 
 
   // Non-gathering ingredients aren't on a map — explain where to get them.
   const costStr = ing.price != null && ing.currency ? `${ing.price} ${ing.currency}` : null
-  const tipMsg =
+  const baseTip =
       ing.craftable             ? 'Craftable — recipe not yet in the catalog'
     : ing.source === 'scrip'    ? `Scrip Exchange · ${costStr || 'scrip purchase'}`
     : ing.source === 'gemstone' ? `Bicolor Gemstone Trader · ${costStr || 'gemstone purchase'}`
     : ing.source === 'vendor'   ? (ing.price != null ? `Buy from a vendor · ${ing.price} gil` : 'Available from a vendor')
     :                             'Available on Market Board'
+  // Override notes carry the full acquisition story (aetherial-reduction
+  // nodes + ET windows, mob drops) — prefer them over the generic line.
+  const tipMsg = ing.notes || baseTip
 
   const dc = dotFor(ing.source, ws, ing)
 
-  // Auto-dismiss the market/vendor tooltip.
+  // Auto-dismiss the market/vendor tooltip (longer for detailed override notes).
   useEffect(() => {
     if (!tip) return
-    const t = setTimeout(() => setTip(false), 1900)
+    const t = setTimeout(() => setTip(false), ing.notes ? 9000 : 1900)
     return () => clearTimeout(t)
-  }, [tip])
+  }, [tip, ing.notes])
 
   // Tap the chip: expand a craftable's recipe, jump to a gathering spot, else flash the tooltip.
   function handleClick() {
@@ -569,13 +573,24 @@ export default function Cooking() {
     return () => clearInterval(id)
   }, [])
 
+  // Does the dish need this ingredient anywhere in its craft chain? Direct
+  // ingredients OR inside a craftable intermediate (so reverse links from the
+  // gathering pages work for subcraft-only items like Dark Rye → Dark Rye Flour).
+  const usesIngredient = (ings, needle, depth = 0) =>
+    (ings || []).some(i => {
+      if (i.name.toLowerCase() === needle) return true
+      if (depth >= 4 || !(i.craftable || i.subcraft)) return false
+      const sub = recipeByName?.get(i.name.trim().toLowerCase())
+      return sub ? usesIngredient(sub.ingredients, needle, depth + 1) : false
+    })
+
   const filtered = useMemo(() => {
     const query = q.trim().toLowerCase()
     const ingNeedle = ingFilter.trim().toLowerCase()
     let result = recipeList.filter(r => {
       if (statFilter !== 'all' && r.primaryStat !== statFilter) return false
       if (diffFilter !== 0     && r.stars !== diffFilter)       return false
-      if (ingNeedle && !r.ingredients.some(i => i.name.toLowerCase() === ingNeedle)) return false
+      if (ingNeedle && !usesIngredient(r.ingredients, ingNeedle)) return false
       if (query) {
         const hay = [r.name, STAT_TYPES[r.primaryStat]?.label, ...r.ingredients.map(i => i.name)]
           .join(' ').toLowerCase()
@@ -588,7 +603,7 @@ export default function Cooking() {
     if (sortBy === 'stat')  result = [...result].sort((a, b) =>
       STAT_ORDER.indexOf(a.primaryStat) - STAT_ORDER.indexOf(b.primaryStat))
     return result
-  }, [q, statFilter, diffFilter, ingFilter, sortBy, recipeList])
+  }, [q, statFilter, diffFilter, ingFilter, sortBy, recipeList, recipeByName])
 
   const shoppingList = useMemo(() => {
     const items = {}

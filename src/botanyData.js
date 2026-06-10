@@ -1,3 +1,4 @@
+import { EXTRA_BOTANY_NODES } from './crosslinkNodes.js'
 /* ============================================================
    botanyData.js — botanical node catalog + leaf-type color system.
 
@@ -342,4 +343,6 @@ export const BOTANY_NODES = [
       { name: 'Brightleaf',                tag: 'aetherial', icon: 'herb' },
       { name: 'Lightning Crystal',         tag: 'aetherial', icon: 'leaf' },
     ] },
+  // Cross-link extras (recipe-ingredient nodes outside the EW/DT endgame catalog)
+  ...EXTRA_BOTANY_NODES,
 ]

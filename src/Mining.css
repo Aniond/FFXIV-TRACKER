@@ -225,6 +225,10 @@ body.mining-page {
 .item__name { font:700 13.5px var(--fb); color: var(--parchment); line-height: 1.1; }
 .item__meta { font:600 10.5px var(--fb); color: var(--ink-dim); margin-top: 2px; }
 .item__tag { font:700 8.5px var(--fb); letter-spacing:.1em; text-transform:uppercase; color: var(--ic); border: 1px solid color-mix(in srgb, var(--ic) 50%, transparent); border-radius: 20px; padding: 2px 8px; white-space: nowrap; }
+
+/* cross-link chip: item -> cooking recipes that use it */
+.item__recipes { font:700 8.5px var(--fb); letter-spacing:.08em; text-transform:uppercase; color:var(--topaz, #d4a84a); border:1px solid color-mix(in srgb, var(--topaz, #d4a84a) 45%, transparent); border-radius:20px; padding:2px 8px; white-space:nowrap; text-decoration:none; transition:all .14s; }
+.item__recipes:hover { background: color-mix(in srgb, var(--topaz, #d4a84a) 18%, transparent); }
 .item__check { flex: 0 0 24px; width: 24px; height: 24px; border-radius: 7px; cursor: pointer; border: 1.5px dashed var(--ink-faint); background: transparent; display: grid; place-items: center; color: transparent; transition: all .14s; }
 .item__check svg { width: 13px; height: 13px; }
 .item__check:hover { border-color: var(--gem); }

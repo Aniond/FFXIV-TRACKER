@@ -2,6 +2,8 @@ import { useState, useEffect, useMemo, useRef } from 'react'
 import EorzeaClock from './EorzeaClock'
 import OceanFishing, { OCEAN_ROUTES } from './OceanFishing'
 import { FISHING_SPOTS, EXPANSIONS } from './fishingData'
+import { EXP_SHORT } from './crosslinkNodes.js'
+import { useRecipeUsage, usageFor, cookingLink } from './recipeLinks'
 import { BAIT_VENDORS } from './baitVendors'
 import { BAIT_TACKLE } from './baitTackleData'
 import ActivityNav from './ActivityNav'
@@ -39,7 +41,7 @@ const RARITY_WORD = { common: 'Common', rare: 'Rare', legendary: 'Legendary' }
 
 const fishKey = (spotId, fishName) => `${spotId}::${fishName}`
 
-function SpotCard({ spot, caught, onToggleFish, onToggleAll, onCopy, highlighted }) {
+function SpotCard({ spot, caught, onToggleFish, onToggleAll, onCopy, highlighted, usage }) {
   const total = spot.fish.length
   const got = spot.fish.filter((f) => caught[fishKey(spot.id, f.name)]).length
   const allDone = got === total
@@ -54,7 +56,7 @@ function SpotCard({ spot, caught, onToggleFish, onToggleAll, onCopy, highlighted
         <div className="spot__head-main">
           <h2 className="spot__name">{spot.name}</h2>
           <div className="spot__zone">
-            <span className="exp">{spot.expansion === 'Dawntrail' ? 'DT' : 'EW'}</span>
+            <span className="exp">{EXP_SHORT[spot.expansion] || 'EW'}</span>
             {spot.zone}
           </div>
           <div className={`spot__prog${allDone ? ' full' : ''}`}>
@@ -107,6 +109,16 @@ function SpotCard({ spot, caught, onToggleFish, onToggleAll, onCopy, highlighted
                 <span className="fish__name">{f.name}</span>
                 {(f.note || f.timed) && <span className="fish__meta">{f.timed ? '⌚ ' : ''}{f.note || RARITY_WORD[f.rarity]}</span>}
               </span>
+              {(() => { // cross-link: this item is a cooking ingredient
+                const u = usage && usageFor(usage, f.name)
+                return u ? (
+                  <a className="fish__recipes" href={cookingLink(f.name)}
+                    title={`Used in: ${u.dishes.slice(0, 6).join(', ')}${u.dishes.length > 6 ? '…' : ''}`}
+                    onClick={(e) => e.stopPropagation()}>
+                    {u.count} recipe{u.count > 1 ? 's' : ''}
+                  </a>
+                ) : null
+              })()}
               <span className="fish__rarity">{RARITY_WORD[f.rarity]}</span>
               <button className={`fish__check${done ? ' is-done' : ''}`} onClick={() => onToggleFish(key)} title={done ? 'Caught' : 'Mark caught'}>
                 <I.check />
@@ -128,6 +140,7 @@ export default function Fishing({ spots = FISHING_SPOTS }) {
   const [zone, setZone] = useState('All zones')
   const [toast, setToast] = useState(null)
   const [highlightId, setHighlightId] = useState(null)
+  const recipeUsage = useRecipeUsage() // item → dishes cross-links
   const toastTimer = useRef(null)
 
   // Scope the fishing page's CSS tokens to body so they don't bleed into the hunt board
@@ -290,7 +303,7 @@ export default function Fishing({ spots = FISHING_SPOTS }) {
           ) : (
             <div className="spots">
               {filtered.map((s) => (
-                <SpotCard key={s.id} spot={s} caught={caught} highlighted={s.id === highlightId} onToggleFish={toggleFish} onToggleAll={toggleAll} onCopy={copyCoords} />
+                <SpotCard key={s.id} spot={s} caught={caught} highlighted={s.id === highlightId} onToggleFish={toggleFish} onToggleAll={toggleAll} onCopy={copyCoords} usage={recipeUsage} />
               ))}
             </div>
           )}

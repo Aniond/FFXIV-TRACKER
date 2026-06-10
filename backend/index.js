@@ -361,7 +361,7 @@ app.get('/api/recipes', async (req, res) => {
     };
     let overrides = new Map();
     try {
-      const ov = await pool.query('SELECT item_id, source, node_name, zone, coords, notes FROM ingredient_overrides');
+      const ov = await pool.query('SELECT item_id, source, node_name, zone, coords, notes, price, currency FROM ingredient_overrides');
       overrides = new Map(ov.rows.map((o) => [o.item_id, o]));
     } catch { /* table not migrated yet — serve baked data */ }
 
@@ -377,6 +377,8 @@ app.get('/api/recipes', async (req, res) => {
           zone: o.zone ?? ing.zone,
           coords: o.coords ?? ing.coords,
           notes: o.notes ?? null,
+          price: o.price ?? ing.price ?? null,
+          currency: o.currency ?? ing.currency ?? null,
         };
       }),
     }));

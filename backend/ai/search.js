@@ -167,7 +167,7 @@ let OVERRIDES_CACHE = { at: 0, rows: [] };
 async function getOverrides() {
   if (OVERRIDES_CACHE.rows.length && Date.now() - OVERRIDES_CACHE.at < 60000) return OVERRIDES_CACHE.rows;
   try {
-    const r = await pool.query('SELECT item_name, source, node_name, zone, coords, notes FROM ingredient_overrides');
+    const r = await pool.query('SELECT item_name, source, node_name, zone, coords, notes, price, currency FROM ingredient_overrides');
     OVERRIDES_CACHE = { at: Date.now(), rows: r.rows };
   } catch (err) {
     console.error('[ai/search] ingredient_overrides query failed:', err.message);
@@ -340,6 +340,7 @@ router.post('/', authenticate, async (req, res) => {
         `source, zone, and coords and ignore every other source/location in this prompt:\n` +
         JSON.stringify(overrides.map((o) => ({
           name: o.item_name, source: o.source, zone: o.zone || '', coords: o.coords || '', notes: o.notes || '',
+          ...(o.price != null ? { price: o.price, currency: o.currency } : {}),
         }))) + `\n\n`
       : '';
 
