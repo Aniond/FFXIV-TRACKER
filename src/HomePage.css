@@ -231,3 +231,11 @@ button.dh-top__avatar:hover { border-color: var(--gold); }
 .dh-empty p { margin: 0; font: 500 12.5px var(--fb); line-height: 1.5; }
 .dh-empty a { color: var(--gold-bright); text-decoration: none; }
 .dh-empty a:hover { text-decoration: underline; }
+
+/* ── Desktop (≥920px): wide dashboard, timer cards as a grid ───────────── */
+@media (min-width: 920px) {
+  .dh { max-width: 1180px; }
+  .dh-rail__row { flex-wrap: wrap; overflow-x: visible; }
+  .dh-rail__row > * { flex: 0 0 calc(25% - 8px); min-width: 230px; }
+  .dh-hero { margin-left: 18px; margin-right: 18px; }
+}

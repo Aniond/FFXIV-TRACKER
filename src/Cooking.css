@@ -516,3 +516,18 @@ body.cooking-page .ing-filter-chip {
 body.cooking-page .ing-filter-chip b { color: var(--parchment); font-weight: 700; }
 body.cooking-page .ing-filter-chip__x { font-size: 13px; line-height: 1; opacity: .8; }
 body.cooking-page .ing-filter-chip:hover { filter: brightness(1.15); }
+
+/* ── Desktop (≥920px): wide board, recipe cards in a responsive grid ────── */
+@media (min-width: 920px) {
+  body.cooking-page .ledger { max-width: 1180px; }
+  body.cooking-page .brand { padding: 20px 24px 12px; }
+  body.cooking-page .controls { padding-left: 24px; padding-right: 24px; }
+  body.cooking-page .search input { max-width: 560px; }
+  body.cooking-page .recipes {
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
+    gap: 14px; align-items: start; padding: 4px 24px 0;
+  }
+}
+@media (min-width: 1440px) {
+  body.cooking-page .ledger { max-width: 1320px; }
+}
