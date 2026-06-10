@@ -4,6 +4,8 @@ import OceanFishing, { OCEAN_ROUTES } from './OceanFishing'
 import { FISHING_SPOTS, EXPANSIONS } from './fishingData'
 import { EXP_SHORT } from './crosslinkNodes.js'
 import { useRecipeUsage, usageFor, cookingLink } from './recipeLinks'
+import { weatherWindow, hasWeather } from './eorzeaWeather'
+import { fmtDur } from './etWindow'
 import { useSyncedState } from './syncedState'
 import { BAIT_VENDORS } from './baitVendors'
 import { BAIT_TACKLE } from './baitTackleData'
@@ -42,6 +44,23 @@ const RARITY_WORD = { common: 'Common', rare: 'Rare', legendary: 'Legendary' }
 
 const fishKey = (spotId, fishName) => `${spotId}::${fishName}`
 
+/* Live zone weather: current condition + the next different one with a real
+   countdown. Self-ticking (15s) so only the chip re-renders, not the page. */
+function WeatherChip({ zone }) {
+  const [, setTick] = useState(0)
+  useEffect(() => {
+    const id = setInterval(() => setTick((t) => t + 1), 15000)
+    return () => clearInterval(id)
+  }, [])
+  if (!hasWeather(zone)) return null
+  const w = weatherWindow(zone)
+  return (
+    <span className="req req--weather" title={w.next ? `${w.next} in ${fmtDur(w.changeMs)}` : 'Weather holding'}>
+      <I.cloud />{w.now}{w.next && <span className="wnext">→ {w.next} {Math.ceil(w.changeMs / 60000)}m</span>}
+    </span>
+  )
+}
+
 function SpotCard({ spot, caught, onToggleFish, onToggleAll, onCopy, highlighted, usage }) {
   const total = spot.fish.length
   const got = spot.fish.filter((f) => caught[fishKey(spot.id, f.name)]).length
@@ -73,7 +92,7 @@ function SpotCard({ spot, caught, onToggleFish, onToggleAll, onCopy, highlighted
         <span className="req req--coords" onClick={() => onCopy(spot.coords)} title="Tap to copy">
           <I.copy />{spot.coords}
         </span>
-        {spot.weather && <span className="req req--weather"><I.cloud />{spot.weather}</span>}
+        <WeatherChip zone={spot.zone} />
         <span className={`req ${spot.time === 'Night' ? 'req--weather' : 'req--time'}`}>
           {spot.time === 'Night' ? <I.moon /> : spot.time === 'Any' ? <I.clock /> : <I.sun />}{spot.time}
         </span>

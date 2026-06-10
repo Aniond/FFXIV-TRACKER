@@ -359,3 +359,6 @@ body.fishing-page {
 .bt-price svg { width: 12px; height: 12px; }
 .bt-other { font: 500 11.5px var(--fb); color: var(--ink-faint); }
 .fish-tabs { width: 100%; }
+
+/* live weather chip: upcoming-change accent */
+.req--weather .wnext { color: var(--teal, #5ec0b0); font-weight: 700; margin-left: 4px; }
