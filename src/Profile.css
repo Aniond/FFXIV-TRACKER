@@ -216,6 +216,21 @@ body.profile-page .bar > span { display: block; height: 100%; border-radius: 20p
 
 /* Territory */
 body.profile-page .zones { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+/* expansion sub-groups inside the (now full-width) Territory panel */
+body.profile-page .zones-group { margin-bottom: 14px; }
+body.profile-page .zones-group:last-child { margin-bottom: 0; }
+body.profile-page .zones-group__hd {
+  display: flex; align-items: center; gap: 10px; margin: 2px 0 9px;
+  font: 700 9.5px var(--fb); letter-spacing: .2em; text-transform: uppercase; color: var(--gold-dim);
+}
+body.profile-page .zones-group__line { flex: 1; height: 1px; background: linear-gradient(90deg, var(--bill-edge), transparent); }
+/* collapsible panel affordance */
+body.profile-page .panel__title.is-collapsible { cursor: pointer; user-select: none; }
+body.profile-page .panel__title.is-collapsible:hover .panel__chev { color: var(--gold-bright); }
+body.profile-page .panel__chev { display: inline-flex; margin-left: 8px; color: var(--ink-dim); transition: transform .18s, color .14s; }
+body.profile-page .panel__chev svg { width: 15px; height: 15px; }
+body.profile-page .panel__chev.is-open { transform: rotate(180deg); }
+body.profile-page .panel.is-closed .panel__title { margin-bottom: 0; }
 body.profile-page .zone {
   position: relative; display: flex; align-items: center; gap: 12px;
   background: rgba(0,0,0,.18); border: 1px solid var(--bill-edge); border-radius: 12px; padding: 11px 12px;
@@ -375,6 +390,9 @@ body.profile-page .toast svg { width: 15px; height: 15px; color: var(--gold-brig
    Responsive — mobile first means this IS the phone layout;
    below collapses multi-columns.
    ============================================================ */
+@media (min-width: 761px) {
+  body.profile-page .col-span .zones { grid-template-columns: repeat(4, 1fr); }
+}
 @media (max-width: 760px) {
   body.profile-page .grid { grid-template-columns: 1fr; }
   body.profile-page .statband { grid-template-columns: repeat(2, 1fr); }

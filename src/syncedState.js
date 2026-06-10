@@ -30,6 +30,7 @@ export const SYNCED_KEYS = [
   'ffxiv-saved-recipes',
   'ffxiv-fav-nodes',
   'ffxiv-search-history',
+  'ffxiv-profile-collapsed', // collapsed profile panels
 ]
 
 export const HYDRATED_EVENT = 'ffxiv-state-hydrated'

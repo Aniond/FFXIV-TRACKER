@@ -32,9 +32,6 @@ router.get('/api/profile/:slug', async (req, res) => {
   }
 });
 
-// Manual Lodestone refresh — pulls fresh data for the logged-in user right now.
-// Per-user cooldown: each call deliberately busts the cache and live-scrapes
-
 // Link Lodestone character (saves lodestone_id, world, dc, portrait_url)
 router.patch('/api/user/character', authenticate, async (req, res) => {
   const { lodestone_id, world, dc, portrait_url } = req.body;
@@ -128,6 +125,7 @@ const STATE_KEYS = new Set([
   'ffxiv-saved-recipes',     // bookmarked recipes
   'ffxiv-fav-nodes',         // starred nodes (dashboard timers)
   'ffxiv-search-history',    // recent AI searches
+  'ffxiv-profile-collapsed', // collapsed profile panels
 ]);
 const STATE_VALUE_MAX = 64 * 1024; // bytes of JSON per key — plenty for checklists
 

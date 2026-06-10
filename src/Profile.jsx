@@ -1,5 +1,7 @@
 import { useState, useEffect, useMemo } from 'react'
 import { saveJobs, saveCharacterLink, refreshJobsFromLodestone, fetchJobs, API } from './api'
+import { readState, writeState, hydrateFromServer, HYDRATED_EVENT } from './syncedState'
+import { ZONE_EXPANSION } from './profileData'
 import './Profile.css'
 
 /* ============================================================
@@ -68,19 +70,46 @@ function Ring({ pct, size = 40, stroke = 4, color = 'var(--gold)' }) {
   )
 }
 
-function Panel({ title, icon: Ico, count, badge, action, children, className = '' }) {
-  const hasRight = count != null || action
+const COLLAPSE_KEY = 'ffxiv-profile-collapsed'
+
+function Panel({ title, icon: Ico, count, badge, action, children, className = '', collapseId }) {
+  const collapsible = !!collapseId
+  // Default open; the collapsed set follows the account (synced state).
+  const [open, setOpen] = useState(() => !collapsible || !readState(COLLAPSE_KEY, {})[collapseId])
+  useEffect(() => {
+    if (!collapsible) return
+    hydrateFromServer()
+    const onHydrated = () => setOpen(!readState(COLLAPSE_KEY, {})[collapseId])
+    window.addEventListener(HYDRATED_EVENT, onHydrated)
+    return () => window.removeEventListener(HYDRATED_EVENT, onHydrated)
+  }, [collapsible, collapseId])
+  const toggle = () => {
+    const map = { ...readState(COLLAPSE_KEY, {}) }
+    if (open) map[collapseId] = true
+    else delete map[collapseId]
+    writeState(COLLAPSE_KEY, map)
+    setOpen(!open)
+  }
+  const hasRight = count != null || action || collapsible
   return (
-    <section className={`panel ${className}`}>
-      <h3 className="panel__title">
+    <section className={`panel ${className}${collapsible && !open ? ' is-closed' : ''}`}>
+      <h3 className={`panel__title${collapsible ? ' is-collapsible' : ''}`}
+        onClick={collapsible ? toggle : undefined}
+        role={collapsible ? 'button' : undefined}
+        aria-expanded={collapsible ? open : undefined}>
         {Ico && <Ico />}
         {title}
         {badge && <span className="panel__badge">{badge}</span>}
         {hasRight && <span className="panel__spacer" />}
         {count != null && <span className="ct">{count}</span>}
-        {action && <span className="panel__action">{action}</span>}
+        {action && <span className="panel__action" onClick={(e) => e.stopPropagation()}>{action}</span>}
+        {collapsible && (
+          <span className={`panel__chev${open ? ' is-open' : ''}`} aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+          </span>
+        )}
       </h3>
-      {children}
+      {open && children}
     </section>
   )
 }
@@ -389,24 +418,47 @@ export default function Profile({ profile = SAMPLE_PROFILE, isOwner = false }) {
           })}
         </Panel>
 
-        {/* Territory */}
-        <Panel title="Territory" icon={I.map}
-          count={`${p.zones.reduce((a, z) => a + z.done, 0)}/${p.zones.reduce((a, z) => a + z.total, 0)}`}>
-          <div className="zones">
-            {p.zones.map((z) => {
-              const pct = z.total ? Math.round((z.done / z.total) * 100) : 0
-              return (
-                <div className="zone" key={z.name}>
-                  <span className="zone__fill" style={{ width: pct + '%' }} />
-                  <span className="zone__ring"><Ring pct={pct} size={40} stroke={4} color={pct === 100 ? 'var(--rank-b)' : 'var(--gold)'} /></span>
-                  <span className="zone__body">
-                    <span className="zone__name">{z.name}</span>
-                    <span className="zone__count">{z.done} / {z.total} marks</span>
-                  </span>
+        {/* Recent Clears — paired with Bounty to balance the first row */}
+        <Panel title="Recent Clears" icon={I.check}>
+          {p.recent.map((c, i) => (
+            <div className="clear" key={i} style={RANK_VARS[c.rank] || RANK_VARS.B}>
+              <span className="clear__seal">{c.rank}</span>
+              <span className="clear__body">
+                <span className="clear__name">{c.name}</span>
+                <span className="clear__zone">{c.zone}</span>
+              </span>
+              <span className="clear__time">{c.time}</span>
+            </div>
+          ))}
+        </Panel>
+
+        {/* Territory — full width, grouped by expansion, collapsible */}
+        <Panel title="Territory" icon={I.map} className="col-span" collapseId="territory"
+          count={`${p.zones.reduce((a, z) => a + (z?.done || 0), 0)}/${p.zones.reduce((a, z) => a + (z?.total || 0), 0)}`}>
+          {['Dawntrail', 'Endwalker'].map((exp) => {
+            const zs = p.zones.filter((z) => z && ZONE_EXPANSION[z.name] === exp)
+            if (!zs.length) return null
+            return (
+              <div className="zones-group" key={exp}>
+                <div className="zones-group__hd">{exp}<span className="zones-group__line" /></div>
+                <div className="zones">
+                  {zs.map((z) => {
+                    const pct = z.total ? Math.round((z.done / z.total) * 100) : 0
+                    return (
+                      <div className="zone" key={z.name}>
+                        <span className="zone__fill" style={{ width: pct + '%' }} />
+                        <span className="zone__ring"><Ring pct={pct} size={40} stroke={4} color={pct === 100 ? 'var(--rank-b)' : 'var(--gold)'} /></span>
+                        <span className="zone__body">
+                          <span className="zone__name">{z.name}</span>
+                          <span className="zone__count">{z.done} / {z.total} marks</span>
+                        </span>
+                      </div>
+                    )
+                  })}
                 </div>
-              )
-            })}
-          </div>
+              </div>
+            )
+          })}
         </Panel>
 
         {/* Job levels */}
@@ -414,6 +466,7 @@ export default function Profile({ profile = SAMPLE_PROFILE, isOwner = false }) {
           title="Job Levels"
           icon={I.swords}
           className="col-span"
+          collapseId="jobs"
 
           count={editingJobs ? undefined : `${at100} at 100`}
           action={jobsAction}
@@ -452,18 +505,7 @@ export default function Profile({ profile = SAMPLE_PROFILE, isOwner = false }) {
         </Panel>
 
         {/* Recent clears */}
-        <Panel title="Recent Clears" icon={I.check} className="col-span">
-          {p.recent.map((c, i) => (
-            <div className="clear" key={i} style={RANK_VARS[c.rank] || RANK_VARS.B}>
-              <span className="clear__seal">{c.rank}</span>
-              <span className="clear__body">
-                <span className="clear__name">{c.name}</span>
-                <span className="clear__zone">{c.zone}</span>
-              </span>
-              <span className="clear__time">{c.time}</span>
-            </div>
-          ))}
-        </Panel>
+
       </div>
 
       <footer className="foot">

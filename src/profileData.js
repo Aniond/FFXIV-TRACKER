@@ -12,6 +12,12 @@ export const ZONE_ORDER = [
   'Urqopacha', "Kozama'uka", "Yak T'el", 'Shaaloani', 'Heritage Found', 'Living Memory',
   'Labyrinthos', 'Thavnair', 'Garlemald', 'Mare Lamentorum', 'Elpis', 'Ultima Thule',
 ]
+export const ZONE_EXPANSION = {
+  Urqopacha: 'Dawntrail', "Kozama'uka": 'Dawntrail', "Yak T'el": 'Dawntrail',
+  Shaaloani: 'Dawntrail', 'Heritage Found': 'Dawntrail', 'Living Memory': 'Dawntrail',
+  Labyrinthos: 'Endwalker', Thavnair: 'Endwalker', Garlemald: 'Endwalker',
+  'Mare Lamentorum': 'Endwalker', Elpis: 'Endwalker', 'Ultima Thule': 'Endwalker',
+}
 
 const RANK_META = {
   S: { word: 'Elite', sub: 'Notorious Monster' },
