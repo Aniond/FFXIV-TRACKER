@@ -113,7 +113,12 @@ export function searchIndex(entries, query, limit = 8) {
     else continue
     scored.push([score, e])
   }
-  scored.sort((a, b) => a[0] - b[0] || a[1].label.length - b[1].label.length)
+  // On equal text-match quality: "where to find it" (gathering/hunt) beats
+  // "what uses it" (ingredient/recipe), then shorter labels first.
+  const CAT_PRIO = { hunt: 0, mining: 0, botany: 0, fishing: 0, recipe: 1, ingredient: 2 }
+  scored.sort((a, b) => a[0] - b[0]
+    || (CAT_PRIO[a[1].cat] ?? 3) - (CAT_PRIO[b[1].cat] ?? 3)
+    || a[1].label.length - b[1].label.length)
   // One row per label+cat is already guaranteed; also collapse identical
   // labels across categories down to the top 2 (e.g. item + ingredient view).
   const byLabel = new Map()

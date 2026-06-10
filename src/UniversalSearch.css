@@ -1,0 +1,70 @@
+/* UniversalSearch — the everything-bar + instant-results dropdown.
+   Shared by the logged-in dashboard and the guest hunt board, so every
+   color token carries a fallback for pages with different palettes. */
+.dh-hero {
+  position: relative; padding: 4px 18px 24px; border-bottom: 1px solid var(--bill-edge, #2e2719);
+  background:
+    radial-gradient(ellipse 90% 280px at 50% 70px, rgba(143,182,214,.09) 0%, transparent 70%),
+    repeating-linear-gradient(0deg, rgba(255,255,255,.007) 0 1px, transparent 1px 32px);
+}
+.dh-hero__label { display: flex; align-items: center; gap: 8px; font: 700 9px var(--fb, 'Manrope',system-ui,sans-serif); letter-spacing: .2em; text-transform: uppercase; color: var(--gold-dim, #8a7038); margin-bottom: 12px; }
+.dh-hero__label svg { width: 14px; height: 14px; color: var(--gold, #c9a35b); animation: dh-spin 14s linear infinite; }
+@keyframes dh-spin { to { transform: rotate(360deg); } }
+.dh-hero__bar { position: relative; }
+.dh-hero__ico { position: absolute; left: 17px; top: 50%; transform: translateY(-50%); width: 19px; height: 19px; color: var(--gold, #c9a35b); pointer-events: none; }
+.dh-hero__input {
+  width: 100%; height: 58px; font: 500 15.5px var(--fb, 'Manrope',system-ui,sans-serif); color: var(--parchment, #efe6d0);
+  background: rgba(9,7,4,.92); border: 1.5px solid rgba(143,182,214,.22);
+  border-radius: 16px; padding: 0 58px 0 50px; outline: none;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.04), 0 4px 20px rgba(0,0,0,.55);
+  transition: border-color .18s, box-shadow .22s; letter-spacing: .01em;
+}
+.dh-hero__input::placeholder { color: var(--ink-faint, #6a6151); font-style: italic; }
+.dh-hero__input:focus {
+  border-color: rgba(143,182,214,.48);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.05), 0 0 0 4px rgba(143,182,214,.12), 0 8px 30px rgba(0,0,0,.6);
+}
+.dh-hero__send {
+  position: absolute; right: 10px; top: 50%; transform: translateY(-50%);
+  width: 38px; height: 38px; border-radius: 12px;
+  background: linear-gradient(180deg, var(--gold-bright, #ecca82), var(--gold, #c9a35b));
+  border: 0; display: grid; place-items: center; cursor: pointer; color: #0a0d11;
+  box-shadow: 0 2px 10px rgba(143,182,214,.22); transition: filter .14s, opacity .15s;
+}
+.dh-hero__send svg { width: 16px; height: 16px; }
+.dh-hero__send:disabled { opacity: .32; cursor: default; box-shadow: none; }
+.dh-hero__send:hover:not(:disabled) { filter: brightness(1.12); }
+.dh-drop {
+  position: absolute; left: 0; right: 0; top: calc(100% + 8px); z-index: 40;
+  background: var(--bill, #1a1610); border: 1px solid var(--gold-deep, #5e4a22);
+  border-radius: 14px; overflow: hidden; box-shadow: 0 18px 48px rgba(0,0,0,.55);
+}
+.dh-drop__row {
+  display: flex; align-items: center; gap: 12px; width: 100%; text-align: left;
+  padding: 11px 14px; background: transparent; border: 0; border-bottom: 1px solid rgba(201,163,91,.08);
+  cursor: pointer; color: inherit; font-family: var(--fb, 'Manrope',system-ui,sans-serif);
+}
+.dh-drop__row:last-child { border-bottom: 0; }
+.dh-drop__row.is-sel { background: rgba(201,163,91,.10); }
+.dh-drop__cat {
+  flex: 0 0 64px; display: inline-flex; justify-content: center; align-items: center;
+  font: 700 8.5px var(--fb, 'Manrope',system-ui,sans-serif); letter-spacing: .12em; text-transform: uppercase;
+  color: var(--cc, var(--gold, #c9a35b)); border: 1px solid color-mix(in srgb, var(--cc, var(--gold, #c9a35b)) 45%, transparent);
+  border-radius: 20px; padding: 3px 0;
+}
+.dh-drop__main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.dh-drop__name { font: 700 13.5px var(--fb, 'Manrope',system-ui,sans-serif); color: var(--parchment, #efe6d0); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.dh-drop__sub { font: 500 11px var(--fb, 'Manrope',system-ui,sans-serif); color: var(--ink-dim, #8f846a); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.dh-drop__go { width: 13px; height: 13px; color: var(--gold-dim, #8a7038); flex: 0 0 13px; }
+.dh-drop__row--ai .dh-drop__name { color: var(--gold-bright, #ecca82); }
+.dh-hero__recent { display: flex; flex-wrap: wrap; gap: 7px; margin-top: 15px; align-items: center; }
+.dh-hero__rlabel { width: 100%; font: 700 8.5px var(--fb, 'Manrope',system-ui,sans-serif); letter-spacing: .18em; text-transform: uppercase; color: var(--ink-faint, #6a6151); margin-bottom: -1px; }
+.dh-hero__chip {
+  display: inline-flex; align-items: center; gap: 6px; font: 500 12px var(--fb, 'Manrope',system-ui,sans-serif); color: var(--ink, #cdbf9f);
+  background: rgba(255,255,255,.025); border: 1px solid var(--bill-edge, #2e2719);
+  border-radius: 20px; padding: 6px 12px; cursor: pointer;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: calc(50% - 4px);
+  transition: border-color .12s, color .12s, background .12s;
+}
+.dh-hero__chip svg { width: 11px; height: 11px; flex: 0 0 11px; color: var(--ink-faint, #6a6151); }
+.dh-hero__chip:hover { border-color: var(--gold-dim, #8a7038); color: var(--gold-bright, #ecca82); background: var(--gold-faint, rgba(201,163,91,.1)); }

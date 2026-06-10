@@ -42,3 +42,9 @@ test('same label collapses to at most two categories', () => {
   const dup = [E('Gem Algae', 'botany'), E('Gem Algae', 'ingredient'), E('Gem Algae', 'fishing')]
   assert.equal(searchIndex(dup, 'gem algae').length, 2)
 })
+
+test('where-to-find rows outrank what-uses-it rows on equal match', () => {
+  const dup = [E('Goldentail', 'ingredient'), E('Goldentail', 'fishing')]
+  const r = searchIndex(dup, 'goldentail')
+  assert.deepEqual(r.map((e) => e.cat), ['fishing', 'ingredient'])
+})

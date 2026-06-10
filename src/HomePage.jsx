@@ -4,7 +4,7 @@ import { MINING_NODES } from './miningData'
 import { BOTANY_NODES } from './botanyData'
 import { getFavNodes } from './favNodes'
 import { hydrateFromServer, HYDRATED_EVENT, readState } from './syncedState'
-import { getUniversalIndex, searchIndex } from './universalIndex'
+import UniversalSearch from './UniversalSearch'
 import { clearToken } from './api'
 import { navigate } from './router'
 import './HomePage.css'
@@ -16,12 +16,6 @@ import './HomePage.css'
    etWindow helpers, and manual (no-router) navigation.
    ============================================================ */
 
-const HISTORY_KEY = 'ffxiv-search-history'
-
-function getHistory() {
-  const v = readState(HISTORY_KEY, [])
-  return (Array.isArray(v) ? v : []).slice(0, 8)
-}
 
 function greeting() {
   const h = new Date().getHours()
@@ -46,7 +40,6 @@ const NODE_INDEX = (() => {
   return m
 })()
 
-const goAI = (q) => navigate(q ? `/ai?q=${encodeURIComponent(q)}` : '/ai')
 
 const I = {
   spark: (p) => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" {...p}><path d="M12 3v4M12 17v4M3 12h4M17 12h4M5.6 5.6l2.8 2.8M15.6 15.6l2.8 2.8M18.4 5.6l-2.8 2.8M8.4 15.6l-2.8 2.8"/><circle cx="12" cy="12" r="2.4"/></svg>,
@@ -69,13 +62,6 @@ const I = {
 
 const SRC_ICO = { botany: I.leaf, mining: I.pick, fishing: I.fish }
 
-const AI_PLACEHOLDERS = [
-  'Ask about any node, mark, or fish…',
-  'Where is Chupacabra?',
-  'Unspoiled nodes open now',
-  'Rhotano Sea fishing',
-  'Show me timed botany nodes',
-]
 
 function CompactET() {
   const [et, setEt] = useState(eorzeaNow)
@@ -123,118 +109,6 @@ function QuickTile({ tile }) {
   )
   if (tile.soon) return <div className="dh-tile is-soon" style={{ '--tc': tile.color }}>{inner}</div>
   return <a href={tile.href} className="dh-tile" style={{ '--tc': tile.color }}>{inner}</a>
-}
-
-// Category accents for instant-search rows (matches each page's identity).
-const CAT_META = {
-  hunt: { word: 'Hunt', color: '#d6483a' },
-  mining: { word: 'Mining', color: '#d4a84a' },
-  botany: { word: 'Botany', color: '#54b98a' },
-  fishing: { word: 'Fishing', color: '#5ec0b0' },
-  recipe: { word: 'Recipe', color: '#e0a24a' },
-  ingredient: { word: 'Ingredient', color: '#b07ce0' },
-}
-
-function AIHero({ rev = 0 }) {
-  const [q, setQ] = useState('')
-  const [phIdx, setPhIdx] = useState(0)
-  const [focused, setFocused] = useState(false)
-  const [index, setIndex] = useState(null)
-  const [sel, setSel] = useState(-1)
-  const recent = useMemo(getHistory, [rev]) // re-read after server hydration (parent bumps rev on HYDRATED_EVENT)
-
-  useEffect(() => {
-    if (focused) return
-    const id = setInterval(() => setPhIdx((i) => (i + 1) % AI_PLACEHOLDERS.length), 3400)
-    return () => clearInterval(id)
-  }, [focused])
-
-  // Universal index loads once on first focus — keeps initial page load lean.
-  useEffect(() => {
-    if (!focused || index) return
-    let alive = true
-    getUniversalIndex().then((idx) => { if (alive) setIndex(idx) })
-    return () => { alive = false }
-  }, [focused, index])
-
-  // Instant matches: substring hits across hunts/nodes/fish/recipes — free,
-  // no AI call. The AI row below is the fallback for real questions.
-  const hits = useMemo(() => (index ? searchIndex(index, q) : []), [index, q])
-  useEffect(() => { setSel(-1) }, [q])
-
-  const go = (href) => navigate(href)
-  function onKeyDown(e) {
-    const max = hits.length // index `hits.length` = the Ask-AI row
-    if (e.key === 'ArrowDown') { e.preventDefault(); setSel((s) => Math.min(s + 1, max)) }
-    else if (e.key === 'ArrowUp') { e.preventDefault(); setSel((s) => Math.max(s - 1, -1)) }
-    else if (e.key === 'Enter' && q.trim()) {
-      if (sel >= 0 && sel < hits.length) go(hits[sel].href)
-      else goAI(q.trim())
-    } else if (e.key === 'Escape') { setQ(''); setSel(-1) }
-  }
-
-  const showDrop = focused && q.trim().length >= 2
-
-  return (
-    <section className="dh-hero">
-      <div className="dh-hero__label"><I.spark />Centurio AI — Ask anything</div>
-      <div className="dh-hero__bar">
-        <I.search className="dh-hero__ico" />
-        <input
-          className="dh-hero__input"
-          value={q}
-          onChange={(e) => setQ(e.target.value)}
-          onKeyDown={onKeyDown}
-          onFocus={() => setFocused(true)}
-          onBlur={() => setTimeout(() => setFocused(false), 120) /* let row clicks land */}
-          placeholder={AI_PLACEHOLDERS[phIdx]}
-          aria-label="Search everything"
-          aria-expanded={showDrop}
-          role="combobox"
-        />
-        <button className="dh-hero__send" disabled={!q.trim()} onClick={() => q.trim() && goAI(q.trim())} aria-label="Search">
-          <I.arrow />
-        </button>
-        {showDrop && (
-          <div className="dh-drop" role="listbox">
-            {hits.map((h, i) => (
-              <button key={h.cat + h.label} role="option" aria-selected={i === sel}
-                className={`dh-drop__row${i === sel ? ' is-sel' : ''}`}
-                onMouseDown={(e) => { e.preventDefault(); go(h.href) }}
-                onMouseEnter={() => setSel(i)}>
-                <span className="dh-drop__cat" style={{ '--cc': CAT_META[h.cat]?.color }}>{CAT_META[h.cat]?.word}</span>
-                <span className="dh-drop__main">
-                  <span className="dh-drop__name">{h.label}</span>
-                  <span className="dh-drop__sub">{h.sub}</span>
-                </span>
-                <I.arrow className="dh-drop__go" />
-              </button>
-            ))}
-            <button role="option" aria-selected={sel === hits.length}
-              className={`dh-drop__row dh-drop__row--ai${sel === hits.length ? ' is-sel' : ''}`}
-              onMouseDown={(e) => { e.preventDefault(); goAI(q.trim()) }}
-              onMouseEnter={() => setSel(hits.length)}>
-              <span className="dh-drop__cat" style={{ '--cc': 'var(--gold, #c9a35b)' }}><I.spark style={{ width: 11, height: 11 }} /></span>
-              <span className="dh-drop__main">
-                <span className="dh-drop__name">Ask Centurio AI</span>
-                <span className="dh-drop__sub">“{q.trim()}” — full answer with locations, timers & tips</span>
-              </span>
-              <I.arrow className="dh-drop__go" />
-            </button>
-          </div>
-        )}
-      </div>
-
-      {recent.length > 0 && (
-        <div className="dh-hero__recent">
-          <div className="dh-hero__rlabel">Recent</div>
-          {recent.map((r) => (
-            <button key={r} className="dh-hero__chip" onClick={() => goAI(r)}><I.hist />{r}</button>
-          ))}
-        </div>
-      )}
-    </section>
-  )
 }
 
 export default function HomePage({ user }) {
@@ -321,7 +195,7 @@ export default function HomePage({ user }) {
         <CompactET />
       </header>
 
-      <AIHero rev={favRev} />
+      <UniversalSearch rev={favRev} />
 
       <div className="dh-shd"><span className="dh-shd__title">Quick Access</span></div>
       <div className="dh-grid">

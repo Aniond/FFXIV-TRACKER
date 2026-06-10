@@ -4,6 +4,7 @@ import { Icon, RankSeal, BillCard, HuntTable, Highlight, rankVars } from './comp
 import { useTweaks, TweaksPanel, TweakSection, TweakRadio, TweakColor } from './TweaksPanel'
 import { API, getToken, clearToken, consumeUrlToken, fetchMe, loadProgress, saveProgress, resetProgress, savePreferences } from './api'
 import Dashboard, { DIcon } from './Dashboard'
+import UniversalSearch from './UniversalSearch'
 import Banner from './Banner'
 import ActivityNav from './ActivityNav'
 
@@ -224,6 +225,9 @@ function App() {
           </>
         )}
       </header>
+
+      {/* The everything-bar: instant results free for guests; AI row gates on Discord */}
+      <UniversalSearch showRecent={false} />
 
       <div className="pagenav">
         <button className={page === 'overview' ? 'is-active' : ''} onClick={() => setPage('overview')}>
