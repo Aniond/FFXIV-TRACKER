@@ -20,7 +20,7 @@ import { fileURLToPath } from 'url'
 
 const here = path.dirname(fileURLToPath(import.meta.url))
 const prodDump = path.join(here, '..', 'gtmp', 'prod-recipes.json')
-const seed = path.join(here, 'cooking-recipes.json')
+const seed = path.join(here, '..', 'cooking-recipes.json')
 const src = fs.existsSync(prodDump) ? prodDump : seed
 console.log(`checking against ${path.basename(src)}`)
 const recipes = JSON.parse(fs.readFileSync(src))
