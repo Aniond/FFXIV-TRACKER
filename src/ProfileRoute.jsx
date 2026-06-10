@@ -5,6 +5,13 @@ import { API, fetchMe, getToken } from './api'
 import './Profile.css'
 
 export default function ProfileRoute({ slug }) {
+  // Scope Profile.css tokens to this page (they used to sit on :root and
+  // leak the Sky accent + .bar/.ring/.toast rules into other pages).
+  useEffect(() => {
+    document.body.classList.add('profile-page')
+    return () => document.body.classList.remove('profile-page')
+  }, [])
+
   const [profile, setProfile] = useState(null)
   const [state, setState] = useState('loading')
   const [isOwner, setIsOwner] = useState(false)

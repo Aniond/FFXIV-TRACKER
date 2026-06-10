@@ -45,25 +45,30 @@ try {
 
 // Dawntrail Culinarian recipes (compacted for the prompt — drop ids; each
 // ingredient already carries a cross-referenced source + subcraft flag).
+// PRIMARY SOURCE: the recipes table — the same data /api/recipes serves and
+// the admin endpoints edit, so the AI never drifts from the site. The baked
+// cooking-recipes.json scrape seed is only the boot fallback (DB unreachable).
+const compactRecipes = (rows) => rows.map((r) => ({
+  name: r.name,
+  itemLevel: r.item_level,
+  stars: r.stars,
+  foodBuff: r.food_buff ? r.food_buff.map((b) => ({ stat: b.stat, hq: b.valueHQ, max: b.maxHQ })) : null,
+  ingredients: (r.ingredients || []).map((i) => ({ name: i.name, amount: i.amount, source: i.source, subcraft: i.subcraft })),
+}));
+
 let RECIPES = [];
 try {
-  const raw = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'cooking-recipes.json'), 'utf8'));
-  RECIPES = raw.map((r) => ({
-    name: r.name,
-    itemLevel: r.item_level,
-    stars: r.stars,
-    foodBuff: r.food_buff ? r.food_buff.map((b) => ({ stat: b.stat, hq: b.valueHQ, max: b.maxHQ })) : null,
-    ingredients: r.ingredients.map((i) => ({ name: i.name, amount: i.amount, source: i.source, subcraft: i.subcraft })),
-  }));
+  RECIPES = compactRecipes(JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'cooking-recipes.json'), 'utf8')));
 } catch (err) {
   console.error('[ai/search] cooking-recipes.json missing — run scrape-cooking.js:', err.message);
 }
 
-// Frozen so prompt caching stays valid: stable bytes, no per-request interpolation.
-// The persona/instruction text is the verbatim Centurio system prompt; the
-// structured-output contract (enforced by RESPONSE_SCHEMA) is appended so the
-// model knows the exact field names to fill.
-const SYSTEM_PROMPT =
+// Stable bytes between refreshes so prompt caching stays valid: the prompt is
+// rebuilt ONLY when the recipes table actually changes (hourly check), never
+// per-request. The persona/instruction text is the verbatim Centurio system
+// prompt; the structured-output contract (enforced by RESPONSE_SCHEMA) is
+// appended so the model knows the exact field names to fill.
+const buildSystemPrompt = (recipes) =>
   `You are an FFXIV companion assistant for ffxivlog.com called Centurio.\n` +
   `You have access to a database of hunt marks, fishing spots, mining nodes,\n` +
   `botany nodes, and Dawntrail Culinarian (cooking) recipes for the Dawntrail\n` +
@@ -110,7 +115,34 @@ const SYSTEM_PROMPT =
   `GATHERING DATABASE (fishing spots, mining nodes, botany nodes) as JSON:\n` +
   JSON.stringify({ fishing: GAME_DATA.fishing, mining: GAME_DATA.mining, botany: GAME_DATA.botany }) +
   `\n\nDAWNTRAIL CULINARIAN RECIPES as JSON:\n` +
-  JSON.stringify(RECIPES);
+  JSON.stringify(recipes);
+
+let SYSTEM_PROMPT = buildSystemPrompt(RECIPES);
+
+// Load the live recipe catalog from Postgres and rebuild the prompt when it
+// differs. Runs at boot and hourly — admin recipe edits and reseeds reach the
+// AI within the hour without a redeploy, and identical data keeps the exact
+// same prompt bytes (so the Anthropic prompt cache is unaffected).
+let lastRecipesJson = JSON.stringify(RECIPES);
+async function refreshRecipesFromDb() {
+  try {
+    const r = await pool.query(
+      'SELECT name, item_level, stars, food_buff, ingredients FROM recipes ORDER BY id'
+    );
+    if (!r.rows.length) return; // empty table — keep the seed fallback
+    const fresh = compactRecipes(r.rows);
+    const freshJson = JSON.stringify(fresh);
+    if (freshJson === lastRecipesJson) return;
+    RECIPES = fresh;
+    lastRecipesJson = freshJson;
+    SYSTEM_PROMPT = buildSystemPrompt(fresh);
+    console.log(`[ai/search] recipe context refreshed from DB (${fresh.length} recipes)`);
+  } catch (err) {
+    console.error('[ai/search] recipe refresh failed (serving previous context):', err.message);
+  }
+}
+refreshRecipesFromDb();
+setInterval(refreshRecipesFromDb, 60 * 60 * 1000).unref();
 
 const RESPONSE_SCHEMA = {
   type: 'object',
