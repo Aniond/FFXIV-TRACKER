@@ -4,6 +4,7 @@ import { MINING_NODES } from './miningData'
 import { BOTANY_NODES } from './botanyData'
 import { getFavNodes } from './favNodes'
 import { hydrateFromServer, HYDRATED_EVENT, readState } from './syncedState'
+import { getUniversalIndex, searchIndex } from './universalIndex'
 import { clearToken } from './api'
 import './HomePage.css'
 
@@ -123,10 +124,22 @@ function QuickTile({ tile }) {
   return <a href={tile.href} className="dh-tile" style={{ '--tc': tile.color }}>{inner}</a>
 }
 
+// Category accents for instant-search rows (matches each page's identity).
+const CAT_META = {
+  hunt: { word: 'Hunt', color: '#d6483a' },
+  mining: { word: 'Mining', color: '#d4a84a' },
+  botany: { word: 'Botany', color: '#54b98a' },
+  fishing: { word: 'Fishing', color: '#5ec0b0' },
+  recipe: { word: 'Recipe', color: '#e0a24a' },
+  ingredient: { word: 'Ingredient', color: '#b07ce0' },
+}
+
 function AIHero({ rev = 0 }) {
   const [q, setQ] = useState('')
   const [phIdx, setPhIdx] = useState(0)
   const [focused, setFocused] = useState(false)
+  const [index, setIndex] = useState(null)
+  const [sel, setSel] = useState(-1)
   const recent = useMemo(getHistory, [rev]) // re-read after server hydration (parent bumps rev on HYDRATED_EVENT)
 
   useEffect(() => {
@@ -134,6 +147,32 @@ function AIHero({ rev = 0 }) {
     const id = setInterval(() => setPhIdx((i) => (i + 1) % AI_PLACEHOLDERS.length), 3400)
     return () => clearInterval(id)
   }, [focused])
+
+  // Universal index loads once on first focus — keeps initial page load lean.
+  useEffect(() => {
+    if (!focused || index) return
+    let alive = true
+    getUniversalIndex().then((idx) => { if (alive) setIndex(idx) })
+    return () => { alive = false }
+  }, [focused, index])
+
+  // Instant matches: substring hits across hunts/nodes/fish/recipes — free,
+  // no AI call. The AI row below is the fallback for real questions.
+  const hits = useMemo(() => (index ? searchIndex(index, q) : []), [index, q])
+  useEffect(() => { setSel(-1) }, [q])
+
+  const go = (href) => { window.location.href = href }
+  function onKeyDown(e) {
+    const max = hits.length // index `hits.length` = the Ask-AI row
+    if (e.key === 'ArrowDown') { e.preventDefault(); setSel((s) => Math.min(s + 1, max)) }
+    else if (e.key === 'ArrowUp') { e.preventDefault(); setSel((s) => Math.max(s - 1, -1)) }
+    else if (e.key === 'Enter' && q.trim()) {
+      if (sel >= 0 && sel < hits.length) go(hits[sel].href)
+      else goAI(q.trim())
+    } else if (e.key === 'Escape') { setQ(''); setSel(-1) }
+  }
+
+  const showDrop = focused && q.trim().length >= 2
 
   return (
     <section className="dh-hero">
@@ -144,15 +183,45 @@ function AIHero({ rev = 0 }) {
           className="dh-hero__input"
           value={q}
           onChange={(e) => setQ(e.target.value)}
-          onKeyDown={(e) => e.key === 'Enter' && q.trim() && goAI(q.trim())}
+          onKeyDown={onKeyDown}
           onFocus={() => setFocused(true)}
-          onBlur={() => setFocused(false)}
+          onBlur={() => setTimeout(() => setFocused(false), 120) /* let row clicks land */}
           placeholder={AI_PLACEHOLDERS[phIdx]}
-          aria-label="Ask Centurio"
+          aria-label="Search everything"
+          aria-expanded={showDrop}
+          role="combobox"
         />
         <button className="dh-hero__send" disabled={!q.trim()} onClick={() => q.trim() && goAI(q.trim())} aria-label="Search">
           <I.arrow />
         </button>
+        {showDrop && (
+          <div className="dh-drop" role="listbox">
+            {hits.map((h, i) => (
+              <button key={h.cat + h.label} role="option" aria-selected={i === sel}
+                className={`dh-drop__row${i === sel ? ' is-sel' : ''}`}
+                onMouseDown={(e) => { e.preventDefault(); go(h.href) }}
+                onMouseEnter={() => setSel(i)}>
+                <span className="dh-drop__cat" style={{ '--cc': CAT_META[h.cat]?.color }}>{CAT_META[h.cat]?.word}</span>
+                <span className="dh-drop__main">
+                  <span className="dh-drop__name">{h.label}</span>
+                  <span className="dh-drop__sub">{h.sub}</span>
+                </span>
+                <I.arrow className="dh-drop__go" />
+              </button>
+            ))}
+            <button role="option" aria-selected={sel === hits.length}
+              className={`dh-drop__row dh-drop__row--ai${sel === hits.length ? ' is-sel' : ''}`}
+              onMouseDown={(e) => { e.preventDefault(); goAI(q.trim()) }}
+              onMouseEnter={() => setSel(hits.length)}>
+              <span className="dh-drop__cat" style={{ '--cc': 'var(--gold, #c9a35b)' }}><I.spark style={{ width: 11, height: 11 }} /></span>
+              <span className="dh-drop__main">
+                <span className="dh-drop__name">Ask Centurio AI</span>
+                <span className="dh-drop__sub">“{q.trim()}” — full answer with locations, timers & tips</span>
+              </span>
+              <I.arrow className="dh-drop__go" />
+            </button>
+          </div>
+        )}
       </div>
 
       {recent.length > 0 && (

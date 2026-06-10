@@ -158,7 +158,7 @@ export default function Fishing({ spots = FISHING_SPOTS }) {
     return ['All zones', ...Array.from(new Set(list))]
   }, [exp, spots])
 
-  useEffect(() => { if (!zones.includes(zone)) setZone('All zones') }, [zones]) // eslint-disable-line
+  useEffect(() => { if (!zones.includes(zone)) setZone('All zones') }, [zones])  
 
   const filtered = useMemo(() => {
     const query = q.trim().toLowerCase()

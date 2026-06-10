@@ -26,6 +26,9 @@ jobs:
       - name: Build frontend
         run: npm run build
 
+      - name: Lint (no-undef and friends)
+        run: npm run lint
+
       - name: Unit & data-invariant tests
         run: npm test
 

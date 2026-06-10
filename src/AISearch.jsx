@@ -417,7 +417,7 @@ export default function AISearch() {
     if (!ready || !canUse || didAuto.current) return
     const iq = new URLSearchParams(window.location.search).get('q')
     if (iq && iq.trim()) { didAuto.current = true; setQ(iq.trim()); run(iq.trim()) }
-  }, [ready, canUse]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [ready, canUse])
 
   // Pull the full recipe catalog (dishes + subcrafts) once the page is usable so
   // recipe / ingredient result cards can render their rich detail client-side.

@@ -154,7 +154,7 @@ export default function Botany({ nodes = BOTANY_NODES }) {
     const list = nodes.filter((n) => type === 'All' || n.type === type).map((n) => n.zone)
     return ['All zones', ...Array.from(new Set(list))]
   }, [type, nodes])
-  useEffect(() => { if (!zones.includes(zone)) setZone('All zones') }, [zones]) // eslint-disable-line
+  useEffect(() => { if (!zones.includes(zone)) setZone('All zones') }, [zones])  
 
   const filtered = useMemo(() => {
     const query = q.trim().toLowerCase()

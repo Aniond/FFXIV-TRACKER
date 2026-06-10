@@ -106,7 +106,7 @@ export function useSyncedState(key, fallback, codec = {}) {
     const onHydrated = () => { if (alive) setValue(fromJSON(readState(key, fallback))) }
     window.addEventListener(HYDRATED_EVENT, onHydrated)
     return () => { alive = false; window.removeEventListener(HYDRATED_EVENT, onHydrated) }
-  }, [key]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [key])
 
   const set = (next) => {
     setValue((prev) => {
