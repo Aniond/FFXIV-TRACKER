@@ -940,40 +940,6 @@ export const EXTRA_FISHING_SPOTS = [
     ]
   },
   {
-    "id": "xl-f-325",
-    "name": "Crackling Canyons",
-    "zone": "Heritage Found",
-    "expansion": "Dawntrail",
-    "coords": "X:21.5, Y:32.3",
-    "weather": null,
-    "time": "Any",
-    "baits": [],
-    "fish": [
-      {
-        "name": "Goldentail",
-        "rarity": "common",
-        "note": ""
-      }
-    ]
-  },
-  {
-    "id": "xl-f-322",
-    "name": "Eastbound Zorgor",
-    "zone": "Shaaloani",
-    "expansion": "Dawntrail",
-    "coords": "X:33.1, Y:38.2",
-    "weather": null,
-    "time": "Any",
-    "baits": [],
-    "fish": [
-      {
-        "name": "Cloudsail",
-        "rarity": "common",
-        "note": ""
-      }
-    ]
-  },
-  {
     "id": "xl-f-2",
     "name": "The Vein",
     "zone": "Central Shroud",

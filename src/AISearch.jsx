@@ -3,6 +3,7 @@ import ActivityNav from './ActivityNav'
 import EorzeaClock from './EorzeaClock'
 import { windowState, fmtDur } from './etWindow'
 import { readState, writeState } from './syncedState'
+import { navigate } from './router'
 import { MINING_NODES } from './miningData'
 import { BOTANY_NODES } from './botanyData'
 import { API, getToken, fetchMe, fetchFlags, aiSearch, fetchRecipes } from './api'
@@ -364,7 +365,7 @@ function GatherCard({ r, onCopy }) {
           </span>
         )}
         {link && (
-          <button type="button" className="aicard__link" onClick={() => { window.location.href = href }}
+          <button type="button" className="aicard__link" onClick={() => navigate(href)}
             title={`Open ${link.label}`}>
             {link.label}<I.arrow />
           </button>
@@ -430,7 +431,7 @@ export default function AISearch() {
 
   function showToast(m) { setToast(m); clearTimeout(toastTimer.current); toastTimer.current = setTimeout(() => setToast(null), 1500) }
   function copyCoords(text) { navigator.clipboard?.writeText(String(text).replace(/^~/, '')).catch(() => {}); showToast(`Copied ${text}`) }
-  function navTo(url) { window.location.href = url }
+  function navTo(url) { navigate(url) }
 
   async function run(query) {
     const text = (query ?? q).trim()

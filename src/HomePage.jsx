@@ -6,6 +6,7 @@ import { getFavNodes } from './favNodes'
 import { hydrateFromServer, HYDRATED_EVENT, readState } from './syncedState'
 import { getUniversalIndex, searchIndex } from './universalIndex'
 import { clearToken } from './api'
+import { navigate } from './router'
 import './HomePage.css'
 
 /* ============================================================
@@ -45,7 +46,7 @@ const NODE_INDEX = (() => {
   return m
 })()
 
-const goAI = (q) => { window.location.href = q ? `/ai?q=${encodeURIComponent(q)}` : '/ai' }
+const goAI = (q) => navigate(q ? `/ai?q=${encodeURIComponent(q)}` : '/ai')
 
 const I = {
   spark: (p) => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" {...p}><path d="M12 3v4M12 17v4M3 12h4M17 12h4M5.6 5.6l2.8 2.8M15.6 15.6l2.8 2.8M18.4 5.6l-2.8 2.8M8.4 15.6l-2.8 2.8"/><circle cx="12" cy="12" r="2.4"/></svg>,
@@ -161,7 +162,7 @@ function AIHero({ rev = 0 }) {
   const hits = useMemo(() => (index ? searchIndex(index, q) : []), [index, q])
   useEffect(() => { setSel(-1) }, [q])
 
-  const go = (href) => { window.location.href = href }
+  const go = (href) => navigate(href)
   function onKeyDown(e) {
     const max = hits.length // index `hits.length` = the Ask-AI row
     if (e.key === 'ArrowDown') { e.preventDefault(); setSel((s) => Math.min(s + 1, max)) }

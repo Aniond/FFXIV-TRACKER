@@ -10,6 +10,7 @@ import ActivityNav from './ActivityNav'
 import { STAT_TYPES, STAT_ORDER, SRC, adaptRecipes } from './cookingData'
 import { windowState, fmtDur } from './etWindow'
 import { fetchRecipes } from './api'
+import { navigate } from './router'
 import { useSyncedState, SET_CODEC } from './syncedState'
 import EorzeaClock from './EorzeaClock'
 
@@ -640,7 +641,7 @@ export default function Cooking() {
     const src = SRC[ing.source]
     if (!src.path) return
     // Gathering pages match ?highlight= against the spot/node/item name (see Fishing/Mining/Botany).
-    window.location.href = `${src.path}?highlight=${encodeURIComponent(ing.name)}`
+    navigate(`${src.path}?highlight=${encodeURIComponent(ing.name)}`)
   }
   function copyCoords(text) {
     navigator.clipboard?.writeText(String(text).replace(/^~/, '')).catch(() => {})

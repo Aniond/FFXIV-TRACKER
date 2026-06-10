@@ -10,31 +10,33 @@ import Botany from './Botany'
 import AISearch from './AISearch'
 import Cooking from './Cooking'
 import Timers from './Timers'
+import { useUrl } from './router'
 
-const path = window.location.pathname
-const profileMatch = path.match(/^\/profile\/([^/]+)/)
-const isFishing  = path === '/gathering/fishing'
-const isMining   = path === '/gathering/mining'
-const isBotany   = path === '/gathering/botany'
-const isForaging = path === '/gathering/foraging'
-const isAdmin    = path === '/admin'
-const isAI       = path === '/ai'
-const isHunts    = path === '/hunts'
-const isCooking  = path === '/crafting/cooking'
-const isTimers   = path === '/gathering/timers'
+// Path → page. Pages are written for "fresh page load" semantics (query
+// params read at mount, body-class effects), so Root keys the page by the
+// FULL url — every navigation remounts cleanly, while module-level state
+// (recipe caches, synced-state hydration, search index) survives.
+function pageFor(path) {
+  const profileMatch = path.match(/^\/profile\/([^/]+)/)
+  if (path === '/admin') return <AdminDashboard />
+  if (path === '/ai') return <AISearch />
+  if (path === '/hunts') return <App />
+  if (path === '/crafting/cooking') return <Cooking />
+  if (path === '/gathering/timers') return <Timers />
+  if (path === '/gathering/mining') return <Mining />
+  if (path === '/gathering/fishing') return <Fishing />
+  if (path === '/gathering/botany' || path === '/gathering/foraging') return <Botany />
+  if (profileMatch) return <ProfileRoute slug={profileMatch[1]} />
+  return <Home />
+}
+
+function Root() {
+  const url = useUrl() // re-renders on pushState/popstate; installs link interception
+  return <React.Fragment key={url}>{pageFor(window.location.pathname)}</React.Fragment>
+}
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
-    {isAdmin      ? <AdminDashboard /> :
-     isAI         ? <AISearch /> :
-     isHunts      ? <App /> :
-     isCooking    ? <Cooking /> :
-     isTimers     ? <Timers /> :
-     isMining     ? <Mining /> :
-     isFishing    ? <Fishing /> :
-     isBotany     ? <Botany /> :
-     isForaging   ? <Botany /> :
-     profileMatch ? <ProfileRoute slug={profileMatch[1]} /> :
-     <Home />}
+    <Root />
   </React.StrictMode>
 )
