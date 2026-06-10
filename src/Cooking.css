@@ -350,6 +350,15 @@ body.cooking-page .tbadge--up {
   background:rgba(90,170,114,.1);border-color:rgba(90,170,114,.2);
 }
 body.cooking-page .tbadge--up .tbadge__dot {background:var(--dot-avail);box-shadow:0 0 4px var(--dot-avail);}
+/* 'soon' — window opens within 30 real minutes; amber instead of red */
+body.cooking-page .tbadge--soon {
+  color:var(--dot-soon, #d4a84a);
+  background:rgba(212,168,74,.1);border-color:rgba(212,168,74,.25);
+}
+body.cooking-page .tbadge--soon .tbadge__dot {
+  background:var(--dot-soon, #d4a84a);
+  animation:tbadge-pulse 1.8s ease-in-out infinite;
+}
 body.cooking-page .tbadge--closed {
   color:var(--dot-closed);
   background:rgba(212,96,96,.1);border-color:rgba(212,96,96,.2);

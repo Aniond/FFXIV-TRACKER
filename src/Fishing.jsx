@@ -78,6 +78,7 @@ function SpotCard({ spot, caught, onToggleFish, onToggleAll, onCopy, highlighted
         </span>
       </div>
 
+      {spot.baits.length > 0 && <>
       <div className="field-lbl">Bait</div>
       <div className="baits">
         {spot.baits.map(([name, color]) => {
@@ -96,6 +97,7 @@ function SpotCard({ spot, caught, onToggleFish, onToggleAll, onCopy, highlighted
           )
         })}
       </div>
+      </>}
 
       <div className="field-lbl">Catch ({got}/{total})</div>
       <div className="fish-list">
@@ -142,6 +144,7 @@ export default function Fishing({ spots = FISHING_SPOTS }) {
   const [highlightId, setHighlightId] = useState(null)
   const recipeUsage = useRecipeUsage() // item → dishes cross-links
   const toastTimer = useRef(null)
+  useEffect(() => () => clearTimeout(toastTimer.current), []) // drop pending toast on unmount
 
   // Scope the fishing page's CSS tokens to body so they don't bleed into the hunt board
   useEffect(() => {

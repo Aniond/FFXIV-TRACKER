@@ -23,14 +23,25 @@ export function msUntilEt(targetH, targetM = 0) {
 }
 
 /**
- * Live state for a node's spawn window.
- * @param {{open:[h,m], close:[h,m]}|null} window
+ * Live state for a node's spawn window(s).
+ * @param {{open:[h,m], close:[h,m]}|Array<{open,close}>|null} window
+ *   Unspoiled/Legendary nodes can pop twice an ET day — pass an array and the
+ *   active (or next-opening) window wins.
  * @returns null (always-up) | { state:'up'|'soon'|'closed', pre, ms }
  *   state: up = active now; soon = opens within 30 real min; closed otherwise.
  *   pre:   label ('Closes in' / 'Opens in'); ms: real ms to that boundary.
  */
 export function windowState(window) {
   if (!window) return null
+  if (Array.isArray(window)) {
+    let best = null
+    for (const w of window) {
+      const s = windowState(w)
+      if (s.state === 'up') return s
+      if (!best || s.ms < best.ms) best = s // next window to open
+    }
+    return best
+  }
   const { open, close } = window
   const et = eorzeaMinuteOfDay()
   const o = open[0] * 60 + open[1]

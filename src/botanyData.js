@@ -225,7 +225,7 @@ export const BOTANY_NODES = [
 
   // ---- Yak T'el ----
   { id: 'logging-yak-tel-ancient-stand', name: 'Ancient Stand', gatherType: 'Logging', zone: "Yak T'el", expansion: 'Dawntrail',
-    type: 'Unspoiled', coords: 'X:21, Y:32', level: '100★', time: 'ET 10:00 / 22:00', window: { open: [10, 0], close: [12, 0] },
+    type: 'Unspoiled', coords: 'X:21, Y:32', level: '100★', time: 'ET 10:00 / 22:00', window: [{ open: [10, 0], close: [12, 0] }, { open: [22, 0], close: [0, 0] }],
     items: [
       { name: "Yak T'el Hardwood Log",     tag: 'collectable', icon: 'leaf' },
       { name: 'Spirit Bark',               tag: 'collectable', icon: 'leaf' },
@@ -281,7 +281,7 @@ export const BOTANY_NODES = [
 
   // ---- Heritage Found ----
   { id: 'logging-heritage-found-primordial-grove', name: 'Primordial Grove', gatherType: 'Logging', zone: 'Heritage Found', expansion: 'Dawntrail',
-    type: 'Legendary', coords: 'X:28, Y:19', level: '100★★', time: 'ET 2:00 / 14:00', window: { open: [2, 0], close: [4, 0] },
+    type: 'Legendary', coords: 'X:28, Y:19', level: '100★★', time: 'ET 2:00 / 14:00', window: [{ open: [2, 0], close: [4, 0] }, { open: [14, 0], close: [16, 0] }],
     items: [
       { name: 'Primordial Resin',          tag: 'legendary', icon: 'leaf' },
       { name: 'Allagan Timber',            tag: 'legendary', icon: 'leaf' },
@@ -314,7 +314,7 @@ export const BOTANY_NODES = [
 
   // ---- Living Memory ----
   { id: 'logging-living-memory-dreaming-stand', name: 'Dreaming Stand', gatherType: 'Logging', zone: 'Living Memory', expansion: 'Dawntrail',
-    type: 'Unspoiled', coords: 'X:12, Y:23', level: '100★', time: 'ET 18:00 / 6:00', window: { open: [18, 0], close: [20, 0] },
+    type: 'Unspoiled', coords: 'X:12, Y:23', level: '100★', time: 'ET 18:00 / 6:00', window: [{ open: [18, 0], close: [20, 0] }, { open: [6, 0], close: [8, 0] }],
     items: [
       { name: 'Memory Blossom',            tag: 'collectable', icon: 'herb' },
       { name: 'Resonant Fiber',            tag: 'collectable', icon: 'herb' },

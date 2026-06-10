@@ -57,7 +57,9 @@ function TimerBadge({ ing }) {
     <span className="tbadge tbadge--up"><span className="tbadge__dot"/>Closes in {fmtDur(ws.ms)}</span>
   )
   return (
-    <span className="tbadge tbadge--closed"><span className="tbadge__dot"/>Opens in {fmtDur(ws.ms)}</span>
+    <span className={`tbadge tbadge--${ws.state === 'soon' ? 'soon' : 'closed'}`}>
+      <span className="tbadge__dot"/>Opens in {fmtDur(ws.ms)}
+    </span>
   )
 }
 
@@ -174,7 +176,7 @@ function dotFor(srcKey, ws, ing) {
 
 /* ── Ingredient Chip ─────────────────────────────────────── */
 function IngredientChip({ ing, onNav, onCopy, checked, onCheck, recipeByName }) {
-  const [tip, setTip] = useState(false)
+  const [tip, setTip] = useState(0)
   const [open, setOpen] = useState(false)
   const ws = ing.window ? winState(ing.window) : null
   const canNav = !!ing.nodeId
@@ -199,9 +201,10 @@ function IngredientChip({ ing, onNav, onCopy, checked, onCheck, recipeByName }) 
   const dc = dotFor(ing.source, ws, ing)
 
   // Auto-dismiss the market/vendor tooltip (longer for detailed override notes).
+  // `tip` is a counter so re-tapping restarts the timer instead of no-oping.
   useEffect(() => {
     if (!tip) return
-    const t = setTimeout(() => setTip(false), ing.notes ? 9000 : 1900)
+    const t = setTimeout(() => setTip(0), ing.notes ? 9000 : 1900)
     return () => clearTimeout(t)
   }, [tip, ing.notes])
 
@@ -209,7 +212,7 @@ function IngredientChip({ ing, onNav, onCopy, checked, onCheck, recipeByName }) 
   function handleClick() {
     if (canExpand) { setOpen(o => !o); return }
     if (canNav) onNav(ing)
-    else setTip(true)
+    else setTip((n) => n + 1)
   }
   const interactive = canExpand || canNav
   const chipTitle = canExpand ? (open ? 'Hide recipe' : `Show ${ing.name} recipe`)
@@ -257,7 +260,7 @@ function IngredientChip({ ing, onNav, onCopy, checked, onCheck, recipeByName }) 
           <I.arrow/>
         </button>
       ) : null}
-      {tip && <span className="chip__tip" role="status"><SrcIco/>{tipMsg}</span>}
+      {tip > 0 && <span className="chip__tip" role="status"><SrcIco/>{tipMsg}</span>}
     </div>
     {open && canExpand && (
       <div className="crafttree crafttree--root">
@@ -541,6 +544,7 @@ export default function Cooking() {
   const [toast, setToast]           = useState(null)
   const [, setTick]                 = useState(0)
   const toastTimer = useRef(null)
+  useEffect(() => () => clearTimeout(toastTimer.current), []) // drop pending toast on unmount
 
   useEffect(() => {
     document.body.classList.add('cooking-page')
@@ -550,6 +554,7 @@ export default function Cooking() {
   useEffect(() => {
     fetchRecipes({ job: 'CUL', expansion: 'Dawntrail' })
       .then((rs) => setRecipeList(adaptRecipes(rs)))
+      .catch(() => {}) // network failure — page shows the empty state; HTTP errors already resolve []
       .finally(() => setLoading(false))
   }, [])
 
@@ -568,11 +573,6 @@ export default function Cooking() {
 
   useEffect(() => { localStorage.setItem(LIST_KEY,  JSON.stringify([...listIds]))  }, [listIds])
   useEffect(() => { localStorage.setItem(SAVED_KEY, JSON.stringify([...savedIds])) }, [savedIds])
-  useEffect(() => {
-    const id = setInterval(() => setTick(t => t + 1), 1000)
-    return () => clearInterval(id)
-  }, [])
-
   // Does the dish need this ingredient anywhere in its craft chain? Direct
   // ingredients OR inside a craftable intermediate (so reverse links from the
   // gathering pages work for subcraft-only items like Dark Rye → Dark Rye Flour).
@@ -604,6 +604,15 @@ export default function Cooking() {
       STAT_ORDER.indexOf(a.primaryStat) - STAT_ORDER.indexOf(b.primaryStat))
     return result
   }, [q, statFilter, diffFilter, ingFilter, sortBy, recipeList, recipeByName])
+
+  // re-render each second for countdown badges — only while a timed
+  // ingredient is actually in the filtered view.
+  const anyTimed = useMemo(() => filtered.some(r => r.ingredients.some(i => i.window)), [filtered])
+  useEffect(() => {
+    if (!anyTimed) return
+    const id = setInterval(() => setTick(t => t + 1), 1000)
+    return () => clearInterval(id)
+  }, [anyTimed])
 
   const shoppingList = useMemo(() => {
     const items = {}

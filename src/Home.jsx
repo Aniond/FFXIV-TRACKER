@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import App from './App'
 import HomePage from './HomePage'
-import { getToken, setToken, fetchMe } from './api'
+import { getToken, consumeUrlToken, fetchMe } from './api'
 
 /* ============================================================
    Home — the "/" route. Signed-in users get the personal
@@ -15,12 +15,7 @@ export default function Home() {
 
   useEffect(() => {
     // Catch the Discord OAuth redirect token (non-admins land back on "/").
-    const params = new URLSearchParams(window.location.search)
-    const urlToken = params.get('token')
-    if (urlToken) {
-      setToken(urlToken)
-      window.history.replaceState({}, '', window.location.pathname)
-    }
+    consumeUrlToken()
     if (!getToken()) { setView('board'); return }
     fetchMe()
       .then((me) => { if (me) { setUser(me); setView('home') } else { setView('board') } })

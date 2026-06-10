@@ -101,7 +101,7 @@ export const MINING_NODES = [
       { name: 'Wind Crystal', tag: 'aetherial', icon: 'gem' },
     ] },
   { id: 'quarrying-mare-lamentorum-lunar-quartz', name: 'Mare Lamentorum', gatherType: 'Quarrying', zone: 'Mare Lamentorum', expansion: 'Endwalker',
-    type: 'Ephemeral', coords: 'X:21.2, Y:33.9', level: '90', time: 'ET 0:00–6:00', window: { open: [0,0], close: [6,40] },
+    type: 'Ephemeral', coords: 'X:21.2, Y:33.9', level: '90', time: 'ET 0:00–4:00', window: { open: [0,0], close: [4,0] },
     items: [
       { name: 'Lunar Quartz', tag: 'common', icon: 'gem' },
       { name: 'Earthen Quartz', tag: 'common', icon: 'gem' },
@@ -281,7 +281,7 @@ export const MINING_NODES = [
       { name: 'Earth Crystal', tag: 'aetherial', icon: 'gem' },
     ] },
   { id: 'quarrying-living-memory-brightwind-ore', name: 'Living Memory', gatherType: 'Quarrying', zone: 'Living Memory', expansion: 'Dawntrail',
-    type: 'Ephemeral', coords: 'X:10.3, Y:10.8', level: '100', time: 'ET 0:00–6:00', window: { open: [0,0], close: [6,40] },
+    type: 'Ephemeral', coords: 'X:10.3, Y:10.8', level: '100', time: 'ET 0:00–4:00', window: { open: [0,0], close: [4,0] },
     items: [
       { name: 'Brightwind Ore', tag: 'common', icon: 'ore' },
       { name: 'Lightning Crystal', tag: 'aetherial', icon: 'gem' },

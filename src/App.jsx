@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo, useRef } from 'react'
 import './App.css'
 import { Icon, RankSeal, BillCard, HuntTable, Highlight, rankVars } from './components'
 import { useTweaks, TweaksPanel, TweakSection, TweakRadio, TweakColor } from './TweaksPanel'
-import { API, getToken, setToken, clearToken, fetchMe, loadProgress, saveProgress, resetProgress, savePreferences } from './api'
+import { API, getToken, clearToken, consumeUrlToken, fetchMe, loadProgress, saveProgress, resetProgress, savePreferences } from './api'
 import Dashboard, { DIcon } from './Dashboard'
 import Banner from './Banner'
 import ActivityNav from './ActivityNav'
@@ -75,12 +75,7 @@ function App() {
 
   // Handle OAuth redirect token in URL, then load user profile
   useEffect(() => {
-    const params = new URLSearchParams(window.location.search)
-    const urlToken = params.get('token')
-    if (urlToken) {
-      setToken(urlToken)
-      window.history.replaceState({}, '', window.location.pathname)
-    }
+    consumeUrlToken()
     if (getToken()) {
       fetchMe().then((u) => {
         if (!u) return

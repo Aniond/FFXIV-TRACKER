@@ -12,6 +12,22 @@ function clearToken() {
   localStorage.removeItem('ffxiv-jwt')
 }
 
+// Capture the OAuth redirect token and scrub it from the URL. The backend now
+// delivers it in the fragment (#token=) so it never reaches server logs or
+// Referer headers; the query-string form is still read for backward compat.
+function consumeUrlToken(cleanPath = window.location.pathname) {
+  let token = null
+  try {
+    const hash = new URLSearchParams(window.location.hash.replace(/^#/, ''))
+    token = hash.get('token') || new URLSearchParams(window.location.search).get('token')
+  } catch { /* malformed URL — ignore */ }
+  if (token) {
+    setToken(token)
+    window.history.replaceState({}, '', cleanPath)
+  }
+  return token
+}
+
 async function apiFetch(path, opts = {}) {
   const token = getToken()
   return fetch(`${API}${path}`, {
@@ -209,7 +225,7 @@ async function adminApiUsage() {
 }
 
 export {
-  API, getToken, setToken, clearToken, fetchMe,
+  API, getToken, setToken, clearToken, consumeUrlToken, fetchMe,
   loadProgress, saveProgress, resetProgress, saveStash, savePreferences,
   fetchJobs, saveJobs, saveCharacterLink, refreshJobsFromLodestone,
   fetchFlags, aiSearch, fetchRecipes,

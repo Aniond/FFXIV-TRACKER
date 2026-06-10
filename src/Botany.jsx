@@ -130,10 +130,9 @@ export default function Botany({ nodes = BOTANY_NODES }) {
   const [highlightId, setHighlightId] = useState(null)
   const recipeUsage = useRecipeUsage() // item → dishes cross-links
   const toastTimer = useRef(null)
+  useEffect(() => () => clearTimeout(toastTimer.current), []) // drop pending toast on unmount
 
   useEffect(() => { localStorage.setItem(COLLECT_KEY, JSON.stringify(collected)) }, [collected])
-  // re-render each second so spawn-window countdowns stay live
-  useEffect(() => { const id = setInterval(() => setTick((t) => t + 1), 1000); return () => clearInterval(id) }, [])
 
   // Deep-link from AI search (?highlight=<item or node name>): find the matching
   // node, glow it gold for 3s. Cards are always expanded, so details show at once.
@@ -170,6 +169,15 @@ export default function Botany({ nodes = BOTANY_NODES }) {
       return true
     })
   }, [q, type, zone, nodes])
+
+  // re-render each second so spawn-window countdowns stay live — but only
+  // while a timed node is actually in the filtered view.
+  const anyTimed = useMemo(() => filtered.some((n) => n.window), [filtered])
+  useEffect(() => {
+    if (!anyTimed) return
+    const id = setInterval(() => setTick((t) => t + 1), 1000)
+    return () => clearInterval(id)
+  }, [anyTimed])
 
   const totalItems = nodes.reduce((a, n) => a + n.items.length, 0)
   const gotItems = Object.values(collected).filter(Boolean).length

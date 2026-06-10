@@ -48,14 +48,24 @@ export function buildUsageIndex(recipes) {
   return index
 }
 
+// Module-level promise cache: pages are separate full loads, but within one
+// page lifetime every consumer (and remount) shares a single catalog fetch.
+let indexPromise = null
+function getUsageIndex() {
+  if (!indexPromise) {
+    indexPromise = fetchRecipes({ job: null, expansion: null, includeSubcraft: true })
+      .then((rows) => (rows.length ? buildUsageIndex(rows) : new Map()))
+      .catch(() => { indexPromise = null; return new Map() }) // allow retry next mount
+  }
+  return indexPromise
+}
+
 /** Fetch-once hook; returns an empty Map until the payload arrives. */
 export function useRecipeUsage() {
   const [index, setIndex] = useState(() => new Map())
   useEffect(() => {
     let alive = true
-    fetchRecipes({ job: null, expansion: null, includeSubcraft: true })
-      .then((rows) => { if (alive && rows.length) setIndex(buildUsageIndex(rows)) })
-      .catch(() => {})
+    getUsageIndex().then((idx) => { if (alive && idx.size) setIndex(idx) })
     return () => { alive = false }
   }, [])
   return index

@@ -1,6 +1,7 @@
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
+const crypto = require('crypto');
 const passport = require('passport');
 const DiscordStrategy = require('passport-discord').Strategy;
 const jwt = require('jsonwebtoken');
@@ -10,7 +11,16 @@ const { searchCharacter, fetchCharacter } = require('./lodestone');
 const { refreshUserJobs } = require('./refresh');
 const aiSearchRouter = require('./ai/search');
 
+// Fail fast: without JWT_SECRET every login 500s and every verify silently
+// rejects — a misconfigured deploy should die loudly at boot instead.
+if (!process.env.JWT_SECRET) {
+  throw new Error('JWT_SECRET is not set — refusing to start');
+}
+
 const app = express();
+// Railway terminates TLS at a proxy; trust X-Forwarded-For so req.ip is the
+// real client IP (needed for the per-IP Lodestone rate limit below).
+app.set('trust proxy', 1);
 const PORT = process.env.PORT || 3001;
 
 const ALLOWED_ORIGINS = [
@@ -23,9 +33,10 @@ const ALLOWED_ORIGINS = [
 
 app.use(cors({
   origin: (origin, cb) => {
-    // Allow server-to-server calls (no origin) and known frontend origins
-    if (!origin || ALLOWED_ORIGINS.includes(origin)) return cb(null, true);
-    cb(new Error(`CORS: origin ${origin} not allowed`));
+    // Allow server-to-server calls (no origin) and known frontend origins.
+    // Disallowed origins get cb(null, false) — no CORS headers, browser blocks —
+    // instead of an Error, which would fall through to Express's 500 handler.
+    cb(null, !origin || ALLOWED_ORIGINS.includes(origin));
   },
   credentials: true,
 }));
@@ -53,25 +64,74 @@ passport.use(new DiscordStrategy({
   }
 }));
 
-function authenticate(req, res, next) {
+// Ban checks hit the DB; cache verdicts briefly so hot users cost one query/min.
+const BAN_CACHE = new Map(); // user id -> { banned, at }
+const BAN_CACHE_MS = 60_000;
+async function isBanned(userId) {
+  const hit = BAN_CACHE.get(userId);
+  if (hit && Date.now() - hit.at < BAN_CACHE_MS) return hit.banned;
+  const r = await pool.query('SELECT banned FROM users WHERE id = $1', [userId]);
+  const banned = r.rows[0]?.banned === true;
+  BAN_CACHE.set(userId, { banned, at: Date.now() });
+  return banned;
+}
+
+async function authenticate(req, res, next) {
   const authHeader = req.headers.authorization;
   if (!authHeader?.startsWith('Bearer ')) return res.status(401).json({ error: 'Unauthorized' });
   const token = authHeader.split(' ')[1];
   try {
-    req.user = jwt.verify(token, process.env.JWT_SECRET);
-    next();
+    req.user = jwt.verify(token, process.env.JWT_SECRET, { algorithms: ['HS256'] });
   } catch {
-    res.status(401).json({ error: 'Invalid token' });
+    return res.status(401).json({ error: 'Invalid token' });
   }
+  // Enforce bans everywhere, not just the AI endpoint — a 7-day token must not
+  // outlive the ban. DB failure here fails open (auth already proved identity).
+  try {
+    if (await isBanned(req.user.id)) return res.status(403).json({ error: 'Account banned' });
+  } catch (err) {
+    console.error('[auth] ban check failed:', err.message);
+  }
+  next();
 }
 
 function adminAuth(req, res, next) {
   const authHeader = req.headers.authorization;
   if (!authHeader?.startsWith('Bearer ')) return res.status(401).json({ error: 'Unauthorized' });
   const token = authHeader.split(' ')[1];
-  if (token !== process.env.API_SECRET) return res.status(401).json({ error: 'Unauthorized' });
+  // Constant-time compare — `!==` leaks how many leading bytes matched.
+  const a = Buffer.from(token);
+  const b = Buffer.from(process.env.API_SECRET || '');
+  if (a.length !== b.length || !crypto.timingSafeEqual(a, b)) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
   next();
 }
+
+async function isFlagEnabled(key) {
+  const r = await pool.query('SELECT enabled FROM feature_flags WHERE key = $1', [key]);
+  return r.rows[0]?.enabled === true;
+}
+
+// Minimal fixed-window per-key rate limiter (in-memory, per instance) for the
+// unauthenticated Lodestone proxy routes — they trigger real scrapes of
+// Square Enix's site, so unbounded anonymous use risks an IP ban + table bloat.
+function rateLimit({ windowMs, max }) {
+  const hits = new Map(); // key -> { n, resetAt }
+  setInterval(() => {
+    const now = Date.now();
+    for (const [k, v] of hits) if (v.resetAt <= now) hits.delete(k);
+  }, windowMs).unref();
+  return (req, res, next) => {
+    const key = req.ip;
+    const now = Date.now();
+    let h = hits.get(key);
+    if (!h || h.resetAt <= now) { h = { n: 0, resetAt: now + windowMs }; hits.set(key, h); }
+    if (++h.n > max) return res.status(429).json({ error: 'Too many requests — slow down' });
+    next();
+  };
+}
+const lodestoneLimiter = rateLimit({ windowMs: 60_000, max: 10 });
 
 // Health
 app.get('/health', (req, res) => res.json({ status: 'ok' }));
@@ -112,18 +172,28 @@ app.get('/api/profile/:slug', async (req, res) => {
   }
 });
 
-// Manual Lodestone refresh — pulls fresh data for the logged-in user right now
+// Manual Lodestone refresh — pulls fresh data for the logged-in user right now.
+// Per-user cooldown: each call deliberately busts the cache and live-scrapes
+// the Lodestone, so don't let one user hammer it.
+const REFRESH_COOLDOWN_MS = 5 * 60_000;
+const lastRefresh = new Map(); // user id -> timestamp
 app.post('/api/user/refresh-jobs', authenticate, async (req, res) => {
+  const last = lastRefresh.get(req.user.id) || 0;
+  if (Date.now() - last < REFRESH_COOLDOWN_MS) {
+    const wait = Math.ceil((REFRESH_COOLDOWN_MS - (Date.now() - last)) / 1000);
+    return res.status(429).json({ error: `Recently refreshed — try again in ${wait}s` });
+  }
   try {
     const u = await pool.query('SELECT lodestone_id FROM users WHERE id = $1', [req.user.id]);
     if (!u.rows[0]?.lodestone_id) {
       return res.status(400).json({ error: 'No Lodestone character linked — use Link Character first' });
     }
+    lastRefresh.set(req.user.id, Date.now());
     const result = await refreshUserJobs(pool, req.user.id, u.rows[0].lodestone_id);
     res.json({ ok: true, ...result });
   } catch (err) {
     console.error('[refresh-jobs manual]', err.message);
-    res.status(503).json({ error: err.message });
+    res.status(503).json({ error: 'Lodestone refresh failed — try again later' });
   }
 });
 
@@ -131,6 +201,10 @@ app.post('/api/user/refresh-jobs', authenticate, async (req, res) => {
 cron.schedule('0 4 * * *', async () => {
   console.log('[cron] Lodestone daily refresh started');
   try {
+    // Purge expired cache rows — nothing else ever deletes them, and every
+    // unique anonymous search inserts one.
+    const purged = await pool.query('DELETE FROM lodestone_cache WHERE expires_at < NOW()');
+    console.log(`[cron] purged ${purged.rowCount} expired lodestone_cache rows`);
     const users = await pool.query(
       'SELECT id, username, lodestone_id FROM users WHERE lodestone_id IS NOT NULL'
     );
@@ -150,8 +224,8 @@ cron.schedule('0 4 * * *', async () => {
   }
 });
 
-// Lodestone character search — unauthenticated, cached 24 h
-app.post('/api/character/search', async (req, res) => {
+// Lodestone character search — unauthenticated, cached 24 h, rate-limited per IP
+app.post('/api/character/search', lodestoneLimiter, async (req, res) => {
   const name   = (req.body.name   || '').trim();
   const server = (req.body.server || '').trim();
   if (!name) return res.status(400).json({ error: 'name is required' });
@@ -175,12 +249,12 @@ app.post('/api/character/search', async (req, res) => {
     res.json(data);
   } catch (err) {
     console.error('[lodestone search]', err.message);
-    res.status(503).json({ error: 'Lodestone unreachable', detail: err.message });
+    res.status(503).json({ error: 'Lodestone unreachable' });
   }
 });
 
-// Lodestone character detail — unauthenticated, cached 1 h
-app.get('/api/character/:id', async (req, res) => {
+// Lodestone character detail — unauthenticated, cached 1 h, rate-limited per IP
+app.get('/api/character/:id', lodestoneLimiter, async (req, res) => {
   const { id } = req.params;
   if (!/^\d+$/.test(id)) return res.status(400).json({ error: 'Invalid character ID' });
 
@@ -204,7 +278,7 @@ app.get('/api/character/:id', async (req, res) => {
     res.json(data);
   } catch (err) {
     console.error('[lodestone char]', err.message);
-    res.status(503).json({ error: 'Lodestone unreachable', detail: err.message });
+    res.status(503).json({ error: 'Lodestone unreachable' });
   }
 });
 
@@ -267,7 +341,9 @@ app.get('/auth/discord/callback',
       { expiresIn: '7d' }
     );
     const dest = req.user.discord_id === process.env.ADMIN_DISCORD_ID ? '/admin' : '/';
-    res.redirect(`${process.env.FRONTEND_URL}${dest}?token=${token}`);
+    // Fragment, not query string: #token= never leaves the browser (no server
+    // logs, no Referer leak, no proxy/CDN capture of a 7-day bearer token).
+    res.redirect(`${process.env.FRONTEND_URL}${dest}#token=${token}`);
   }
 );
 
@@ -345,7 +421,7 @@ app.get('/api/recipes', async (req, res) => {
   if (req.query.expansion) { params.push(String(req.query.expansion)); where.push(`expansion = $${params.length}`); }
   // Subcrafts (intermediate crafted ingredients) are excluded by default — the
   // cooking page lists food dishes only. Pass ?include_subcraft=1 to fetch them.
-  if (!('include_subcraft' in req.query)) where.push('is_subcraft = false');
+  if (!['1', 'true'].includes(String(req.query.include_subcraft))) where.push('is_subcraft = false');
   const clause = where.length ? `WHERE ${where.join(' AND ')}` : '';
   try {
     const result = await pool.query(
@@ -382,6 +458,9 @@ app.get('/api/recipes', async (req, res) => {
         };
       }),
     }));
+    // Recipes change rarely and pages are separate full loads — let the
+    // browser reuse the catalog across navigations instead of refetching.
+    res.set('Cache-Control', 'public, max-age=300');
     res.json(rows);
   } catch (err) {
     console.error('[recipes]', err.message);
@@ -445,24 +524,37 @@ app.delete('/api/hunts/:id', adminAuth, async (req, res) => {
 app.post('/api/progress', authenticate, async (req, res) => {
   const { hunt_id, status } = req.body;
   if (!hunt_id || !status) return res.status(400).json({ error: 'hunt_id and status are required' });
+  const huntId = Number(hunt_id);
+  if (!Number.isInteger(huntId)) return res.status(400).json({ error: 'hunt_id must be an integer' });
+  if (!['todo', 'done'].includes(status)) return res.status(400).json({ error: 'invalid status' });
   try {
-    // Check previous status so we only increment lifetime_cleared on a new done
-    const prev = await pool.query(
-      'SELECT status FROM progress WHERE user_id = $1 AND hunt_id = $2',
-      [req.user.id, hunt_id]
-    );
-    const wasAlreadyDone = prev.rows[0]?.status === 'done';
-
+    // Single atomic statement: only inserts for real hunts (the SELECT joins
+    // hunts, so fabricated ids do nothing), and only updates when the status
+    // actually changes (the DO UPDATE WHERE re-evaluates under the row lock,
+    // so two concurrent "done" posts can't both report a transition).
     const result = await pool.query(
       `INSERT INTO progress (user_id, hunt_id, status)
-       VALUES ($1, $2, $3)
+       SELECT $1, h.id, $3 FROM hunts h WHERE h.id = $2
        ON CONFLICT (user_id, hunt_id) DO UPDATE SET status = $3, updated_at = NOW()
+         WHERE progress.status IS DISTINCT FROM $3
        RETURNING *`,
-      [req.user.id, hunt_id, status]
+      [req.user.id, huntId, status]
     );
 
-    // Lifetime counter only goes up — increment when newly marking done
-    if (status === 'done' && !wasAlreadyDone) {
+    if (!result.rows.length) {
+      // Either the hunt doesn't exist, or the status didn't change (no-op).
+      const exists = await pool.query('SELECT 1 FROM hunts WHERE id = $1', [huntId]);
+      if (!exists.rows.length) return res.status(400).json({ error: 'unknown hunt_id' });
+      const current = await pool.query(
+        'SELECT * FROM progress WHERE user_id = $1 AND hunt_id = $2',
+        [req.user.id, huntId]
+      );
+      return res.json(current.rows[0] || { user_id: req.user.id, hunt_id: huntId, status });
+    }
+
+    // A row came back ⇒ a real transition happened; count fresh "done"s.
+    // (Resetting progress and redoing still counts — that is a real clear.)
+    if (status === 'done') {
       await pool.query(
         'UPDATE users SET lifetime_cleared = lifetime_cleared + 1 WHERE id = $1',
         [req.user.id]
@@ -496,11 +588,14 @@ app.delete('/api/progress', authenticate, async (req, res) => {
   }
 });
 
-// Community hunt submissions
+// Community hunt submissions — gated by the ENABLE_SUBMISSIONS feature flag
 app.post('/api/submit-hunt', authenticate, async (req, res) => {
   const { hunt_data } = req.body;
   if (!hunt_data) return res.status(400).json({ error: 'hunt_data is required' });
   try {
+    if (!(await isFlagEnabled('ENABLE_SUBMISSIONS'))) {
+      return res.status(403).json({ error: 'Submissions are not open right now' });
+    }
     const result = await pool.query(
       `INSERT INTO submissions (user_id, hunt_data) VALUES ($1, $2) RETURNING *`,
       [req.user.id, JSON.stringify(hunt_data)]
@@ -598,6 +693,7 @@ app.post('/api/admin/users/:id/ban', adminJWT, async (req, res) => {
       [req.params.id, !!banned]
     );
     if (!result.rows[0]) return res.status(404).json({ error: 'User not found' });
+    BAN_CACHE.delete(result.rows[0].id); // take effect immediately, not after the 60s cache
     res.json(result.rows[0]);
   } catch (err) {
     console.error('[admin/ban]', err.message);
