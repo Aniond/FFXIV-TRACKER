@@ -1,5 +1,5 @@
 require('dotenv').config();
-const pool = require('./db');
+const pool = require('../db');
 
 /**
  * migrate-state.js — per-user synced UI state (account sync).
@@ -9,7 +9,7 @@ const pool = require('./db');
  * favorite nodes, search history) — see routes/users.js STATE_KEYS.
  *
  * Run (link the Postgres service — see migrate-overrides.js):
- *   railway run sh -c 'DATABASE_URL=$DATABASE_PUBLIC_URL NODE_ENV=production node migrate-state.js'
+ *   railway run sh -c 'DATABASE_URL=$DATABASE_PUBLIC_URL NODE_ENV=production node scripts/migrate-state.js'
  */
 async function migrate() {
   await pool.query(`

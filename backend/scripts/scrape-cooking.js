@@ -28,7 +28,7 @@
  * MARKET_BOARD) by cross-referencing Teamcraft nodes + our gather snapshot.
  *
  * Output: backend/cooking-recipes.json (seed consumed by migrate-cooking.js).
- * Run:  node backend/scrape-cooking.js
+ * Run:  node backend/scripts/scrape-cooking.js
  */
 const fs = require('fs');
 const path = require('path');
@@ -61,7 +61,7 @@ const coordStr = (x, y) => `X:${Number(x).toFixed(1)}, Y:${Number(y).toFixed(1)}
 // Our curated gathering snapshot (backend/ai/gameData.json) — name -> full
 // location. Used as a fallback for items Teamcraft's open data misses.
 function buildGameLocations() {
-  const game = JSON.parse(fs.readFileSync(path.join(__dirname, 'ai', 'gameData.json'), 'utf8'));
+  const game = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'ai', 'gameData.json'), 'utf8'));
   const m = new Map();
   const addNodes = (nodes, source) => (nodes || []).forEach((n) => (n.items || []).forEach((it) => {
     const k = norm(it);
@@ -345,7 +345,7 @@ async function main() {
   console.log(`Total rows:    ${out.length}`);
   console.log(`Broken subcraft chains after resolution: ${broken.size}${broken.size ? ' -> ' + [...broken].join(', ') : ' ✓'}`);
 
-  const dest = path.join(__dirname, 'cooking-recipes.json');
+  const dest = path.join(__dirname, '..', 'cooking-recipes.json');
   fs.writeFileSync(dest, JSON.stringify(out), 'utf8');
   console.log(`\nWrote ${dest} (${out.length} rows)`);
 }

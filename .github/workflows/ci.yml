@@ -34,9 +34,9 @@ jobs:
 
       - name: Backend syntax checks
         run: |
-          for f in backend/*.js backend/ai/*.js; do
+          for f in backend/*.js backend/ai/*.js backend/routes/*.js backend/scripts/*.js; do
             node --check "$f"
           done
 
       - name: Cross-link integrity (every ingredient resolves)
-        run: node backend/check-crosslinks.mjs
+        run: node backend/scripts/check-crosslinks.mjs

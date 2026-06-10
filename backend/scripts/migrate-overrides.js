@@ -1,5 +1,5 @@
 require('dotenv').config();
-const pool = require('./db');
+const pool = require('../db');
 
 /**
  * migrate-overrides.js — authoritative seed for ingredient_overrides.
@@ -15,7 +15,7 @@ const pool = require('./db');
  * service, not FFXIV-TRACKER — DATABASE_PUBLIC_URL only exists on Postgres
  * (the app service's DATABASE_URL is the internal host, unreachable locally):
  *   railway link --project ffxivlog-backend --environment production --service Postgres
- *   railway run sh -c 'DATABASE_URL=$DATABASE_PUBLIC_URL NODE_ENV=production node migrate-overrides.js'
+ *   railway run sh -c 'DATABASE_URL=$DATABASE_PUBLIC_URL NODE_ENV=production node scripts/migrate-overrides.js'
  *
  * source ∈ 'Fishing' | 'Mining' | 'Botany' | 'Market Board' | 'Scrip Exchange' | 'Gemstone'
  *

@@ -1,5 +1,5 @@
 require('dotenv').config();
-const pool = require('./db');
+const pool = require('../db');
 const cheerio = require('cheerio');
 
 /**
@@ -14,7 +14,7 @@ const cheerio = require('cheerio');
  * Idempotent: upserts by (name) — re-running updates instead of duplicating.
  *
  * Run against prod (link the Postgres service — see migrate-overrides.js):
- *   railway run sh -c 'DATABASE_URL=$DATABASE_PUBLIC_URL NODE_ENV=production node seed-hunts-endwalker.js'
+ *   railway run sh -c 'DATABASE_URL=$DATABASE_PUBLIC_URL NODE_ENV=production node scripts/seed-hunts-endwalker.js'
  */
 
 const ZONES = ['Labyrinthos', 'Thavnair', 'Garlemald', 'Mare_Lamentorum', 'Elpis', 'Ultima_Thule'];

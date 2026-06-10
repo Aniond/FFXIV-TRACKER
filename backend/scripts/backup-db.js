@@ -1,7 +1,7 @@
 require('dotenv').config();
 const fs = require('fs');
 const path = require('path');
-const pool = require('./db');
+const pool = require('../db');
 
 /**
  * backup-db.js — dump every table to JSON under backend/backups/<timestamp>/.
@@ -11,7 +11,7 @@ const pool = require('./db');
  * risky migrations and on a periodic basis:
  *
  *   railway link --project ffxivlog-backend --environment production --service Postgres
- *   railway run sh -c 'DATABASE_URL=$DATABASE_PUBLIC_URL NODE_ENV=production node backup-db.js'
+ *   railway run sh -c 'DATABASE_URL=$DATABASE_PUBLIC_URL NODE_ENV=production node scripts/backup-db.js'
  *
  * Restore a table by replaying the JSON with an INSERT loop (column names are
  * preserved in each row object). backups/ is gitignored — copy dumps somewhere
@@ -22,7 +22,7 @@ async function backup() {
     `SELECT tablename FROM pg_tables WHERE schemaname = 'public' ORDER BY tablename`
   );
   const stamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
-  const dir = path.join(__dirname, 'backups', stamp);
+  const dir = path.join(__dirname, '..', 'backups', stamp);
   fs.mkdirSync(dir, { recursive: true });
 
   let total = 0;

@@ -1,12 +1,12 @@
 require('dotenv').config();
-const pool = require('./db');
+const pool = require('../db');
 
 // AI search migration — adds the short-lived query cache used by /api/ai/search.
 // Logging still goes to the existing `ai_queries` table (see migrate-admin.js),
 // which the /admin dashboard reads. This migration only adds the cache table.
 //
 // Run against prod from a local machine (see reference-railway-ops):
-//   railway run sh -c 'DATABASE_URL=$DATABASE_PUBLIC_URL node migrate-ai.js'
+//   railway run sh -c 'DATABASE_URL=$DATABASE_PUBLIC_URL node scripts/migrate-ai.js'
 async function migrate() {
   console.log('Running AI migration...');
 

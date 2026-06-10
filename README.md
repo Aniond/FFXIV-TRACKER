@@ -35,7 +35,7 @@ To add or update hunts, use the admin endpoints (requires `API_SECRET` bearer to
 - `PATCH /api/hunts/:id` — update a hunt
 - `DELETE /api/hunts/:id` — remove a hunt
 
-To reseed the database from scratch: `node backend/seed-hunts.js`
+To reseed the database from scratch: `node backend/scripts/seed-hunts.js`
 
 ## Database
 

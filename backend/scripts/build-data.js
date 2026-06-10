@@ -4,8 +4,8 @@
  * Run once after each FFXIV patch, commit the output files.
  * No wiki dependency. Source: xivapi.com (game data files).
  *
- * Dry-run:  node backend/build-data.js
- * Write:    node backend/build-data.js --write
+ * Dry-run:  node backend/scripts/build-data.js
+ * Write:    node backend/scripts/build-data.js --write
  *
  * Expected runtime: ~3-5 minutes (rate-limited API calls)
  */

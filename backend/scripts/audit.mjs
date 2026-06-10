@@ -19,9 +19,9 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import pg from 'pg';
 
-import { FISHING_SPOTS } from '../src/fishingData.js';
-import { MINING_NODES } from '../src/miningData.js';
-import { BOTANY_NODES } from '../src/botanyData.js';
+import { FISHING_SPOTS } from '../../src/fishingData.js';
+import { MINING_NODES } from '../../src/miningData.js';
+import { BOTANY_NODES } from '../../src/botanyData.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -40,7 +40,7 @@ const norm = (s) => String(s || '').replace(/\s*\(.*?\)\s*$/, '').trim().toLower
 // ----- build gather name-sets for cross-reference -------------------------
 // Combine the frontend data files AND the curated gameData snapshot so the
 // cross-reference has the widest possible coverage of known gatherables.
-const gameData = JSON.parse(fs.readFileSync(path.join(__dirname, 'ai', 'gameData.json'), 'utf8'));
+const gameData = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'ai', 'gameData.json'), 'utf8'));
 
 const fishNames = new Set();
 const miningNames = new Set();

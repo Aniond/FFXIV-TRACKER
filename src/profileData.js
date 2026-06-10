@@ -96,13 +96,15 @@ export function buildProfile({ user, hunts, progress, xivapi, jobs = [] }) {
     }
   }
 
-  // recent clears (latest 5 by updated_at)
+  // recent clears (latest 5 by updated_at) — skip rows whose hunt no longer
+  // exists (orphans from old reseeds used to render as 'Unknown').
   const recent = [...doneRows]
+    .filter((r) => huntById[r.hunt_id])
     .sort((a, b) => new Date(b.updated_at) - new Date(a.updated_at))
     .slice(0, 5)
     .map((r) => {
-      const h = huntById[r.hunt_id] || {}
-      return { name: h.name || 'Unknown', rank: h.rank || 'B', zone: h.zone || '—', time: relTime(r.updated_at) }
+      const h = huntById[r.hunt_id]
+      return { name: h.name, rank: h.rank || 'B', zone: h.zone || '—', time: relTime(r.updated_at) }
     })
 
   // job levels: manual entries override XIVAPI, both fall back to 0

@@ -1,8 +1,8 @@
 /**
  * Mining node scraper — ffxiv.consolegameswiki.com
  *
- * Dry-run:   node backend/scrape-mining.js
- * Write:     node backend/scrape-mining.js --write
+ * Dry-run:   node backend/scripts/scrape-mining.js
+ * Write:     node backend/scripts/scrape-mining.js --write
  *
  * Sources:
  *   Miner_Node_Locations  → Regular nodes (levels 80+)

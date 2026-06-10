@@ -2,10 +2,10 @@
  * Fishing spot scraper — ffxiv.consolegameswiki.com
  *
  * Dry-run (prints JS to stdout):
- *   node backend/scrape-fishing.js
+ *   node backend/scripts/scrape-fishing.js
  *
  * Write fishingData.js directly:
- *   node backend/scrape-fishing.js --write
+ *   node backend/scripts/scrape-fishing.js --write
  */
 
 const cheerio = require('cheerio');

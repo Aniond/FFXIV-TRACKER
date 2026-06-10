@@ -1,14 +1,14 @@
 require('dotenv').config();
 const fs = require('fs');
 const path = require('path');
-const pool = require('./db');
+const pool = require('../db');
 
 // Cooking migration — creates the recipes table and seeds it from
 // cooking-recipes.json (produced by scrape-cooking.js). Re-runnable: it
 // clears and reseeds the CUL/Dawntrail slice each time.
 //
 // Run against prod from a local machine (see reference-railway-ops):
-//   railway run sh -c 'DATABASE_URL=$DATABASE_PUBLIC_URL node migrate-cooking.js'
+//   railway run sh -c 'DATABASE_URL=$DATABASE_PUBLIC_URL node scripts/migrate-cooking.js'
 async function migrate() {
   console.log('Running cooking migration…');
 
@@ -56,7 +56,7 @@ async function migrate() {
   // only guarantees the table exists so /api/recipes never errors.
   console.log('  ingredient_overrides table ready (rows seeded by migrate-overrides.js)');
 
-  const seed = JSON.parse(fs.readFileSync(path.join(__dirname, 'cooking-recipes.json'), 'utf8'));
+  const seed = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'cooking-recipes.json'), 'utf8'));
 
   // The recipes table is fully managed by this seed (food dishes + subcrafts,
   // multiple jobs/expansions), so clear it entirely for a clean reseed.

@@ -1,5 +1,5 @@
 require('dotenv').config();
-const pool = require('./db');
+const pool = require('../db');
 
 /**
  * migrate-audit.js — indexes flagged by the 2026-06 code audit.
@@ -11,7 +11,7 @@ const pool = require('./db');
  * - lodestone_cache(expires_at): the daily cron purge deletes by expiry.
  *
  * Run (link the Postgres service, not the app — see migrate-overrides.js):
- *   railway run sh -c 'DATABASE_URL=$DATABASE_PUBLIC_URL NODE_ENV=production node migrate-audit.js'
+ *   railway run sh -c 'DATABASE_URL=$DATABASE_PUBLIC_URL NODE_ENV=production node scripts/migrate-audit.js'
  */
 async function migrate() {
   const stmts = [

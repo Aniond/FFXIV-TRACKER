@@ -2,10 +2,10 @@
  * Dawntrail hunt scraper — ffxiv.consolegameswiki.com
  *
  * Dry-run (inspect only):
- *   node backend/scrape-dawntrail.js
+ *   node backend/scripts/scrape-dawntrail.js
  *
  * Write to Railway DB:
- *   railway run node backend/scrape-dawntrail.js --import
+ *   railway run node backend/scripts/scrape-dawntrail.js --import
  */
 
 require('dotenv').config();
