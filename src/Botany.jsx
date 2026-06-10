@@ -120,6 +120,13 @@ function NodeCard({ node, collected, onToggleItem, onToggleAll, onCopy, highligh
 }
 
 export default function Botany({ nodes = BOTANY_NODES }) {
+  // Scope the shared ledger structure + botany palette to body (the tokens
+  // used to sit on :root and leaked into every page in the bundle).
+  useEffect(() => {
+    document.body.classList.add('ledger-page', 'botany-page')
+    return () => document.body.classList.remove('ledger-page', 'botany-page')
+  }, [])
+
   // Account-synced (localStorage for guests, Postgres for logged-in users).
   const [collected, setCollected] = useSyncedState(COLLECT_KEY, {})
   const [q, setQ] = useState('')

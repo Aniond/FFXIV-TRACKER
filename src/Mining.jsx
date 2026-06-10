@@ -131,10 +131,10 @@ export default function Mining({ nodes = MINING_NODES }) {
   const toastTimer = useRef(null)
   useEffect(() => () => clearTimeout(toastTimer.current), []) // drop pending toast on unmount
 
-  // Scope mining CSS tokens to body
+  // Scope the shared ledger structure + mining palette to body
   useEffect(() => {
-    document.body.classList.add('mining-page')
-    return () => document.body.classList.remove('mining-page')
+    document.body.classList.add('ledger-page', 'mining-page')
+    return () => document.body.classList.remove('ledger-page', 'mining-page')
   }, [])
 
   // Deep-link from AI search (?highlight=<item or node name>): find the matching

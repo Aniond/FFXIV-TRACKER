@@ -1,0 +1,207 @@
+/* ============================================================
+   ledger.css — shared "gathering ledger" structure.
+
+   One copy of the card/list/clock/controls skeleton used by the
+   Mining and Botany logs (previously two near-identical files
+   with baked-in tints that silently collided in the SPA bundle —
+   both emitted global `.node` rules and last-import won).
+
+   Every page-tinted value is a variable. A page opts in by adding
+   `ledger-page` + its own class to <body> and defining, in its own
+   CSS, the palette contract:
+
+     --board/--board-2/--bill/--bill-raised/--bill-edge  surfaces
+     --gem/--gem-bright/--gem-dim/--gem-faint            accent
+     --accent-rgb        accent as "r,g,b" for alpha tints
+     --parchment/--ink/--ink-dim/--ink-faint             text scale
+     --day/--day-bg/--day-edge/--night/--night-bg        time chips
+     --crest-core        crest/clock radial core color
+     --input-2           search input gradient end
+     --btn-core-a/--btn-core-b                           collect-btn core
+     --seal-ink          text on filled accent (darkest page ink)
+     --win-up/--win-soon                                 window states
+     --xlink             cross-link recipe chip color
+     --fd/--fb           fonts
+   ============================================================ */
+
+body.ledger-page { margin: 0; padding: 0; min-height: 100vh; color: var(--ink); font-family: var(--fb); -webkit-font-smoothing: antialiased; background-attachment: fixed; }
+body.ledger-page * { box-sizing: border-box; }
+
+body.ledger-page .ledger {
+  width: 100%; max-width: 460px; margin: 0 auto; min-height: 100vh; position: relative;
+  background: linear-gradient(180deg, rgba(0,0,0,.22), transparent 200px), var(--board-2);
+  border-left: 1px solid rgba(var(--accent-rgb), .10); border-right: 1px solid rgba(var(--accent-rgb), .10);
+  box-shadow: 0 0 60px rgba(0,0,0,.65); padding-bottom: 60px;
+}
+@media (max-width: 480px) { body.ledger-page .ledger { border-left: 0; border-right: 0; } }
+
+/* ---------- Brand header ---------- */
+body.ledger-page .brand { display: flex; align-items: center; gap: 12px; padding: 16px 16px 12px; }
+body.ledger-page .brand__crest {
+  width: 42px; height: 42px; flex: 0 0 42px; border-radius: 50%; display: grid; place-items: center; position: relative;
+  background: radial-gradient(circle at 50% 38%, var(--crest-core), var(--board-2) 72%);
+  border: 1.5px solid var(--gem-dim); box-shadow: inset 0 0 10px rgba(0,0,0,.7), 0 0 0 3px rgba(var(--accent-rgb), .06);
+}
+body.ledger-page .brand__crest::after { content:""; position:absolute; inset:5px; border-radius:50%; border:1px solid rgba(var(--accent-rgb), .35); }
+body.ledger-page .brand__crest svg { width: 22px; height: 22px; position: relative; color: var(--gem-bright); }
+body.ledger-page .brand__title { font:800 18px var(--fd); letter-spacing:.14em; color: var(--parchment); margin: 0; line-height: 1; }
+body.ledger-page .brand__sub { font:700 10px var(--fb); letter-spacing:.24em; text-transform:uppercase; color: var(--gem); margin-top: 5px; }
+
+/* ---------- Eorzea clock ---------- */
+body.ledger-page .eclock {
+  display: flex; align-items: center; gap: 12px; margin: 0 16px 12px;
+  background: linear-gradient(180deg, var(--bill-raised), var(--bill));
+  border: 1px solid var(--bill-edge); border-radius: 13px; padding: 12px 15px; position: relative; overflow: hidden;
+}
+body.ledger-page .eclock::before { content:""; position:absolute; left:0; right:0; top:0; height:2px; background: linear-gradient(90deg, transparent, var(--gem-dim), transparent); opacity:.7; }
+body.ledger-page .eclock__dial { position: relative; width: 44px; height: 44px; flex: 0 0 44px; }
+body.ledger-page .eclock__face { position: absolute; inset: 0; border-radius: 50%; background: radial-gradient(circle at 50% 35%, var(--crest-core), var(--board) 75%); border: 1.5px solid var(--gem-dim); }
+body.ledger-page .eclock__hand { position: absolute; left: 50%; top: 50%; transform-origin: bottom center; background: var(--gem-bright); border-radius: 2px; }
+body.ledger-page .eclock__hand--h { width: 2.5px; height: 12px; margin-left: -1.25px; margin-top: -12px; }
+body.ledger-page .eclock__hand--m { width: 2px; height: 16px; margin-left: -1px; margin-top: -16px; opacity: .7; }
+body.ledger-page .eclock__pivot { position: absolute; left: 50%; top: 50%; width: 5px; height: 5px; background: var(--gem-bright); border-radius: 50%; transform: translate(-50%,-50%); }
+body.ledger-page .eclock__body { flex: 1; min-width: 0; }
+body.ledger-page .eclock__lbl { font:700 9px var(--fb); letter-spacing:.16em; text-transform:uppercase; color: var(--ink-dim); }
+body.ledger-page .eclock__time { font:800 26px var(--fd); color: var(--parchment); line-height: 1; margin-top: 3px; font-variant-numeric: tabular-nums; letter-spacing:.02em; }
+body.ledger-page .eclock__period { display: inline-flex; align-items: center; gap: 6px; margin-top: 5px; font:600 11px var(--fb); }
+body.ledger-page .eclock__period svg { width: 13px; height: 13px; }
+body.ledger-page .eclock__period.is-day { color: var(--day); }
+body.ledger-page .eclock__period.is-night { color: var(--night); }
+
+/* ---------- Controls ---------- */
+body.ledger-page .controls { position: sticky; top: 0; z-index: 30; padding: 6px 16px 12px; background: linear-gradient(180deg, var(--board-2) 80%, transparent); backdrop-filter: blur(6px); }
+body.ledger-page .search { position: relative; display: flex; align-items: center; margin-bottom: 10px; }
+body.ledger-page .search__icon { position: absolute; left: 13px; width: 17px; height: 17px; color: var(--gem); pointer-events: none; }
+body.ledger-page .search input {
+  width: 100%; font:500 15px var(--fb); color: var(--parchment);
+  background: linear-gradient(180deg, var(--board), var(--input-2)); border: 1px solid var(--bill-edge);
+  border-radius: 11px; padding: 12px 14px 12px 40px; outline: none; transition: border-color .15s, box-shadow .15s;
+}
+body.ledger-page .search input::placeholder { color: var(--ink-faint); }
+body.ledger-page .search input:focus { border-color: var(--gem-dim); box-shadow: 0 0 0 3px var(--gem-faint); }
+
+/* node-type filter chips (page CSS styles the pip/gem marker) */
+body.ledger-page .types { display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none; padding-bottom: 2px; }
+body.ledger-page .types::-webkit-scrollbar { display: none; }
+body.ledger-page .tchip {
+  flex: 0 0 auto; display: inline-flex; align-items: center; gap: 7px;
+  font:600 12px var(--fb); letter-spacing:.02em; color: var(--ink-dim);
+  background: var(--bill); border: 1px solid var(--bill-edge); border-radius: 20px; padding: 6px 12px; cursor: pointer; white-space: nowrap; transition: all .14s;
+}
+body.ledger-page .tchip.is-active { color: var(--parchment); border-color: var(--gc, var(--gem-dim)); background: color-mix(in srgb, var(--gc, var(--gem)) 14%, transparent); }
+
+/* zone dropdown row */
+body.ledger-page .zonebar { display: flex; align-items: center; gap: 8px; margin-top: 10px; }
+body.ledger-page .selwrap { position: relative; flex: 1; }
+body.ledger-page .selwrap svg { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); width: 15px; height: 15px; color: var(--gem); pointer-events: none; }
+body.ledger-page .selwrap select {
+  width: 100%; appearance: none; -webkit-appearance: none; font:600 13px var(--fb); color: var(--parchment);
+  background: var(--bill); border: 1px solid var(--bill-edge); border-radius: 9px; padding: 10px 36px 10px 13px; cursor: pointer; outline: none;
+}
+body.ledger-page .selwrap select:focus { border-color: var(--gem-dim); }
+body.ledger-page .zonebar__count { font:700 11px var(--fb); letter-spacing:.06em; text-transform:uppercase; color: var(--ink-dim); white-space: nowrap; }
+body.ledger-page .zonebar__count b { color: var(--gem); }
+
+/* ---------- Node cards ---------- */
+body.ledger-page .nodes { display: flex; flex-direction: column; gap: 13px; padding: 4px 16px 0; }
+body.ledger-page .node {
+  position: relative; background: linear-gradient(180deg, var(--bill-raised), var(--bill));
+  border: 1px solid var(--bill-edge); border-radius: 15px; padding: 15px; overflow: hidden; transition: border-color .18s;
+}
+body.ledger-page .node::before { content:""; position:absolute; left:0; right:0; top:0; height:2px; background: linear-gradient(90deg, transparent, var(--nc), transparent); opacity:.5; }
+body.ledger-page .node::after { content:""; position:absolute; left:0; top:0; bottom:0; width:3px; background: var(--nc); opacity:.85; }
+body.ledger-page .node.is-done { opacity: .58; }
+body.ledger-page .node.is-done .node__name { color: var(--ink-dim); }
+
+/* Deep-link highlight: gold border glow that fades over 3s (AI search jump-to). */
+body.ledger-page .node.is-highlight { animation: nodeHighlight 3s ease-out forwards; z-index: 1; }
+@keyframes nodeHighlight {
+  0%   { border-color: #ffd34d; box-shadow: 0 0 0 1px #ffd34d, 0 0 22px 4px rgba(255,211,77,.7); }
+  70%  { border-color: #ffd34d; box-shadow: 0 0 0 1px #ffd34d, 0 0 18px 3px rgba(255,211,77,.55); }
+  100% { border-color: var(--bill-edge); box-shadow: 0 0 0 0 rgba(255,211,77,0); }
+}
+
+body.ledger-page .node__head { display: flex; align-items: flex-start; gap: 11px; }
+body.ledger-page .node__head-main { flex: 1; min-width: 0; }
+body.ledger-page .node__name { font:700 18px var(--fd); color: var(--parchment); margin: 0; line-height: 1.1; }
+body.ledger-page .node__zone { display: flex; align-items: center; gap: 7px; margin-top: 5px; font:600 11.5px var(--fb); color: var(--ink-dim); }
+body.ledger-page .node__zone .exp { font:700 9px var(--fb); letter-spacing:.1em; text-transform:uppercase; color: var(--gem); border: 1px solid var(--gem-dim); border-radius: 20px; padding: 1px 7px; }
+body.ledger-page .node__prog { font:700 10.5px var(--fb); color: var(--ink-dim); letter-spacing:.04em; white-space: nowrap; margin-top: 6px; display: inline-flex; align-items: center; gap: 5px; }
+body.ledger-page .node__prog b { color: var(--gem-bright); }
+
+/* wax-seal style collect toggle */
+body.ledger-page .collect-btn {
+  flex: 0 0 36px; width: 36px; height: 36px; cursor: pointer; border-radius: 50%;
+  background: radial-gradient(circle at 50% 35%, var(--btn-core-a), var(--btn-core-b)); border: 1.5px dashed var(--ink-faint); color: var(--ink-faint);
+  display: grid; place-items: center; transition: all .15s;
+}
+body.ledger-page .collect-btn svg { width: 18px; height: 18px; }
+body.ledger-page .collect-btn:hover { border-color: var(--nc); color: var(--nc); }
+body.ledger-page .collect-btn.is-done {
+  border: 1.5px solid color-mix(in srgb, var(--nc) 80%, #fff); background: radial-gradient(circle at 50% 35%, color-mix(in srgb, var(--nc) 85%, #fff), color-mix(in srgb, var(--nc) 50%, var(--btn-core-b)) 75%);
+  color: var(--seal-ink); box-shadow: 0 0 12px color-mix(in srgb, var(--nc) 60%, transparent);
+}
+
+/* requirement badges */
+body.ledger-page .reqs { display: flex; flex-wrap: wrap; gap: 7px; margin-top: 12px; }
+body.ledger-page .req { display: inline-flex; align-items: center; gap: 6px; font:600 11.5px var(--fb); border-radius: 8px; padding: 5px 10px; border: 1px solid transparent; }
+body.ledger-page .req svg { width: 13px; height: 13px; }
+body.ledger-page .req--coords { color: var(--parchment); background: rgba(255,255,255,.03); border-color: var(--bill-edge); cursor: pointer; font-variant-numeric: tabular-nums; }
+body.ledger-page .req--coords svg { color: var(--gem); }
+body.ledger-page .req--coords:hover { border-color: var(--gem-dim); background: var(--gem-faint); }
+body.ledger-page .req--time { color: var(--day); background: var(--day-bg); border-color: var(--day-edge); }
+body.ledger-page .req--time.night { color: var(--night); background: var(--night-bg); border-color: rgba(94,135,212,.3); }
+body.ledger-page .req--lvl { color: var(--ink); background: rgba(255,255,255,.03); border-color: var(--bill-edge); }
+
+/* spawn window callout (Unspoiled / Ephemeral / Legendary) */
+body.ledger-page .window {
+  display: flex; align-items: center; gap: 11px; margin-top: 12px; padding: 11px 12px; border-radius: 11px;
+  background: color-mix(in srgb, var(--nc) 9%, rgba(0,0,0,.2)); border: 1px solid color-mix(in srgb, var(--nc) 38%, transparent);
+}
+body.ledger-page .window__ico { flex: 0 0 30px; width: 30px; height: 30px; border-radius: 9px; display: grid; place-items: center; color: var(--nc); background: color-mix(in srgb, var(--nc) 16%, var(--btn-core-b)); border: 1px solid color-mix(in srgb, var(--nc) 40%, transparent); }
+body.ledger-page .window__ico svg { width: 17px; height: 17px; }
+body.ledger-page .window__body { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+body.ledger-page .window__lbl { font:700 8.5px var(--fb); letter-spacing:.14em; text-transform:uppercase; color: var(--ink-dim); }
+body.ledger-page .window__et { font:800 13.5px var(--fd); color: var(--parchment); margin-top: 2px; font-variant-numeric: tabular-nums; }
+body.ledger-page .window__state { font:700 11px var(--fb); white-space: nowrap; text-align: right; }
+body.ledger-page .window__state.up { color: var(--win-up); }
+body.ledger-page .window__state.soon { color: var(--win-soon); }
+body.ledger-page .window__state.closed { color: var(--ink-dim); }
+
+/* item list */
+body.ledger-page .field-lbl { font:700 9px var(--fb); letter-spacing:.13em; text-transform:uppercase; color: var(--ink-faint); margin: 14px 0 7px; }
+body.ledger-page .items { display: flex; flex-direction: column; gap: 6px; }
+body.ledger-page .item { display: flex; align-items: center; gap: 11px; background: rgba(0,0,0,.22); border: 1px solid var(--bill-edge); border-radius: 10px; padding: 8px 11px; }
+body.ledger-page .item__icon {
+  flex: 0 0 30px; width: 30px; height: 30px; border-radius: 8px; display: grid; place-items: center;
+  background: radial-gradient(circle at 50% 35%, color-mix(in srgb, var(--ic) 30%, var(--bill)), var(--board)); border: 1.5px solid var(--ic); color: var(--ic);
+}
+body.ledger-page .item__icon svg { width: 16px; height: 16px; }
+body.ledger-page .item__body { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+body.ledger-page .item__name { font:700 13.5px var(--fb); color: var(--parchment); line-height: 1.1; }
+body.ledger-page .item__meta { font:600 10.5px var(--fb); color: var(--ink-dim); margin-top: 2px; }
+body.ledger-page .item__tag { font:700 8.5px var(--fb); letter-spacing:.1em; text-transform:uppercase; color: var(--ic); border: 1px solid color-mix(in srgb, var(--ic) 50%, transparent); border-radius: 20px; padding: 2px 8px; white-space: nowrap; }
+
+/* cross-link chip: item -> cooking recipes that use it */
+body.ledger-page .item__recipes { font:700 8.5px var(--fb); letter-spacing:.08em; text-transform:uppercase; color: var(--xlink); border:1px solid color-mix(in srgb, var(--xlink) 45%, transparent); border-radius:20px; padding:2px 8px; white-space:nowrap; text-decoration:none; transition:all .14s; }
+body.ledger-page .item__recipes:hover { background: color-mix(in srgb, var(--xlink) 18%, transparent); }
+body.ledger-page .item__check { flex: 0 0 24px; width: 24px; height: 24px; border-radius: 7px; cursor: pointer; border: 1.5px dashed var(--ink-faint); background: transparent; display: grid; place-items: center; color: transparent; transition: all .14s; }
+body.ledger-page .item__check svg { width: 13px; height: 13px; }
+body.ledger-page .item__check:hover { border-color: var(--gem); }
+body.ledger-page .item__check.is-done { border-style: solid; border-color: var(--gem-bright); background: var(--gem); color: var(--seal-ink); }
+
+/* ---------- empty / toast ---------- */
+body.ledger-page .empty { text-align: center; padding: 56px 28px; color: var(--ink-dim); }
+body.ledger-page .empty__ico { width: 60px; height: 60px; margin: 0 auto 16px; border-radius: 50%; border: 1.5px dashed var(--gem-dim); display: grid; place-items: center; color: var(--gem-dim); }
+body.ledger-page .empty__ico svg { width: 28px; height: 28px; }
+body.ledger-page .empty h3 { font:700 17px var(--fd); color: var(--parchment); margin: 0 0 6px; }
+body.ledger-page .empty p { font: 500 13px var(--fb); margin: 0 auto; max-width: 260px; line-height: 1.5; }
+
+body.ledger-page .toast {
+  position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%) translateY(12px);
+  background: var(--bill-raised); border: 1px solid var(--gem-dim); color: var(--parchment);
+  font:600 12.5px var(--fb); padding: 9px 16px; border-radius: 22px; box-shadow: 0 8px 24px rgba(0,0,0,.5);
+  opacity: 0; pointer-events: none; transition: opacity .2s, transform .2s; z-index: 200; display: flex; align-items: center; gap: 8px;
+}
+body.ledger-page .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+body.ledger-page .toast svg { width: 15px; height: 15px; color: var(--gem-bright); }
