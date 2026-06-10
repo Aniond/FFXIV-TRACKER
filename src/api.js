@@ -174,6 +174,16 @@ async function fetchRecipes({ job = 'CUL', expansion = 'Dawntrail', includeSubcr
   return r.json().catch(() => [])
 }
 
+// ── Market prices (Universalis via our cached proxy) ─────────────────────────
+
+// { dc, prices: { [itemId]: { nq, hq } } }; {} on failure.
+async function fetchPrices(ids) {
+  if (!ids.length) return { prices: {} }
+  const r = await apiFetch(`/api/prices?ids=${ids.slice(0, 100).join(',')}`)
+  if (!r.ok) return { prices: {} }
+  return r.json().catch(() => ({ prices: {} }))
+}
+
 // ── Admin API helpers ────────────────────────────────────────────────────────
 
 async function adminFetch(path, opts = {}) {
@@ -248,7 +258,7 @@ export {
   fetchUserState, saveUserState,
   loadProgress, saveProgress, resetProgress, saveStash, savePreferences,
   fetchJobs, saveJobs, saveCharacterLink, refreshJobsFromLodestone,
-  fetchFlags, aiSearch, fetchRecipes,
+  fetchFlags, aiSearch, fetchRecipes, fetchPrices,
   adminStats, adminUsers, adminBanUser, adminQueries,
   adminSubmissions, adminUpdateSubmission, adminFlags, adminToggleFlag, adminApiUsage,
 }

@@ -76,3 +76,34 @@ test('weatherWindow reports the next change consistently with forecast', () => {
     assert.equal(weatherAt(zone, t + w.changeMs - WEATHER_PERIOD_MS / 2), w.now)
   }
 })
+
+test('nextFishWindow: hour-only windows are exact and zone-independent', async () => {
+  const { nextFishWindow } = await import('../src/eorzeaWeather.js')
+  const cond = { weather: [], prevWeather: [], start: 20, end: 24 }
+  const t = 1_700_000_000_000
+  const w = nextFishWindow('Anywhere', cond, t)
+  assert.ok(w, 'window must exist')
+  assert.ok(w.closeMs > w.openMs && w.closeMs > t)
+  // boundaries land exactly on ET 20:00 / 24:00 (multiples of 175s from ET midnight)
+  const etHour = (ms) => Math.floor((((ms / 1000) * (3600 / 175)) % 86400) / 3600)
+  assert.equal(etHour(w.openMs), 20)
+  assert.equal(etHour(w.closeMs - 1), 23)
+})
+
+test('nextFishWindow: weather-gated window opens on matching weather', async () => {
+  const { nextFishWindow, weatherAt } = await import('../src/eorzeaWeather.js')
+  const zone = 'Labyrinthos'
+  const cond = { weather: ['Rain'], prevWeather: [], start: 0, end: 24 }
+  const t = 1_700_000_000_000
+  const w = nextFishWindow(zone, cond, t)
+  assert.ok(w, 'Rain happens in Labyrinthos within 7 days')
+  assert.equal(weatherAt(zone, w.openMs), 'Rain')
+  assert.notEqual(weatherAt(zone, w.openMs - 1), 'Rain') // truly the window start (or hour boundary)
+})
+
+test('nextFishWindow: ET-midnight-wrapping hours work', async () => {
+  const { nextFishWindow } = await import('../src/eorzeaWeather.js')
+  const cond = { weather: [], prevWeather: [], start: 22, end: 2 }
+  const w = nextFishWindow('Anywhere', cond, 1_700_000_000_000)
+  assert.ok(w && w.closeMs > w.openMs)
+})

@@ -380,3 +380,7 @@ body.fishing-page .req--weather .wnext { color: var(--teal, #5ec0b0); font-weigh
 @media (min-width: 1440px) {
   body.fishing-page .ledger { max-width: 1320px; }
 }
+
+/* restricted-fish catch window: condition + live countdown */
+body.fishing-page .fish__window { display:inline-flex; align-items:center; gap:4px; margin-top:3px; font:600 10px var(--fb); color:var(--ink-dim); }
+body.fishing-page .fish__window.is-open { color:var(--teal-bright, #74e3dc); }

@@ -74,3 +74,57 @@ export function weatherWindow(zone, ms = Date.now(), horizon = 24) {
 }
 
 export const hasWeather = (zone) => !!ZONE_WEATHER[zone]
+
+/** ET hour (0-23) at a real timestamp. */
+const etHourAt = (ms) => Math.floor((((ms / 1000) * (3600 / 175)) % 86400) / 3600)
+const ET_HOUR_MS = 175 * 1000
+
+/**
+ * Next catchable window for a restricted fish.
+ * @param zone  the spot's zone (for weather lookups)
+ * @param cond  { weather:[], prevWeather:[], start, end } from fishConditions
+ * @returns { openMs, closeMs, active } in real ms, or null if no window is
+ *          found within the horizon (~7 real days) / zone unmapped.
+ */
+export function nextFishWindow(zone, cond, ms = Date.now(), horizonPeriods = 1040) {
+  const needsWeather = (cond.weather?.length || 0) + (cond.prevWeather?.length || 0) > 0
+  if (needsWeather && !ZONE_WEATHER[zone]) return null
+  const hourSegs = cond.start < cond.end
+    ? [[cond.start, cond.end]]
+    : [[cond.start, 24], [0, cond.end]] // ET-midnight-wrapping window
+
+  const periodOk = (start) => {
+    if (!needsWeather) return true
+    const w = weatherAt(zone, start)
+    const p = weatherAt(zone, start - WEATHER_PERIOD_MS)
+    const okW = !cond.weather?.length || cond.weather.includes(w)
+    const okP = !cond.prevWeather?.length || cond.prevWeather.includes(p)
+    return okW && okP
+  }
+
+  let start = periodStart(ms)
+  for (let i = 0; i < horizonPeriods; i++, start += WEATHER_PERIOD_MS) {
+    if (!periodOk(start)) continue
+    const h0 = etHourAt(start) // 0, 8 or 16
+    for (const [a, b] of hourSegs) {
+      const s = Math.max(a, h0)
+      const e = Math.min(b, h0 + 8)
+      if (s >= e) continue
+      const openMs = start + (s - h0) * ET_HOUR_MS
+      let closeMs = start + (e - h0) * ET_HOUR_MS
+      if (closeMs <= ms) continue
+      // Extend the close across consecutive periods while the window truly
+      // continues (weather still valid and the hour range carries over).
+      let nxt = start + WEATHER_PERIOD_MS
+      while (closeMs === nxt && periodOk(nxt)) {
+        const nh = etHourAt(nxt)
+        const seg = hourSegs.find(([sa, sb]) => sa <= nh && nh < sb)
+        if (!seg) break
+        closeMs = nxt + (Math.min(seg[1], nh + 8) - nh) * ET_HOUR_MS
+        nxt += WEATHER_PERIOD_MS
+      }
+      return { openMs, closeMs, active: ms >= openMs && ms < closeMs }
+    }
+  }
+  return null
+}

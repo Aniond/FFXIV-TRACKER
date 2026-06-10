@@ -9,7 +9,7 @@ import './Cooking.css'
 import ActivityNav from './ActivityNav'
 import { STAT_TYPES, STAT_ORDER, SRC, adaptRecipes } from './cookingData'
 import { windowState, fmtDur } from './etWindow'
-import { fetchRecipes } from './api'
+import { fetchRecipes, fetchPrices } from './api'
 import { navigate } from './router'
 import { useSyncedState, SET_CODEC } from './syncedState'
 import EorzeaClock from './EorzeaClock'
@@ -177,7 +177,7 @@ function dotFor(srcKey, ws, ing) {
 }
 
 /* ── Ingredient Chip ─────────────────────────────────────── */
-function IngredientChip({ ing, onNav, onCopy, checked, onCheck, recipeByName }) {
+function IngredientChip({ ing, onNav, onCopy, checked, onCheck, recipeByName, mbPrice }) {
   const [tip, setTip] = useState(0)
   const [open, setOpen] = useState(false)
   const ws = ing.window ? winState(ing.window) : null
@@ -190,12 +190,13 @@ function IngredientChip({ ing, onNav, onCopy, checked, onCheck, recipeByName }) 
 
   // Non-gathering ingredients aren't on a map — explain where to get them.
   const costStr = ing.price != null && ing.currency ? `${ing.price} ${ing.currency}` : null
+  const mbStr = mbPrice?.nq != null ? `~${mbPrice.nq.toLocaleString()} gil` : null
   const baseTip =
       ing.craftable             ? 'Craftable — recipe not yet in the catalog'
     : ing.source === 'scrip'    ? `Scrip Exchange · ${costStr || 'scrip purchase'}`
     : ing.source === 'gemstone' ? `Bicolor Gemstone Trader · ${costStr || 'gemstone purchase'}`
     : ing.source === 'vendor'   ? (ing.price != null ? `Buy from a vendor · ${ing.price} gil` : 'Available from a vendor')
-    :                             'Available on Market Board'
+    :                             (mbStr ? `Market Board · min listing ${mbStr}` : 'Available on Market Board')
   // Override notes carry the full acquisition story (aetherial-reduction
   // nodes + ET windows, mob drops) — prefer them over the generic line.
   const tipMsg = ing.notes || baseTip
@@ -248,6 +249,8 @@ function IngredientChip({ ing, onNav, onCopy, checked, onCheck, recipeByName }) 
           {ing.source === 'vendor' && ing.price != null && <span className="chip__price">{ing.price} gil</span>}
           {(ing.source === 'scrip' || ing.source === 'gemstone') && ing.price != null &&
             <span className="chip__price">{ing.price} {CUR_SHORT(ing.currency)}</span>}
+          {ing.source === 'market' && !ing.craftable && mbStr &&
+            <span className="chip__price chip__price--mb" title="Universalis min listing (DC)">{mbStr}</span>}
         </span>
       </span>
       <span className="chip__qty">×{ing.qty}</span>
@@ -277,7 +280,7 @@ function IngredientChip({ ing, onNav, onCopy, checked, onCheck, recipeByName }) 
 }
 
 /* ── Recipe Card ─────────────────────────────────────────── */
-function RecipeCard({ recipe, inList, isSaved, onToggleList, onToggleSave, onNav, onCopy, highlighted, recipeByName }) {
+function RecipeCard({ recipe, inList, isSaved, onToggleList, onToggleSave, onNav, onCopy, highlighted, recipeByName, mbPrices }) {
   const [expanded, setExpanded] = useState(!!highlighted)
   const [checked, setChecked] = useState(() => new Set())
   const cardRef = useRef(null)
@@ -379,7 +382,7 @@ function RecipeCard({ recipe, inList, isSaved, onToggleList, onToggleSave, onNav
 
             <div className="chips">
               {sorted.map(ing => (
-                <IngredientChip key={ing.name + ing.source} ing={ing}
+                <IngredientChip key={ing.name + ing.source} ing={ing} mbPrice={mbPrices?.[ing.itemId]}
                   onNav={onNav} onCopy={onCopy} checked={checked.has(ing.name)} onCheck={toggleCheck}
                   recipeByName={recipeByName}/>
               ))}
@@ -521,6 +524,7 @@ export default function Cooking() {
   // Full catalog (all jobs/expansions + subcrafts), keyed by name, so a craftable
   // ingredient can expand to reveal its own recipe (e.g. Palm Sugar → Palm Syrup).
   const [recipeByName, setRecipeByName] = useState(null)
+  const [mbPrices, setMbPrices] = useState({}) // itemId -> { nq, hq } (Universalis, DC-level)
 
   // Account-synced (localStorage for guests, Postgres for logged-in users).
   const [listIds, setListIds] = useSyncedState(LIST_KEY, [], SET_CODEC)
@@ -552,7 +556,15 @@ export default function Cooking() {
 
   useEffect(() => {
     fetchRecipes({ job: 'CUL', expansion: 'Dawntrail' })
-      .then((rs) => setRecipeList(adaptRecipes(rs)))
+      .then((rs) => {
+        const adapted = adaptRecipes(rs)
+        setRecipeList(adapted)
+        // Market-board ingredients: one cached price lookup for the page.
+        const ids = [...new Set(adapted.flatMap(r => r.ingredients)
+          .filter(i => i.source === 'market' && !i.craftable && i.itemId)
+          .map(i => i.itemId))]
+        fetchPrices(ids).then((p) => setMbPrices(p.prices || {})).catch(() => {})
+      })
       .catch(() => {}) // network failure — page shows the empty state; HTTP errors already resolve []
       .finally(() => setLoading(false))
   }, [])
@@ -724,7 +736,7 @@ export default function Cooking() {
       ) : (
         <div className="recipes">
           {filtered.map(r => (
-            <RecipeCard key={r.id} recipe={r}
+            <RecipeCard key={r.id} recipe={r} mbPrices={mbPrices}
               inList={listIds.has(r.id)} isSaved={savedIds.has(r.id)}
               highlighted={!!recipeFocus && r.name.toLowerCase() === recipeFocus.trim().toLowerCase()}
               recipeByName={recipeByName}

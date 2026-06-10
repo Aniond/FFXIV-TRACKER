@@ -531,3 +531,6 @@ body.cooking-page .ing-filter-chip:hover { filter: brightness(1.15); }
 @media (min-width: 1440px) {
   body.cooking-page .ledger { max-width: 1320px; }
 }
+
+/* Universalis market price chip */
+body.cooking-page .chip__price--mb { color:#9fb4c8; border-color:rgba(159,180,200,.3); }

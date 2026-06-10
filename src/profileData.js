@@ -6,9 +6,11 @@
 
 import { parseReward } from './Dashboard' // reuse the shipped reward parser
 
-/* The six Dawntrail hunt zones, in display order. Extend as content grows. */
+/* Hunt zones in display order — Dawntrail first, then Endwalker. Zones not
+   listed here still work everywhere; they just sort after these. */
 export const ZONE_ORDER = [
   'Urqopacha', "Kozama'uka", "Yak T'el", 'Shaaloani', 'Heritage Found', 'Living Memory',
+  'Labyrinthos', 'Thavnair', 'Garlemald', 'Mare Lamentorum', 'Elpis', 'Ultima Thule',
 ]
 
 const RANK_META = {

@@ -4,7 +4,8 @@ import OceanFishing, { OCEAN_ROUTES } from './OceanFishing'
 import { FISHING_SPOTS, EXPANSIONS } from './fishingData'
 import { EXP_SHORT } from './crosslinkNodes.js'
 import { useRecipeUsage, usageFor, cookingLink } from './recipeLinks'
-import { weatherWindow, hasWeather } from './eorzeaWeather'
+import { weatherWindow, hasWeather, nextFishWindow } from './eorzeaWeather'
+import { FISH_CONDITIONS } from './fishConditions'
 import { fmtDur } from './etWindow'
 import { useSyncedState } from './syncedState'
 import { BAIT_VENDORS } from './baitVendors'
@@ -57,6 +58,41 @@ function WeatherChip({ zone }) {
   return (
     <span className="req req--weather" title={w.next ? `${w.next} in ${fmtDur(w.changeMs)}` : 'Weather holding'}>
       <I.cloud />{w.now}{w.next && <span className="wnext">→ {w.next} {Math.ceil(w.changeMs / 60000)}m</span>}
+    </span>
+  )
+}
+
+/* Catch-window chip for restricted fish: required weather/ET hours with a
+   live countdown to (or remaining in) the next window. Self-ticking so only
+   the chip re-renders. */
+function fmtEta(ms) {
+  const m = Math.max(0, Math.round(ms / 60000))
+  if (m < 60) return m + 'm'
+  const h = Math.floor(m / 60)
+  if (h < 48) return h + 'h ' + (m % 60) + 'm'
+  return Math.floor(h / 24) + 'd ' + (h % 24) + 'h'
+}
+function FishWindowChip({ name, zone }) {
+  const cond = FISH_CONDITIONS[name]
+  const [, setTick] = useState(0)
+  useEffect(() => {
+    if (!cond) return
+    const id = setInterval(() => setTick((t) => t + 1), 15000)
+    return () => clearInterval(id)
+  }, [cond])
+  if (!cond) return null
+  const w = nextFishWindow(zone, cond)
+  const condStr = [
+    cond.weather.length ? cond.weather.join('/') : null,
+    (cond.start !== 0 || cond.end !== 24) ? `ET ${cond.start}–${cond.end}` : null,
+  ].filter(Boolean).join(' · ')
+  const title = [
+    cond.prevWeather.length ? `after ${cond.prevWeather.join('/')}` : null,
+    cond.bait?.length ? `bait: ${cond.bait.join(' → ')}` : null,
+  ].filter(Boolean).join(' · ') || condStr
+  return (
+    <span className={`fish__window${w?.active ? ' is-open' : ''}`} title={title}>
+      ⌚ {condStr}{w && (w.active ? ` · open ${fmtEta(w.closeMs - Date.now())}` : ` · in ${fmtEta(w.openMs - Date.now())}`)}
     </span>
   )
 }
@@ -130,6 +166,7 @@ function SpotCard({ spot, caught, onToggleFish, onToggleAll, onCopy, highlighted
               <span className="fish__body">
                 <span className="fish__name">{f.name}</span>
                 {(f.note || f.timed) && <span className="fish__meta">{f.timed ? '⌚ ' : ''}{f.note || RARITY_WORD[f.rarity]}</span>}
+                <FishWindowChip name={f.name} zone={spot.zone} />
               </span>
               {(() => { // cross-link: this item is a cooking ingredient
                 const u = usage && usageFor(usage, f.name)

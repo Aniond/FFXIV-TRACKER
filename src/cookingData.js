@@ -79,6 +79,7 @@ export function adaptRecipes(apiRecipes) {
         const navable = source === 'fishing' || source === 'mining' || source === 'botany'
         return {
           name: ing.name,
+          itemId: ing.id ?? null, // for market-price lookups (Universalis)
           qty: ing.amount,
           source,
           craftable,
