@@ -60,10 +60,12 @@ function fmtCoords(x, y) {
   return [xv, yv].filter(Boolean).join(', ');
 }
 
-// ET minutes (0-1439) → [h, m]; 65535 = not applicable
-function etMinToHm(min) {
-  if (min == null || min >= 65000) return null;
-  return [Math.floor(min / 60), min % 60];
+// Ephemeral start/end times are encoded as ET HHMM (e.g. 2000 = 20:00), NOT
+// minutes-of-day — decoding as minutes produced impossible windows like 33:20.
+// → [h, m]; 65535 = not applicable
+function etTimeToHm(v) {
+  if (v == null || v >= 65000) return null;
+  return [Math.floor(v / 100), v % 100];
 }
 
 function slugify(s) {
@@ -166,8 +168,8 @@ async function buildMining() {
     const ephStart = row.GatheringPointTransient?.EphemeralStartTime;
     const ephEnd   = row.GatheringPointTransient?.EphemeralEndTime;
     const rareId   = row.GatheringPointTransient?.GatheringRarePopTimeTableTargetID;
-    const openHm   = etMinToHm(ephStart);
-    const closeHm  = etMinToHm(ephEnd);
+    const openHm   = etTimeToHm(ephStart);
+    const closeHm  = etTimeToHm(ephEnd);
 
     let nodeType = 'Regular';
     let window   = null;

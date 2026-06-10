@@ -363,10 +363,27 @@ router.post('/', authenticate, async (req, res) => {
       messages: [{ role: 'user', content: userContent }],
     });
 
+    // The Anthropic call is paid the moment it returns, success or not — log it
+    // before any early return so failed calls (max_tokens, unparseable output)
+    // still count toward the rate limit (which counts ai_queries rows) and the
+    // admin usage dashboard.
+    const usage = message.usage || {};
+    const tokensIn =
+      (usage.input_tokens || 0) +
+      (usage.cache_creation_input_tokens || 0) +
+      (usage.cache_read_input_tokens || 0);
+    const tokensOut = usage.output_tokens || 0;
+    const logUsage = () =>
+      pool.query(
+        'INSERT INTO ai_usage (user_id, query_text, tokens_in, tokens_out, cached) VALUES ($1, $2, $3, $4, false)',
+        [req.user.id, query, tokensIn, tokensOut]
+      );
+
     // A broad query (e.g. "list every node") can blow past max_tokens, which
     // truncates the JSON mid-string. Surface that as actionable feedback rather
     // than a parse error.
     if (message.stop_reason === 'max_tokens') {
+      await logUsage();
       return res.status(422).json({ error: 'That query returned too many results — try narrowing it (a specific zone, item, or mark).' });
     }
 
@@ -375,24 +392,15 @@ router.post('/', authenticate, async (req, res) => {
     try {
       answer = JSON.parse(textBlock?.text ?? '{}');
     } catch {
+      await logUsage();
       return res.status(502).json({ error: 'AI returned an unparseable response' });
     }
     applyOverrides(answer, overrides); // BUG 1: force authoritative ingredient source/location
     sanitizeAnswer(answer);            // BUG 2: strip external-reference / missing-location hints
     withSourceUrls(answer);            // add deep-link source_url to gatherable results (stored + returned)
 
-    const usage = message.usage || {};
-    const tokensIn =
-      (usage.input_tokens || 0) +
-      (usage.cache_creation_input_tokens || 0) +
-      (usage.cache_read_input_tokens || 0);
-    const tokensOut = usage.output_tokens || 0;
-
     await Promise.all([
-      pool.query(
-        'INSERT INTO ai_usage (user_id, query_text, tokens_in, tokens_out, cached) VALUES ($1, $2, $3, $4, false)',
-        [req.user.id, query, tokensIn, tokensOut]
-      ),
+      logUsage(),
       pool.query(
         'INSERT INTO user_searches (user_id, query_norm, response) VALUES ($1, $2, $3)',
         [req.user.id, queryNorm, JSON.stringify(answer)]

@@ -108,7 +108,7 @@ export const MINING_NODES = [
       { name: 'Earth Crystal', tag: 'aetherial', icon: 'gem' },
     ] },
   { id: 'mining-garlemald-ghostly-umbral-rock', name: 'Garlemald', gatherType: 'Mining', zone: 'Garlemald', expansion: 'Endwalker',
-    type: 'Ephemeral', coords: 'X:9.9, Y:15', level: '90', time: 'ET 33:00–0:00', window: { open: [33,20], close: [0,0] },
+    type: 'Ephemeral', coords: 'X:9.9, Y:15', level: '90', time: 'ET 20:00–0:00', window: { open: [20,0], close: [0,0] },
     items: [
       { name: 'Ghostly Umbral Rock', tag: 'common', icon: 'ore' },
       { name: 'Lightning Crystal', tag: 'aetherial', icon: 'gem' },
@@ -275,7 +275,7 @@ export const MINING_NODES = [
       { name: 'Fire Crystal', tag: 'aetherial', icon: 'gem' },
     ] },
   { id: 'quarrying-heritage-found-electrocoal', name: 'Heritage Found', gatherType: 'Quarrying', zone: 'Heritage Found', expansion: 'Dawntrail',
-    type: 'Ephemeral', coords: 'X:26.1, Y:11.9', level: '100', time: 'ET 33:00–0:00', window: { open: [33,20], close: [0,0] },
+    type: 'Ephemeral', coords: 'X:26.1, Y:11.9', level: '100', time: 'ET 20:00–0:00', window: { open: [20,0], close: [0,0] },
     items: [
       { name: 'Electrocoal', tag: 'common', icon: 'ore' },
       { name: 'Earth Crystal', tag: 'aetherial', icon: 'gem' },
