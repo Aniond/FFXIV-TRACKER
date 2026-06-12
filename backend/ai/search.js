@@ -27,7 +27,7 @@ const pool = require('../db');
 
 const router = express.Router();
 
-const MODEL = 'gemini-1.5-pro';
+const MODEL = 'gemini-2.5-pro';
 const MAX_TOKENS = 4096; // headroom for broad queries (e.g. "all unspoiled nodes")
 const RATE_LIMIT = 20; // queries per hour per user
 const CACHE_SECONDS = 60; // identical-query cache window
