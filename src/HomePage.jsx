@@ -58,6 +58,7 @@ const I = {
   user: (p) => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" {...p}><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.5-6 8-6s8 2 8 6"/></svg>,
   shield: (p) => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" {...p}><path d="M12 3 5 6v5c0 4.4 3 7.4 7 9 4-1.6 7-4.6 7-9V6l-7-3Z"/><path d="m9.5 12 1.8 1.8L15 10"/></svg>,
   logout: (p) => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" {...p}><path d="M15 4h3a1 1 0 0 1 1 1v14a1 1 0 0 1-1 1h-3"/><path d="M10 17l-5-5 5-5M5 12h11"/></svg>,
+  flask: (p) => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" {...p}><path d="M10 2v7.31L2.83 18.2a2.02 2.02 0 0 0 1.63 3.14h15.08a2.02 2.02 0 0 0 1.63-3.14L14 9.31V2"/><path d="M8.5 2h7"/><path d="M5.52 14h12.96"/></svg>,
 }
 
 const SRC_ICO = { botany: I.leaf, mining: I.pick, fishing: I.fish }
@@ -153,6 +154,7 @@ export default function HomePage({ user }) {
     { label: 'Botany', href: '/gathering/botany', color: '#5aaa72', ico: 'leaf' },
     { label: 'Fishing', href: '/gathering/fishing', color: '#58c4e8', ico: 'fish' },
     { label: 'Cooking', href: '/crafting/cooking', color: '#d4923a', ico: 'knife' },
+    { label: 'Alchemy', href: '/crafting/alchemy', color: '#c79be0', ico: 'flask' },
   ]
 
   return (
@@ -202,24 +204,21 @@ export default function HomePage({ user }) {
         {tiles.map((t) => <QuickTile key={t.label} tile={t} />)}
       </div>
 
-      <div className="dh-shd">
-        <span className="dh-shd__title">
-          Favorited Timers
-          {activeCount > 0 && <span className="dh-shd__badge">{activeCount} active</span>}
-        </span>
-        <a href="/gathering/botany" className="dh-shd__link">All nodes<I.chevron /></a>
-      </div>
-      {favs.length > 0 ? (
-        <div className="dh-rail">
-          <div className="dh-rail__row">
-            {favs.map((f) => <TimerCard key={f.node.id} fav={f} />)}
+      {favs.length > 0 && (
+        <>
+          <div className="dh-shd">
+            <span className="dh-shd__title">
+              Favorited Timers
+              {activeCount > 0 && <span className="dh-shd__badge">{activeCount} active</span>}
+            </span>
+            <a href="/gathering/botany" className="dh-shd__link">All nodes<I.chevron /></a>
           </div>
-        </div>
-      ) : (
-        <div className="dh-empty">
-          <I.star />
-          <p>Star a node on the <a href="/gathering/mining">Mining</a> or <a href="/gathering/botany">Botany</a> pages to watch its spawn window here.</p>
-        </div>
+          <div className="dh-rail">
+            <div className="dh-rail__row">
+              {favs.map((f) => <TimerCard key={f.node.id} fav={f} />)}
+            </div>
+          </div>
+        </>
       )}
 
       <div className="dh-shd"><span className="dh-shd__title">Saved Recipes</span></div>
