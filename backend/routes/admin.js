@@ -163,7 +163,7 @@ router.patch('/api/admin/flags/:key', adminJWT, async (req, res) => {
   }
 });
 
-// ── Admin: Anthropic API usage (from ai_queries log) ───────────────────────
+// ── Admin: Gemini API usage (from ai_queries log) ──────────────────────────
 router.get('/api/admin/api-usage', adminJWT, async (req, res) => {
   try {
     const [today, month] = await Promise.all([
