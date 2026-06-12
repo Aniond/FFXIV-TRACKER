@@ -97,8 +97,9 @@ export function adaptRecipes(apiRecipes, isFood = true) {
           price: ing.price ?? null,
           notes: ing.notes || null, // override notes (e.g. aetherial-reduction sources, mob drops)
         }
-      }),
-    }))
+      })
+    }
+  })
 }
 
 // Empty fallback — Cooking.jsx fetches live data and passes it in.
