@@ -155,6 +155,7 @@ export default function HomePage({ user }) {
     { label: 'Fishing', href: '/gathering/fishing', color: '#58c4e8', ico: 'fish' },
     { label: 'Cooking', href: '/crafting/cooking', color: '#d4923a', ico: 'knife' },
     { label: 'Alchemy', href: '/crafting/alchemy', color: '#c79be0', ico: 'flask' },
+    { label: 'Armorer', href: '/crafting/armorer', color: '#8fb6d6', ico: 'shield' },
   ]
 
   return (

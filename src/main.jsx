@@ -10,6 +10,7 @@ import Botany from './Botany'
 import AISearch from './AISearch'
 import Cooking from './Cooking'
 import Alchemy from './Alchemy'
+import Armorer from './Armorer'
 import Timers from './Timers'
 import { useUrl } from './router'
 
@@ -24,6 +25,7 @@ function pageFor(path) {
   if (path === '/hunts') return <App />
   if (path === '/crafting/cooking') return <Cooking />
   if (path === '/crafting/alchemy') return <Alchemy />
+  if (path === '/crafting/armorer') return <Armorer />
   if (path === '/gathering/timers') return <Timers />
   if (path === '/gathering/mining') return <Mining />
   if (path === '/gathering/fishing') return <Fishing />
