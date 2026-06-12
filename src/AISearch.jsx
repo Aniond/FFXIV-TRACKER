@@ -1,6 +1,5 @@
 import { useState, useEffect, useRef, useMemo } from 'react'
 import ActivityNav from './ActivityNav'
-import EorzeaClock from './EorzeaClock'
 import { windowState, fmtDur } from './etWindow'
 import { readState, writeState } from './syncedState'
 import { navigate } from './router'
@@ -479,8 +478,6 @@ export default function AISearch() {
         </div>
       ) : (
         <>
-          <EorzeaClock />
-
           <form className="controls" onSubmit={(e) => { e.preventDefault(); run() }}>
             <div className="search">
               <I.search className="search__icon" />
