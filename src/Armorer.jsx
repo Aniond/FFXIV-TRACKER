@@ -530,7 +530,7 @@ export default function Armorer() {
   const [listIds, setListIds] = useSyncedState(LIST_KEY, [], SET_CODEC)
   const [savedIds, setSavedIds] = useSyncedState(SAVED_KEY, [], SET_CODEC)
   const [q, setQ]                   = useState('')
-  const [statFilter, setStatFilter] = useState('all')
+  
   const [diffFilter, setDiffFilter] = useState(0)
   // Deep-link from Centurio AI: /crafting/armorer?ingredient=Flint+Corn shows
   // only dishes that use that ingredient.
@@ -557,7 +557,7 @@ export default function Armorer() {
   useEffect(() => {
     fetchRecipes({ job: 'ARM', expansion: 'Dawntrail' })
       .then((rs) => {
-        const adapted = adaptRecipes(rs)
+        const adapted = adaptRecipes(rs, false)
         setRecipeList(adapted)
         // Market-board ingredients: one cached price lookup for the page.
         const ids = [...new Set(adapted.flatMap(r => r.ingredients)
@@ -597,11 +597,10 @@ export default function Armorer() {
     const query = q.trim().toLowerCase()
     const ingNeedle = ingFilter.trim().toLowerCase()
     let result = recipeList.filter(r => {
-      if (statFilter !== 'all' && r.primaryStat !== statFilter) return false
-      if (diffFilter !== 0     && r.stars !== diffFilter)       return false
+            if (diffFilter !== 0     && r.stars !== diffFilter)       return false
       if (ingNeedle && !usesIngredient(r.ingredients, ingNeedle)) return false
       if (query) {
-        const hay = [r.name, STAT_TYPES[r.primaryStat]?.label, ...r.ingredients.map(i => i.name)]
+        const hay = [r.name, ...r.ingredients.map(i => i.name)]
           .join(' ').toLowerCase()
         if (!hay.includes(query)) return false
       }
@@ -609,10 +608,9 @@ export default function Armorer() {
     })
     if (sortBy === 'ilvl')  result = [...result].sort((a, b) => b.ilvl - a.ilvl)
     if (sortBy === 'alpha') result = [...result].sort((a, b) => a.name.localeCompare(b.name))
-    if (sortBy === 'stat')  result = [...result].sort((a, b) =>
-      STAT_ORDER.indexOf(a.primaryStat) - STAT_ORDER.indexOf(b.primaryStat))
+    
     return result
-  }, [q, statFilter, diffFilter, ingFilter, sortBy, recipeList, recipeByName])
+  }, [q, diffFilter, ingFilter, sortBy, recipeList, recipeByName])
 
   // re-render each second for countdown badges — only while a timed
   // ingredient is actually in the filtered view.
@@ -681,22 +679,6 @@ export default function Armorer() {
             placeholder="Search dishes, ingredients…" aria-label="Search recipes"/>
         </div>
 
-        <div className="filter-row">
-          <span className="filter-row__lbl">Buff</span>
-          <div className="types">
-            {STAT_ORDER.map(k => {
-              const gc = k === 'all' ? 'var(--hearth)' : STAT_TYPES[k].color
-              const label = k === 'all' ? 'All' : STAT_TYPES[k].label
-              return (
-                <button key={k} className={`tchip${statFilter === k ? ' is-active' : ''}`}
-                  style={{ '--gc': gc }} onClick={() => setStatFilter(k)}>
-                  <span className="tchip__pip" style={{ '--gc': gc }}/>{label}
-                </button>
-              )
-            })}
-          </div>
-        </div>
-
         <div className="diff-sort-row">
           <div className="diff-btns">
             <button className={`dchip${diffFilter === 0 ? ' is-active' : ''}`}
@@ -708,7 +690,7 @@ export default function Armorer() {
           </div>
           <div className="sort-bar">
             <I.sort className="sort-bar__ico"/>
-            {[['ilvl','ilvl'],['alpha','A–Z'],['stat','Stat']].map(([val,lbl]) => (
+            {[['ilvl','ilvl'],['alpha','A–Z']].map(([val,lbl]) => (
               <button key={val} className={`sort-btn${sortBy === val ? ' is-active' : ''}`}
                 onClick={() => setSortBy(val)}>{lbl}</button>
             ))}

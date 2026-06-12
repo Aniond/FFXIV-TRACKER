@@ -54,22 +54,26 @@ const API_SRC = {
  * Only food with a buff is included (the catalog's other CUL entries are
  * intermediate subcrafts, not meals).
  */
-export function adaptRecipes(apiRecipes) {
-  return (apiRecipes || [])
-    .filter((r) => Array.isArray(r.food_buff) && r.food_buff.length)
-    .map((r) => ({
+export function adaptRecipes(apiRecipes, isFood = true) {
+  let list = apiRecipes || []
+  if (isFood) {
+    list = list.filter((r) => Array.isArray(r.food_buff) && r.food_buff.length)
+  }
+  return list.map((r) => {
+    const hasBuff = Array.isArray(r.food_buff) && r.food_buff.length
+    return {
       id: String(r.id),
       name: r.name,
       ilvl: r.item_level,
       stars: r.stars || 0,
       rlevel: 100, // DT endgame crafting level (cosmetic; class level not in the API)
-      primaryStat: STAT_KEY[r.food_buff[0].stat] || 'crt',
-      buffDur: 30, // FFXIV food is 30 min (HQ 45)
-      buffs: r.food_buff.map((b) => ({
+      primaryStat: hasBuff ? (STAT_KEY[r.food_buff[0].stat] || 'crt') : 'none',
+      buffDur: hasBuff ? 30 : 0,
+      buffs: hasBuff ? r.food_buff.map((b) => ({
         stat: STAT_FULL[b.stat] || b.stat,
         val: b.relative ? `+${b.valueHQ}%` : `+${b.valueHQ}`,
         cap: b.maxHQ,
-      })),
+      })) : [],
       ingredients: r.ingredients.map((ing) => {
         const source = API_SRC[ing.source] || 'market'
         // subcraft → this ingredient is itself crafted; show it as Craftable
