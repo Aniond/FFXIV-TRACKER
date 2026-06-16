@@ -95,7 +95,7 @@ const buildSystemPrompt = (recipes) =>
   `- auto_pin: boolean. Set to true ONLY if the player explicitly asks to "remind me", "pin", "save", or "star" a specific gathering node. Otherwise omit or set to false.\n` +
   `- NATURAL LANGUAGE & TYPOS: The player may ask questions using complete sentences or misspell item names. Extract the core intent and use your best judgment to fuzzy-match their query to the closest actual item in the provided database.\n` +
   `- Never invent spots, nodes, coordinates, items, or recipes not present in the data. ` +
-  `If a typo is completely unrecognizable or nothing matches, do not break JSON format. Simply set type "none", results [], and politely explain in the summary that you couldn't find a match.\n` +
+  `If an item or ingredient is missing from the database, do NOT immediately fail with type "none". Instead, use the "needs_search_for" array to look it up! Only use type "none" if the external search fails or the query is completely unrecognizable.\n` +
   `- When a gatherable item's exact location is not in the data, leave zone and coords as ` +
   `empty strings and set "detail" to genuinely useful facts only (level, amount, buff) or omit ` +
   `it. Do NOT explain the gap, speculate, point at any external tool/site/database, or otherwise ` +
@@ -108,6 +108,7 @@ const buildSystemPrompt = (recipes) =>
   `- If the player asks for a suggestion based on "cost" or "easiest to make", analyze the ingredients for each candidate recipe.\n` +
   `- "Cost" includes currency (Scrips/Bicolor Gemstones), time/effort (timed nodes), and Gil (Market Board prices).\n` +
   `- If you do not know the Market Board prices for the ingredients you are considering, output their numeric IDs in the "needs_prices_for" array (CRITICAL: Limit to 15 IDs maximum! Only check prices for the top 1 or 2 recipes) and leave everything else blank. I will immediately fetch the live NA average prices and reply to you with them so you can complete your analysis.\n` +
+  `- If the player asks about an item you do not recognize (it's missing from your database), output its name in the "needs_search_for" array (e.g. ["Malm Kelp"]) and leave everything else blank. I will fetch the item's live market board price and details, then pass them back to you.\n` +
   `- Pick 1 or 2 of the cheapest/easiest choices. In your summary, break down *why* it's cheap by explaining where to find the harvestable items and listing any currency/gil costs.\n\n` +
   `CROSS-REFERENCING RECIPES & INGREDIENTS:\n` +
   `Each recipe lists its ingredients with an obtain "source":\n` +
@@ -182,6 +183,11 @@ const RESPONSE_SCHEMA = {
       type: SchemaType.ARRAY,
       description: "If you need Market Board prices to make a recommendation, list up to 15 numeric item IDs here. NEVER exceed 15 IDs. Omit or leave empty if you don't need prices.",
       items: { type: SchemaType.NUMBER }
+    },
+    needs_search_for: {
+      type: SchemaType.ARRAY,
+      description: "If the player asks about an item you don't recognize, list up to 5 item names here to look up.",
+      items: { type: SchemaType.STRING }
     },
     actions: {
       type: SchemaType.OBJECT,
@@ -457,18 +463,52 @@ router.post('/', authenticate, async (req, res) => {
       // Hand-rolled Tool Calling for Market Board prices
       if (response.text()) {
         const tempAnswer = JSON.parse(response.text().replace(/^```json\s*/i, '').replace(/\s*```$/i, '').trim());
-        if (tempAnswer.needs_prices_for && tempAnswer.needs_prices_for.length > 0) {
+        if ((tempAnswer.needs_prices_for && tempAnswer.needs_prices_for.length > 0) || (tempAnswer.needs_search_for && tempAnswer.needs_search_for.length > 0)) {
           // Look up the user's Data Center (fallback to DEFAULT_DC if not set)
           const userRes = await pool.query('SELECT dc FROM users WHERE id = $1', [req.user.id]);
           const userDc = userRes.rows[0]?.dc || DEFAULT_DC;
-          console.log("[ai/search] Fetching prices for:", tempAnswer.needs_prices_for, "DC:", userDc);
 
-          const prices = await fetchPricesForIds(userDc, tempAnswer.needs_prices_for);
-          console.log("[ai/search] Fetched prices:", prices);
-          
-          const priceStrings = Object.entries(prices).map(([id, p]) => `Item ${id}: ${p.nq ? p.nq + 'g NQ' : 'N/A NQ'}, ${p.hq ? p.hq + 'g HQ' : 'N/A HQ'}`);
-          const priceContext = `Here are the LIVE MARKET BOARD PRICES (${userDc} Data Center):\n${priceStrings.join('\n')}\n\nUsing these prices, generate the FINAL JSON response. Remember to pick only the 1 or 2 cheapest options and limit the results array to avoid hitting token limits. Do NOT output needs_prices_for again.`;
-          const result2 = await chat.sendMessage([{ text: priceContext }]);
+          let idsToFetch = tempAnswer.needs_prices_for || [];
+          let searchContext = '';
+
+          // 1. Resolve names via Garland Tools
+          if (tempAnswer.needs_search_for && tempAnswer.needs_search_for.length > 0) {
+            console.log("[ai/search] Resolving item names via Garland Tools:", tempAnswer.needs_search_for);
+            const resolvedItems = [];
+            for (const name of tempAnswer.needs_search_for.slice(0, 5)) {
+              try {
+                const gtRes = await fetch(`https://garlandtools.org/api/search.php?text=${encodeURIComponent(name)}&lang=en`);
+                const gtData = await gtRes.json();
+                const itemList = Array.isArray(gtData) ? gtData : [];
+                const item = itemList.find(v => v.type === 'item');
+                if (item && item.id) {
+                  const numId = Number(item.id);
+                  if (!idsToFetch.includes(numId)) idsToFetch.push(numId);
+                  resolvedItems.push(`Item ID ${item.id} is exactly "${item.obj.n}"`);
+                } else {
+                  resolvedItems.push(`Could not find an exact match for "${name}"`);
+                }
+              } catch (e) {
+                console.error("[ai/search] GarlandTools fetch error:", e.message);
+                resolvedItems.push(`Search failed for "${name}"`);
+              }
+            }
+            if (resolvedItems.length) {
+               searchContext = `Search Results:\n${resolvedItems.join('\n')}\n\n`;
+            }
+          }
+
+          if (idsToFetch.length > 0) {
+            console.log("[ai/search] Fetching prices for:", idsToFetch, "DC:", userDc);
+            const prices = await fetchPricesForIds(userDc, idsToFetch.slice(0, 15));
+            console.log("[ai/search] Fetched prices:", prices);
+            
+            const priceStrings = Object.entries(prices).map(([id, p]) => `Item ${id}: ${p.nq ? p.nq + 'g NQ' : 'N/A NQ'}, ${p.hq ? p.hq + 'g HQ' : 'N/A HQ'}`);
+            searchContext += `Here are the LIVE MARKET BOARD PRICES (${userDc} Data Center):\n${priceStrings.join('\n')}\n\n`;
+          }
+
+          const promptText = searchContext + `Using this information, generate the FINAL JSON response. Remember to pick only the 1 or 2 cheapest options and limit the results array to avoid hitting token limits. Do NOT output needs_prices_for or needs_search_for again.`;
+          const result2 = await chat.sendMessage([{ text: promptText }]);
           response = await result2.response;
         }
       }
