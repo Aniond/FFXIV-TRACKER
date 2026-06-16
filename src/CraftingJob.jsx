@@ -274,6 +274,10 @@ function IngredientChip({ ing, onNav, onCopy, checked, onCheck, recipeByName, mb
         ))}
       </div>
     )}
+    </div>
+  )
+}
+
 /* ── Recipe Card ─────────────────────────────────────────── */
 export function RecipeCard({ recipe, inList, isSaved, onToggleList, onToggleSave, onNav, onCopy, highlighted, recipeByName, mbPrices }) {
   const isFood = recipe.type === 'Food'

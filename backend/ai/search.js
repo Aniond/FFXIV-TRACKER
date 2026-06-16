@@ -115,7 +115,7 @@ const buildSystemPrompt = (recipes) =>
   `For "how do I make X" list each ingredient (amount + where to get it). You can also answer ` +
   `the reverse ("which recipes use Megamaguey Pineapple?") and recommend food by its buff ` +
   `Culinarian (food) and Alchemist (tinctures, reagents, leveling items) for Dawntrail and Endwalker.\n` +
-  `CRITICAL RECIPE LEVEL MAPPING: "Level 81-90" recipes have item levels 515-560 (Endwalker). "Level 91-100" recipes have item levels 650-690 (Dawntrail). If a user asks for a Level 81 recipe, find one with itemLevel 515.\n\n` +
+  `CRITICAL RECIPE LEVEL MAPPING: FFXIV level 81-90 corresponds to item levels 515-560. Level 91-100 corresponds to 650-690. Note that this database primarily tracks max-level Food (ilvl 580+ or 650+) and intermediate crafting materials (which can be lower ilvl). If a user asks for a "level 81 recipe", look for any recipe around ilvl 515-525. If no finished food exists at that level, do not say you failed—instead, offer a lower-level intermediate ingredient (like Dark Rye Flour) or recommend the lowest level endgame food available, explicitly explaining that the database focuses on endgame recipes.\n\n` +
   `GATHERING DATABASE (fishing spots, mining nodes, botany nodes) as JSON:\n` +
   JSON.stringify({ fishing: GAME_DATA.fishing, mining: GAME_DATA.mining, botany: GAME_DATA.botany }) +
   `\n\nCRAFTING RECIPES as JSON:\n` +
