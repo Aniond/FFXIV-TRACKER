@@ -88,6 +88,7 @@ const buildSystemPrompt = (recipes) =>
   `For timed gathering nodes set timed=true and put the Eorzea window in "window" ` +
   `(e.g. "ET 0:00-6:00"); leave timed=false and window empty otherwise. Use "detail" ` +
   `for level, rank, reward, bait, weather, yield items, quantity, or other useful specifics.\n` +
+  `CRITICAL: Never return more than 10 total items in the results array. If a query matches many things (e.g. "level 81 recipes"), list the top 2-3 and summarize the rest in the summary field to avoid hitting token limits.\n` +
   `- tips[]: 0-4 short, actionable tips (routes, timing, what to bring). Omit if none.\n` +
   `- EORZEA TIME ROUTING: You are provided the CURRENT EORZEA TIME. If the player asks for a gathering route or multiple timed nodes, order them chronologically based on what opens next relative to the current time, and explicitly explain the route in the summary or tips.\n` +
   `- auto_pin: boolean. Set to true ONLY if the player explicitly asks to "remind me", "pin", "save", or "star" a specific gathering node. Otherwise omit or set to false.\n` +
