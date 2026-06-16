@@ -23,6 +23,11 @@ export function isFav(id) {
   return getFavNodes().includes(id)
 }
 
+export function addFav(id) {
+  const cur = getFavNodes()
+  if (!cur.includes(id)) writeState(KEY, [...cur, id])
+}
+
 // Toggle membership; returns the new boolean state for `id`.
 export function toggleFav(id) {
   const cur = getFavNodes()

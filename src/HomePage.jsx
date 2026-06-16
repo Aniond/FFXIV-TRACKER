@@ -59,6 +59,10 @@ const I = {
   shield: (p) => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" {...p}><path d="M12 3 5 6v5c0 4.4 3 7.4 7 9 4-1.6 7-4.6 7-9V6l-7-3Z"/><path d="m9.5 12 1.8 1.8L15 10"/></svg>,
   logout: (p) => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" {...p}><path d="M15 4h3a1 1 0 0 1 1 1v14a1 1 0 0 1-1 1h-3"/><path d="M10 17l-5-5 5-5M5 12h11"/></svg>,
   flask: (p) => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" {...p}><path d="M10 2v7.31L2.83 18.2a2.02 2.02 0 0 0 1.63 3.14h15.08a2.02 2.02 0 0 0 1.63-3.14L14 9.31V2"/><path d="M8.5 2h7"/><path d="M5.52 14h12.96"/></svg>,
+  gem: (p) => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" {...p}><path d="m12 21-9-12 3-6h12l3 6-9 12Z"/><path d="M3 9h18M9 3 6 9l6 12 6-12-3-6"/></svg>,
+  leather: (p) => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" {...p}><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>,
+  thread: (p) => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" {...p}><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 14c-2.21 0-4-1.79-4-4s1.79-4 4-4 4 1.79 4 4-1.79 4-4 4z"/></svg>,
+  bookmark: (p) => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" {...p}><path d="m19 21-7-4-7 4V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16z"/></svg>,
 }
 
 const SRC_ICO = { botany: I.leaf, mining: I.pick, fishing: I.fish }
@@ -156,6 +160,11 @@ export default function HomePage({ user }) {
     { label: 'Cooking', href: '/crafting/cooking', color: '#d4923a', ico: 'knife' },
     { label: 'Alchemy', href: '/crafting/alchemy', color: '#c79be0', ico: 'flask' },
     { label: 'Armorer', href: '/crafting/armorer', color: '#8fb6d6', ico: 'shield' },
+    { label: 'Blacksmith', href: '/crafting/blacksmith', color: '#a3a3a3', ico: 'pick' },
+    { label: 'Carpenter', href: '/crafting/carpenter', color: '#a38258', ico: 'leaf' },
+    { label: 'Goldsmith', href: '/crafting/goldsmith', color: '#fcdb03', ico: 'gem' },
+    { label: 'Leatherworker', href: '/crafting/leatherworker', color: '#a36729', ico: 'leather' },
+    { label: 'Weaver', href: '/crafting/weaver', color: '#c146e6', ico: 'thread' },
   ]
 
   return (
@@ -225,11 +234,11 @@ export default function HomePage({ user }) {
       <div className="dh-shd"><span className="dh-shd__title">Saved Recipes</span></div>
       <div className="dh-rail">
         <div className="dh-rail__row">
-          <div className="dh-recipe dh-recipe--soon" style={{ '--rc': '#d4923a' }}>
-            <div className="dh-recipe__type"><I.knife />Cooking</div>
-            <div className="dh-recipe__name">Recipes &amp; shopping lists</div>
-            <div className="dh-recipe__foot"><span className="dh-recipe__soon">Coming soon</span></div>
-          </div>
+          <a href="/saved-recipes" className="dh-recipe" style={{ '--rc': '#ffb04f', textDecoration: 'none' }}>
+            <div className="dh-recipe__type"><I.bookmark />Bookmarks</div>
+            <div className="dh-recipe__name">Saved Recipes</div>
+            <div className="dh-recipe__foot"><span className="dh-recipe__soon" style={{ background: '#ffb04f', color: '#fff' }}>View all</span></div>
+          </a>
         </div>
       </div>
     </div>

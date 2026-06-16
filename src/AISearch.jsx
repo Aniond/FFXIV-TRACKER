@@ -7,6 +7,7 @@ import { MINING_NODES } from './miningData'
 import { BOTANY_NODES } from './botanyData'
 import { API, getToken, fetchMe, fetchFlags, aiSearch, fetchRecipes } from './api'
 import { STAT_TYPES, STAT_KEY } from './cookingData'
+import { isFav, addFav } from './favNodes'
 import './AISearch.css'
 
 /* ============================================================
@@ -383,6 +384,7 @@ export default function AISearch() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
   const [result, setResult] = useState(null)
+  const [chatHistory, setChatHistory] = useState([])
   const [recipeData, setRecipeData] = useState(null) // { recipeByName, ingredientIndex }
   const [toast, setToast] = useState(null)
   const [, setTick] = useState(0)
@@ -438,9 +440,25 @@ export default function AISearch() {
     setQ(text)
     setLoading(true); setError(null); setResult(null)
     try {
-      const data = await aiSearch(text)
+      const data = await aiSearch(text, chatHistory)
       setResult(data)
+      setChatHistory(prev => [...prev, { q: text, a: data.summary }])
       pushHistory(text)
+
+      // Auto-pin check
+      const pinnedNames = []
+      for (const r of data.results || []) {
+        if (r.auto_pin && (r.category === 'mining' || r.category === 'botany')) {
+          const node = TIMED_BY_COORDS.get(normCoords(r.coords))
+          if (node && node.id && !isFav(node.id)) {
+            addFav(node.id)
+            pinnedNames.push(r.name)
+          }
+        }
+      }
+      if (pinnedNames.length > 0) {
+        showToast(`Pinned ${pinnedNames.join(', ')} to dashboard!`)
+      }
     } catch (err) {
       if (err.status === 401) setError('Please sign in with Discord to use AI search.')
       else if (err.status === 403) setError('AI search is in admin preview right now.')
