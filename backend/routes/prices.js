@@ -22,15 +22,7 @@ const MAX_IDS = 100;
 const cache = new Map();
 const dcCache = (dc) => { if (!cache.has(dc)) cache.set(dc, new Map()); return cache.get(dc); };
 
-const pricesLimiter = rateLimit({ windowMs: 60_000, max: 30 });
-
-router.get('/api/prices', pricesLimiter, async (req, res) => {
-  const dc = String(req.query.dc || DEFAULT_DC).trim();
-  if (!/^[A-Za-z-]{2,32}$/.test(dc)) return res.status(400).json({ error: 'invalid dc' });
-  const ids = [...new Set(String(req.query.ids || '').split(',').map((s) => Number(s)).filter((n) => Number.isInteger(n) && n > 0))];
-  if (!ids.length) return res.status(400).json({ error: 'ids is required' });
-  if (ids.length > MAX_IDS) return res.status(400).json({ error: `at most ${MAX_IDS} ids` });
-
+async function fetchPricesForIds(dc, ids) {
   const store = dcCache(dc);
   const now = Date.now();
   const missing = ids.filter((id) => !(store.has(id) && now - store.get(id).at < TTL_MS));
@@ -49,12 +41,10 @@ router.get('/api/prices', pricesLimiter, async (req, res) => {
           store.set(it.itemId, { at: now, nq, hq });
           seen.add(it.itemId);
         }
-        // Untradeable/unknown ids: cache the miss so we don't re-ask every call.
         for (const id of missing) if (!seen.has(id)) store.set(id, { at: now, nq: null, hq: null });
       } else if (r.status === 404) {
-        return res.status(400).json({ error: 'unknown data center' });
+        throw new Error('unknown data center');
       }
-      // other upstream failures: serve whatever cache has (possibly stale/partial)
     } catch (err) {
       console.error('[prices]', err.message);
     }
@@ -65,8 +55,26 @@ router.get('/api/prices', pricesLimiter, async (req, res) => {
     const hit = store.get(id);
     if (hit && (hit.nq != null || hit.hq != null)) prices[id] = { nq: hit.nq, hq: hit.hq };
   }
-  res.set('Cache-Control', 'public, max-age=300');
-  res.json({ dc, prices });
+  return prices;
+}
+
+const pricesLimiter = rateLimit({ windowMs: 60_000, max: 30 });
+
+router.get('/api/prices', pricesLimiter, async (req, res) => {
+  const dc = String(req.query.dc || DEFAULT_DC).trim();
+  if (!/^[A-Za-z-]{2,32}$/.test(dc)) return res.status(400).json({ error: 'invalid dc' });
+  const ids = [...new Set(String(req.query.ids || '').split(',').map((s) => Number(s)).filter((n) => Number.isInteger(n) && n > 0))];
+  if (!ids.length) return res.status(400).json({ error: 'ids is required' });
+  if (ids.length > MAX_IDS) return res.status(400).json({ error: `at most ${MAX_IDS} ids` });
+
+  try {
+    const prices = await fetchPricesForIds(dc, ids);
+    res.set('Cache-Control', 'public, max-age=300');
+    res.json({ dc, prices });
+  } catch (err) {
+    if (err.message === 'unknown data center') return res.status(400).json({ error: err.message });
+    res.status(500).json({ error: 'failed to fetch prices' });
+  }
 });
 
-module.exports = router;
+module.exports = { router, fetchPricesForIds, DEFAULT_DC };

@@ -1,13 +1,14 @@
 import { useState, useEffect, useRef, useMemo } from 'react'
 import ActivityNav from './ActivityNav'
 import { windowState, fmtDur } from './etWindow'
-import { readState, writeState } from './syncedState'
+import { useSyncedState, SET_CODEC, readState, writeState } from './syncedState'
 import { navigate } from './router'
 import { MINING_NODES } from './miningData'
 import { BOTANY_NODES } from './botanyData'
 import { API, getToken, fetchMe, fetchFlags, aiSearch, fetchRecipes } from './api'
 import { STAT_TYPES, STAT_KEY } from './cookingData'
 import { isFav, addFav } from './favNodes'
+import ShoppingListWidget from './ShoppingListWidget'
 import './AISearch.css'
 
 /* ============================================================
@@ -160,10 +161,9 @@ function IngredientRow({ ing, recipeByName, onCopy, onNav, depth = 0 }) {
   )
 }
 
-import { useSyncedState, SET_CODEC } from './syncedState'
 
 /* ── Recipe card (crest + name, CUL/ilvl/stars, buff chips, ingredient rows) ─ */
-function RecipeCard({ recipe, recipeByName, onCopy, onNav }) {
+export function RecipeCard({ recipe, recipeByName, onCopy, onNav }) {
   const [open, setOpen] = useState(false)
   const [listIds, setListIds] = useSyncedState('ffxiv-shopping-list', [], SET_CODEC)
   const inList = listIds.has(recipe.id)
@@ -398,6 +398,9 @@ export default function AISearch() {
   const [result, setResult] = useState(null)
   const [chatHistory, setChatHistory] = useState([])
   const [recipeData, setRecipeData] = useState(null) // { recipeByName, ingredientIndex }
+  const [listIds, setListIds] = useSyncedState('ffxiv-shopping-list', [], SET_CODEC)
+  const [checkedIngs, setCheckedIngs] = useSyncedState('ffxiv-shopping-checked', [], SET_CODEC)
+  const [sheetOpen, setSheetOpen] = useState(false)
   const [toast, setToast] = useState(null)
   const [, setTick] = useState(0)
   const toastTimer = useRef(null)
@@ -442,6 +445,29 @@ export default function AISearch() {
       .catch(() => {})
   }, [canUse, recipeData])
 
+  const shoppingListData = useMemo(() => {
+    if (!listIds.size || !recipeData?.byId || !recipeData?.byName) return {}
+    const totals = {}
+    for (const id of listIds) {
+      const r = recipeData.byId[id]
+      if (!r) continue
+      const add = (ings, mult = 1) => {
+        for (const i of ings) {
+          const qty = i.amount * mult
+          if (totals[i.name]) totals[i.name].qty += qty
+          else totals[i.name] = { ...i, qty }
+          
+          if (i.craftable) {
+            const sub = recipeData.byName[i.name.trim().toLowerCase()]
+            if (sub && sub.ingredients) add(sub.ingredients, Math.ceil(qty / (sub.yields || 1)))
+          }
+        }
+      }
+      add(r.ingredients)
+    }
+    return totals
+  }, [listIds, recipeData])
+
   function showToast(m) { setToast(m); clearTimeout(toastTimer.current); toastTimer.current = setTimeout(() => setToast(null), 1500) }
   function copyCoords(text) { navigator.clipboard?.writeText(String(text).replace(/^~/, '')).catch(() => {}); showToast(`Copied ${text}`) }
   function navTo(url) { navigate(url) }
@@ -452,10 +478,36 @@ export default function AISearch() {
     setQ(text)
     setLoading(true); setError(null); setResult(null)
     try {
-      const data = await aiSearch(text, chatHistory)
+      // Pass the current shopping list recipe names to the AI
+      const currentListNames = Array.from(listIds).map(id => recipeData?.byId[id]?.name).filter(Boolean);
+      const data = await aiSearch(text, chatHistory, currentListNames)
+      
       setResult(data)
       setChatHistory(prev => [...prev, { q: text, a: data.summary }])
       pushHistory(text)
+
+      // Handle autonomous list actions
+      if (data.actions) {
+        setListIds(prev => {
+          let updated = new Set(prev);
+          if (data.actions.clear_list) updated = new Set();
+          
+          if (data.actions.remove_from_list && recipeData?.byName) {
+            for (const name of data.actions.remove_from_list) {
+              const recipe = recipeData.byName[name];
+              if (recipe) updated.delete(recipe.id);
+            }
+          }
+
+          if (data.actions.add_to_list && recipeData?.byName) {
+            for (const name of data.actions.add_to_list) {
+              const recipe = recipeData.byName[name];
+              if (recipe) updated.add(recipe.id);
+            }
+          }
+          return updated;
+        });
+      }
 
       // Auto-pin check
       const pinnedNames = []
@@ -562,6 +614,23 @@ export default function AISearch() {
           )}
         </>
       )}
+
+      <ShoppingListWidget 
+        list={shoppingListData}
+        isOpen={sheetOpen}
+        onOpen={() => setSheetOpen(true)}
+        onClose={() => setSheetOpen(false)}
+        onClear={() => { setListIds(new Set()); setCheckedIngs(new Set()) }}
+        checkedIngs={checkedIngs}
+        onCheckIng={(name) => {
+          setCheckedIngs(prev => {
+            const next = new Set(prev)
+            if (next.has(name)) next.delete(name)
+            else next.add(name)
+            return next
+          })
+        }}
+      />
 
       <div className={`toast${toast ? ' show is-show' : ''}`}><I.copy />{toast}</div>
     </div>

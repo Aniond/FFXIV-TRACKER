@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo, useRef } from 'react'
 import ActivityNav from './ActivityNav'
-import { RecipeCard } from './CraftingJob'
+import { RecipeCard } from './AISearch'
 import { fetchRecipes, fetchPrices } from './api'
 import { adaptRecipes } from './cookingData'
 import { useSyncedState, SET_CODEC } from './syncedState'

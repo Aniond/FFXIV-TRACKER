@@ -89,7 +89,7 @@ const ACTIVITIES = [
   {
     id: 'crafting',
     label: 'Crafting',
-    href: null,
+    href: '/crafting',
     soon: false,
     icon: (p) => (
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" {...p}>
@@ -97,32 +97,6 @@ const ACTIVITIES = [
         <path d="m16 2 6 6-2 2-6-6 2-2ZM4 20l1-4 3 3-4 1Z"/>
       </svg>
     ),
-    children: [
-      {
-        id: 'cooking',
-        label: 'Cooking',
-        href: '/crafting/cooking',
-        soon: false,
-        icon: (p) => (
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" {...p}>
-            <path d="M6 22 17.5 4"/>
-            <path d="M17.5 4c1.5 2.5 2 5 0 9s-2 6-1.5 9"/>
-          </svg>
-        ),
-      },
-      {
-        id: 'alchemy',
-        label: 'Alchemy',
-        href: '/crafting/alchemy',
-        soon: false,
-        icon: (p) => (
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" {...p}>
-            <path d="M9 3h6v4l4 10a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2l4-10z"/>
-            <path d="M9 13h6"/>
-          </svg>
-        ),
-      },
-    ],
   },
 ]
 

@@ -66,7 +66,7 @@ app.use(require('./routes/users'));
 app.use(require('./routes/lodestone'));
 app.use(require('./routes/hunts'));
 app.use(require('./routes/recipes'));
-app.use(require('./routes/prices'));
+app.use(require('./routes/prices').router);
 app.use(require('./routes/admin'));
 
 startJobs();
