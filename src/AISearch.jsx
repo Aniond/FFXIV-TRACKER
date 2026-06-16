@@ -160,9 +160,14 @@ function IngredientRow({ ing, recipeByName, onCopy, onNav, depth = 0 }) {
   )
 }
 
+import { useSyncedState, SET_CODEC } from './syncedState'
+
 /* ── Recipe card (crest + name, CUL/ilvl/stars, buff chips, ingredient rows) ─ */
 function RecipeCard({ recipe, recipeByName, onCopy, onNav }) {
   const [open, setOpen] = useState(false)
+  const [listIds, setListIds] = useSyncedState('ffxiv-shopping-list', [], SET_CODEC)
+  const inList = listIds.has(recipe.id)
+
   const buffs = recipe.food_buff || []
   const accent = STAT_TYPES[STAT_KEY[buffs[0]?.stat]]?.color || 'var(--gold)'
   const hasTimed = recipe.ingredients.some((i) => i.window)
@@ -177,6 +182,13 @@ function RecipeCard({ recipe, recipeByName, onCopy, onNav }) {
         <div className="airecipe__info">
           <h3 className="airecipe__name">{recipe.name}</h3>
         </div>
+        <button className={`rc__act${inList ? ' is-active' : ''}`} style={{ marginLeft: 'auto', marginRight: '8px' }}
+          onClick={(e) => {
+            e.stopPropagation()
+            setListIds(s => { const n = new Set(s); n.has(recipe.id) ? n.delete(recipe.id) : n.add(recipe.id); return n })
+          }}>
+          <I.cart /> {inList ? 'In List' : 'Add to List'}
+        </button>
         <span className={`airecipe__chev${open ? ' is-open' : ''}`}><I.chevron /></span>
       </div>
       {open && (

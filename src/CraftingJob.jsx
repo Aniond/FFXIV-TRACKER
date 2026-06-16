@@ -412,7 +412,7 @@ export function RecipeCard({ recipe, inList, isSaved, onToggleList, onToggleSave
 }
 
 /* ── Shopping List panel ─────────────────────────────────── */
-function ShoppingList({ list, isOpen, onOpen, onClose, onClear }) {
+function ShoppingList({ list, isOpen, onOpen, onClose, onClear, checkedIngs, onCheckIng }) {
   const [, setTick] = useState(0)
   useEffect(() => {
     if (!isOpen) return
@@ -423,9 +423,10 @@ function ShoppingList({ list, isOpen, onOpen, onClose, onClear }) {
   const count = Object.keys(list).length
 
   const groups = useMemo(() => {
-    const craft=[], timed=[], botany=[], mining=[], fishing=[], vendor=[], scrip=[], gemstone=[], market=[]
+    const craft=[], timed=[], botany=[], mining=[], fishing=[], vendor=[], scrip=[], gemstone=[], market=[], checkedList=[]
     for (const item of Object.values(list)) {
-      if (item.craftable)            craft.push(item)
+      if (checkedIngs?.has(item.name))   checkedList.push(item)
+      else if (item.craftable)            craft.push(item)
       else if (item.window)          timed.push(item)
       else if (item.source==='botany')   botany.push(item)
       else if (item.source==='mining')   mining.push(item)
@@ -440,8 +441,8 @@ function ShoppingList({ list, isOpen, onOpen, onClose, onClear }) {
       const wa=winState(a.window), wb=winState(b.window)
       return (ord[wa?.state]??3) - (ord[wb?.state]??3)
     })
-    return { craft, timed, botany, mining, fishing, vendor, scrip, gemstone, market }
-  }, [list])
+    return { craft, timed, botany, mining, fishing, vendor, scrip, gemstone, market, checkedList }
+  }, [list, checkedIngs])
 
   function ShopGroup({ label, iconName, items, isTimed=false }) {
     const IcoEl = I[iconName]
@@ -457,8 +458,12 @@ function ShoppingList({ list, isOpen, onOpen, onClose, onClear }) {
             : item.source==='gemstone' ? 'var(--dot-gem)'
             : 'var(--dot-avail)'
           if (ws) dc = ws.state==='up' ? 'var(--dot-avail)' : ws.state==='soon' ? 'var(--dot-soon)' : 'var(--dot-closed)'
+          const isChecked = checkedIngs?.has(item.name)
           return (
-            <div className="slist__item" key={item.name}>
+            <div className={`slist__item${isChecked ? ' is-checked' : ''}`} key={item.name}>
+              <span className="chip__cb" role="checkbox" aria-checked={isChecked} onClick={() => onCheckIng(item.name)} style={{ marginRight: '8px' }}>
+                {isChecked ? <span className="chip__cb-check"><I.check/></span> : <span className="chip__cb-ring"/>}
+              </span>
               <span className="slist__item-dot" style={{ background:dc, boxShadow:`0 0 5px ${dc}` }}/>
               <span className="slist__item-name">{item.name}</span>
               {ws ? <span className="slist__item-cd">{ws.pre} {fmtDur(ws.ms)}</span>
@@ -507,6 +512,7 @@ function ShoppingList({ list, isOpen, onOpen, onClose, onClear }) {
                   {groups.scrip.length    > 0 && <ShopGroup label="Scrip Exchange"       iconName="scrip"     items={groups.scrip}/>}
                   {groups.gemstone.length > 0 && <ShopGroup label="Bicolor Gemstone"     iconName="gem"       items={groups.gemstone}/>}
                   {groups.market.length   > 0 && <ShopGroup label="Market Board"         iconName="cart"      items={groups.market}/>}
+                  {groups.checkedList.length > 0 && <ShopGroup label="Checked Off"       iconName="check"     items={groups.checkedList}/>}
                 </>
               )}
             </div>
@@ -527,8 +533,9 @@ export default function CraftingJob({ jobKey, title, icon, color, isFood }) {
   const [mbPrices, setMbPrices] = useState({}) // itemId -> { nq, hq } (Universalis, DC-level)
 
   // Account-synced (localStorage for guests, Postgres for logged-in users).
-  const LIST_KEY = `ffxiv-${jobKey.toLowerCase()}-list`
+  const LIST_KEY = 'ffxiv-shopping-list'
   const [listIds, setListIds] = useSyncedState(LIST_KEY, [], SET_CODEC)
+  const [checkedIngs, setCheckedIngs] = useSyncedState('ffxiv-shopping-checked', [], SET_CODEC)
   const [savedIds, setSavedIds] = useSyncedState(SAVED_KEY, [], SET_CODEC)
   const [q, setQ]                   = useState('')
   const [statFilter, setStatFilter] = useState('all')
@@ -751,9 +758,13 @@ export default function CraftingJob({ jobKey, title, icon, color, isFood }) {
       <div className={`toast${toast ? ' show' : ''}`}><I.arrow/>{toast}</div>
 
       <ShoppingList list={shoppingList} isOpen={sheetOpen}
+        checkedIngs={checkedIngs}
+        onCheckIng={(ingName) => {
+          setCheckedIngs(s => { const n = new Set(s); n.has(ingName) ? n.delete(ingName) : n.add(ingName); return n })
+        }}
         onOpen={() => setSheetOpen(true)}
         onClose={() => setSheetOpen(false)}
-        onClear={() => { setListIds(new Set()); setSheetOpen(false) }}/>
+        onClear={() => { setListIds(new Set()); setCheckedIngs(new Set()); setSheetOpen(false) }}/>
     </div>
   )
 }

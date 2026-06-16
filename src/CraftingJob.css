@@ -534,3 +534,7 @@ body.cooking-page .ing-filter-chip:hover { filter: brightness(1.15); }
 
 /* Universalis market price chip */
 body.cooking-page .chip__price--mb { color:#9fb4c8; border-color:rgba(159,180,200,.3); }
+
+/* Shopping List Checked State */
+body.cooking-page .slist__item.is-checked { opacity: 0.5; }
+body.cooking-page .slist__item.is-checked .slist__item-name { text-decoration: line-through; text-decoration-color: var(--ink-dim); }

@@ -121,7 +121,8 @@ const STATE_KEYS = new Set([
   'ffxiv-mining-collected',  // mining checklist
   'ffxiv-botany-collected',  // botany checklist
   'ffxiv-fish-caught',       // fishing log
-  'ffxiv-cooking-list',      // cooking shopping list
+  'ffxiv-shopping-list',     // global unified shopping list
+  'ffxiv-shopping-checked',  // globally checked ingredients
   'ffxiv-saved-recipes',     // bookmarked recipes
   'ffxiv-fav-nodes',         // starred nodes (dashboard timers)
   'ffxiv-search-history',    // recent AI searches
