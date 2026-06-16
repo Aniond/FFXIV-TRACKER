@@ -431,7 +431,6 @@ router.post('/', authenticate, async (req, res) => {
         }
       }
     }
-    contents.push({ role: 'user', parts: [{ text: userContent }] });
 
     const model = genAI.getGenerativeModel({
       model: MODEL,
@@ -443,10 +442,12 @@ router.post('/', authenticate, async (req, res) => {
       }
     });
 
+    // Initialize chat with previous history only
     const chat = model.startChat({ history: contents });
     let response;
     try {
-      const result = await chat.sendMessage([{ text: "Please answer the query." }]);
+      // Send the current query (userContent) as the actual message
+      const result = await chat.sendMessage([{ text: userContent }]);
       response = await result.response;
       
       // Hand-rolled Tool Calling for Market Board prices
