@@ -103,6 +103,10 @@ const buildSystemPrompt = (recipes) =>
   `- INGREDIENT SOURCE OVERRIDES: the player turn may include an "AUTHORITATIVE INGREDIENT ` +
   `SOURCE OVERRIDES" list. Any ingredient named there MUST use that source, zone, and coords, ` +
   `overriding every other classification in this prompt (it is the authoritative source).\n\n` +
+  `COST & EFFORT ANALYSIS (When asked for recipe recommendations):\n` +
+  `- If the player asks for a suggestion based on "cost" or "easiest to make", analyze the ingredients for each candidate recipe.\n` +
+  `- "Cost" includes currency (Scrips/Bicolor Gemstones) and time/effort (Legendary/Unspoiled timed nodes vs Regular free nodes).\n` +
+  `- Pick 1 or 2 of the cheapest/easiest choices. In your summary, break down *why* it's cheap by explaining where to find the harvestable items and listing any currency costs.\n\n` +
   `CROSS-REFERENCING RECIPES & INGREDIENTS:\n` +
   `Each recipe lists its ingredients with an obtain "source":\n` +
   `- FISHING / MINING / BOTANY = gatherable. Look the ingredient name up in the ` +
