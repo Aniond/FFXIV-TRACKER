@@ -460,14 +460,14 @@ router.post('/', authenticate, async (req, res) => {
 
           const prices = await fetchPricesForIds(userDc, tempAnswer.needs_prices_for);
           const priceStrings = Object.entries(prices).map(([id, p]) => `Item ${id}: ${p.nq ? p.nq + 'g NQ' : 'N/A NQ'}, ${p.hq ? p.hq + 'g HQ' : 'N/A HQ'}`);
-          const priceContext = `LIVE MARKET BOARD PRICES (${userDc} Data Center):\n${priceStrings.join('\n')}\nNow complete your analysis.`;
+          const priceContext = `Here are the LIVE MARKET BOARD PRICES (${userDc} Data Center):\n${priceStrings.join('\n')}\n\nUsing these prices, generate the FINAL JSON response. Remember to pick only the 1 or 2 cheapest options and limit the results array to avoid hitting token limits. Do NOT output needs_prices_for again.`;
           const result2 = await chat.sendMessage([{ text: priceContext }]);
           response = await result2.response;
         }
       }
     } catch (err) {
       console.error("[ai/search] Chat error:", err);
-      return res.status(500).json({ error: 'AI encountered an error generating the response.' });
+      return res.status(500).json({ error: `AI Error: ${err.message}` });
     }
 
     const usage = response.usageMetadata || {};
@@ -486,6 +486,7 @@ router.post('/', authenticate, async (req, res) => {
 
     if (response.candidates?.[0]?.finishReason === 'MAX_TOKENS') {
       await logUsage();
+      console.error("[ai/search] Hit MAX_TOKENS. Partial response:", response.text());
       return res.status(422).json({ error: 'That query returned too many results — try narrowing it (a specific zone, item, or mark).' });
     }
 
