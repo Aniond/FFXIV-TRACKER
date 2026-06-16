@@ -441,9 +441,8 @@ router.post('/', authenticate, async (req, res) => {
       model: MODEL,
       systemInstruction: SYSTEM_PROMPT,
       generationConfig: {
-        maxOutputTokens: MAX_TOKENS,
+        maxOutputTokens: 8192,
         responseMimeType: "application/json",
-        responseSchema: RESPONSE_SCHEMA,
       }
     });
 
