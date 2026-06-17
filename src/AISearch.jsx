@@ -5,7 +5,7 @@ import { useSyncedState, SET_CODEC, readState, writeState } from './syncedState'
 import { navigate } from './router'
 import { MINING_NODES } from './miningData'
 import { BOTANY_NODES } from './botanyData'
-import { API, getToken, fetchMe, fetchFlags, aiSearch, fetchRecipes } from './api'
+import { API, getToken, fetchMe, fetchFlags, aiSearch, fetchRecipes, fetchJobs, aiCraftGuide } from './api'
 import { STAT_TYPES, STAT_KEY } from './cookingData'
 import { isFav, addFav } from './favNodes'
 import ShoppingListWidget from './ShoppingListWidget'
@@ -165,8 +165,41 @@ function IngredientRow({ ing, recipeByName, onCopy, onNav, depth = 0 }) {
 /* ── Recipe card (crest + name, CUL/ilvl/stars, buff chips, ingredient rows) ─ */
 export function RecipeCard({ recipe, recipeByName, onCopy, onNav }) {
   const [open, setOpen] = useState(false)
+  const [guideOpen, setGuideOpen] = useState(false)
+  const [guideLoading, setGuideLoading] = useState(false)
+  const [guideResult, setGuideResult] = useState(null)
+  const [guideError, setGuideError] = useState(null)
+  
+  const [stats, setStats] = useSyncedState('ffxiv-crafter-stats', { level: 100, craft: 4000, control: 4000, cp: 600 })
   const [listIds, setListIds] = useSyncedState('ffxiv-shopping-list', [], SET_CODEC)
   const inList = listIds.has(recipe.id)
+
+  // Auto-fetch the player's level for this specific crafting job if they open the guide.
+  useEffect(() => {
+    if (guideOpen && getToken()) {
+      fetchJobs().then(jobs => {
+        const targetJob = recipe.job || 'CUL';
+        const job = jobs.find(j => j.job_abbr === targetJob);
+        if (job && job.level) {
+          setStats(prev => ({ ...prev, level: job.level }));
+        }
+      }).catch(() => {});
+    }
+  }, [guideOpen, recipe.job, setStats]);
+
+  const handleGenerateGuide = async () => {
+    if (!getToken()) return setGuideError("You must be logged in to use the AI crafting guide.")
+    setGuideLoading(true)
+    setGuideError(null)
+    try {
+      const res = await aiCraftGuide(recipe, stats.level, stats.craft, stats.control, stats.cp)
+      setGuideResult(res.guide)
+    } catch (err) {
+      setGuideError(err.message)
+    } finally {
+      setGuideLoading(false)
+    }
+  }
 
   const buffs = recipe.food_buff || []
   const accent = STAT_TYPES[STAT_KEY[buffs[0]?.stat]]?.color || 'var(--gold)'
@@ -182,7 +215,13 @@ export function RecipeCard({ recipe, recipeByName, onCopy, onNav }) {
         <div className="airecipe__info">
           <h3 className="airecipe__name">{recipe.name}</h3>
         </div>
-        <button className={`rc__act${inList ? ' is-active' : ''}`} style={{ marginLeft: 'auto', marginRight: '8px' }}
+        <button className="rc__act" style={{ marginLeft: 'auto', marginRight: '8px' }}
+          onClick={(e) => {
+            e.stopPropagation(); setOpen(true); setGuideOpen((o) => !o);
+          }}>
+          <I.bulb /> Guide
+        </button>
+        <button className={`rc__act${inList ? ' is-active' : ''}`} style={{ marginRight: '8px' }}
           onClick={(e) => {
             e.stopPropagation()
             setListIds(s => { const n = new Set(s); n.has(recipe.id) ? n.delete(recipe.id) : n.add(recipe.id); return n })
@@ -207,6 +246,40 @@ export function RecipeCard({ recipe, recipeByName, onCopy, onNav }) {
               })}
             </div>
           )}
+
+          {guideOpen && (
+            <div className="aiprompt__box" style={{ marginBottom: '12px', padding: '12px', background: 'rgba(0,0,0,0.2)', borderRadius: '8px', border: '1px solid var(--border)' }}>
+              <h4 style={{ margin: '0 0 8px 0', fontSize: '13px', color: 'var(--text)' }}>AI Crafting Guide</h4>
+              <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginBottom: '8px' }}>
+                <label style={{ display: 'flex', flexDirection: 'column', fontSize: '11px', color: 'var(--text-muted)' }}>
+                  Level
+                  <input type="number" value={stats.level} onChange={e => setStats({...stats, level: parseInt(e.target.value)||1})} style={{ width: '60px', background: 'var(--surface-raised)', border: '1px solid var(--border)', color: 'var(--text)', padding: '4px', borderRadius: '4px' }}/>
+                </label>
+                <label style={{ display: 'flex', flexDirection: 'column', fontSize: '11px', color: 'var(--text-muted)' }}>
+                  Craftsmanship
+                  <input type="number" value={stats.craft} onChange={e => setStats({...stats, craft: parseInt(e.target.value)||0})} style={{ width: '80px', background: 'var(--surface-raised)', border: '1px solid var(--border)', color: 'var(--text)', padding: '4px', borderRadius: '4px' }}/>
+                </label>
+                <label style={{ display: 'flex', flexDirection: 'column', fontSize: '11px', color: 'var(--text-muted)' }}>
+                  Control
+                  <input type="number" value={stats.control} onChange={e => setStats({...stats, control: parseInt(e.target.value)||0})} style={{ width: '80px', background: 'var(--surface-raised)', border: '1px solid var(--border)', color: 'var(--text)', padding: '4px', borderRadius: '4px' }}/>
+                </label>
+                <label style={{ display: 'flex', flexDirection: 'column', fontSize: '11px', color: 'var(--text-muted)' }}>
+                  CP
+                  <input type="number" value={stats.cp} onChange={e => setStats({...stats, cp: parseInt(e.target.value)||0})} style={{ width: '60px', background: 'var(--surface-raised)', border: '1px solid var(--border)', color: 'var(--text)', padding: '4px', borderRadius: '4px' }}/>
+                </label>
+              </div>
+              <button className="rc__act is-active" style={{ width: '100%', justifyContent: 'center' }} onClick={handleGenerateGuide} disabled={guideLoading}>
+                {guideLoading ? 'Generating...' : 'Generate Macro & Guide'}
+              </button>
+              {guideError && <div style={{ color: 'var(--red)', marginTop: '8px', fontSize: '12px' }}>{guideError}</div>}
+              {guideResult && (
+                <div className="aireply" style={{ marginTop: '12px', fontSize: '13px', whiteSpace: 'pre-wrap', fontFamily: 'monospace' }}>
+                  {guideResult}
+                </div>
+              )}
+            </div>
+          )}
+
           <div className="airecipe__ing-hd">
             Ingredients ({recipe.ingredients.length})
             {hasTimed && <span className="airecipe__timed">⏱ timed</span>}
