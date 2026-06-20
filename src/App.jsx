@@ -93,7 +93,7 @@ function App() {
 
   // Fetch hunt data, then overlay API progress if authenticated
   useEffect(() => {
-    fetch('https://api.ffxivlog.com/api/hunts')
+    fetch(`${API}/api/hunts`)
       .then((r) => r.ok ? r.json() : null)
       .then(async (d) => {
         if (!d || !Array.isArray(d) || !d.length) return

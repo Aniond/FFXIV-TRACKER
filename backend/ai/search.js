@@ -19,12 +19,12 @@
  *     through to ai_queries — the table the /admin dashboard reads.
  */
 const express = require('express');
-const jwt = require('jsonwebtoken');
 const fs = require('fs');
 const path = require('path');
 const { GoogleGenerativeAI, SchemaType } = require('@google/generative-ai');
 const pool = require('../db');
 const { fetchPricesForIds, DEFAULT_DC } = require('../routes/prices');
+const { authenticate, isFlagEnabled } = require('../middleware');
 
 const router = express.Router();
 
@@ -203,26 +203,6 @@ const RESPONSE_SCHEMA = {
 };
 
 // ── Auth: JWT required, then flag/admin gate ────────────────────────────────
-function authenticate(req, res, next) {
-  const authHeader = req.headers.authorization;
-  if (authHeader === 'Bearer test') {
-    req.user = { id: 1 };
-    return next();
-  }
-  if (!authHeader?.startsWith('Bearer ')) return res.status(401).json({ error: 'Unauthorized' });
-  try {
-    req.user = jwt.verify(authHeader.split(' ')[1], process.env.JWT_SECRET);
-    next();
-  } catch {
-    res.status(401).json({ error: 'Invalid token' });
-  }
-}
-
-async function isFlagEnabled(key) {
-  const r = await pool.query('SELECT enabled FROM feature_flags WHERE key = $1', [key]);
-  return r.rows[0]?.enabled === true;
-}
-
 const normalize = (q) => q.trim().replace(/\s+/g, ' ').toLowerCase();
 
 // ── ingredient_overrides: authoritative ingredient source/location ──────────
@@ -575,6 +555,113 @@ router.post('/', authenticate, async (req, res) => {
     }
     console.error('[ai/search] 500 error trace:', err);
     res.status(500).json({ error: 'Server error: ' + err.message });
+  }
+});
+router.post('/craft_guide', authenticate, async (req, res) => {
+  if (!req.user) return res.status(401).json({ error: 'Unauthorized' });
+
+  const { recipe, job, level, craft, control, cp } = req.body;
+  if (!recipe || !level || !craft || !control || !cp) {
+    return res.status(400).json({ error: 'Missing required crafting parameters.' });
+  }
+
+  try {
+    const cleanRecipe = {
+      name: String(recipe.name || 'Unknown Recipe').slice(0, 120),
+      job: String(job || recipe.job || 'CUL').slice(0, 10),
+      item_level: Number(recipe.item_level) || 0,
+      stars: Number(recipe.stars) || 0,
+      ingredients: Array.isArray(recipe.ingredients)
+        ? recipe.ingredients.slice(0, 30).map((i) => ({
+            id: Number(i.id) || null,
+            name: String(i.name || '').slice(0, 120),
+            amount: Number(i.amount) || 1,
+            source: String(i.source || 'UNKNOWN').slice(0, 40),
+            zone: String(i.zone || '').slice(0, 100),
+            coords: String(i.coords || '').slice(0, 50),
+            currency: String(i.currency || '').slice(0, 80),
+            price: i.price == null ? null : Number(i.price),
+            subcraft: !!i.subcraft,
+            window: i.window || null,
+          }))
+        : [],
+    };
+    const stats = {
+      level: Math.max(1, Math.min(100, Number(level) || 1)),
+      craftsmanship: Math.max(0, Number(craft) || 0),
+      control: Math.max(0, Number(control) || 0),
+      cp: Math.max(0, Number(cp) || 0),
+    };
+
+    const userRes = await pool.query('SELECT dc FROM users WHERE id = $1', [req.user.id]);
+    const userDc = userRes.rows[0]?.dc || DEFAULT_DC;
+    const marketIds = cleanRecipe.ingredients
+      .filter((i) => i.id && ['MARKET_BOARD', 'UNKNOWN', 'VENDOR'].includes(i.source))
+      .map((i) => i.id);
+    const prices = marketIds.length ? await fetchPricesForIds(userDc, [...new Set(marketIds)].slice(0, 15)) : {};
+    const pricedIngredients = cleanRecipe.ingredients.map((i) => {
+      const p = i.id ? prices[i.id] : null;
+      const unit = i.price ?? p?.hq ?? p?.nq ?? null;
+      return {
+        ...i,
+        market_nq: p?.nq ?? null,
+        market_hq: p?.hq ?? null,
+        estimated_unit_cost: unit,
+        estimated_total_cost: unit == null ? null : unit * i.amount,
+      };
+    });
+    const knownCost = pricedIngredients.reduce((sum, i) => sum + (i.estimated_total_cost || 0), 0);
+
+    const prompt = `You are Centurio's FFXIV Crafting Advisor.
+Use only the recipe, player stats, ingredient sources, and live market prices provided below.
+Return concise JSON only. Do not wrap it in markdown.
+
+Decide:
+- whether the player can attempt the craft with the given job level and stats
+- HQ confidence as high, medium, low, or unknown
+- best path: gather, buy, scrip/gemstone, craft subcomponents, or mixed
+- missing risks and warnings
+- a short macro when reasonable; if stats are too low, give a completion-focused fallback or leave macro empty
+
+Recipe and player context:
+${JSON.stringify({
+  recipe: { ...cleanRecipe, ingredients: pricedIngredients },
+  player: { job: cleanRecipe.job, ...stats, dc: userDc },
+  known_market_cost: knownCost,
+})}
+
+JSON shape:
+{
+  "summary": "one sentence",
+  "craftable": true,
+  "hq_confidence": "high|medium|low|unknown",
+  "estimated_cost": 12345,
+  "recommended_food": "food or empty string",
+  "best_path": "short practical recommendation",
+  "warnings": ["short warning"],
+  "missing": ["missing thing"],
+  "ingredients": [
+    { "name": "ingredient", "amount": 1, "source": "BOTANY", "action": "Gather/buy/craft/etc", "cost": 0, "note": "short note" }
+  ],
+  "macro": ["/ac \\"Muscle Memory\\" <wait.3>"],
+  "advice": "brief explanation"
+}`;
+
+    const model = genAI.getGenerativeModel({
+      model: MODEL,
+      generationConfig: {
+        maxOutputTokens: 4096,
+        responseMimeType: 'application/json',
+      },
+    });
+    const result = await model.generateContent(prompt);
+    const response = await result.response;
+    const raw = response.text().replace(/^```json\s*/i, '').replace(/\s*```$/i, '').trim();
+    const advisor = JSON.parse(raw);
+    return res.json({ advisor, guide: advisor.macro?.join('\n') || advisor.summary || '' });
+  } catch (err) {
+    console.error('[ai/craft_guide] Error generating guide:', err);
+    return res.status(500).json({ error: 'Failed to generate crafting advisor.' });
   }
 });
 

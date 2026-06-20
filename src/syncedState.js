@@ -32,6 +32,7 @@ export const SYNCED_KEYS = [
   'ffxiv-fav-nodes',
   'ffxiv-search-history',
   'ffxiv-profile-collapsed', // collapsed profile panels
+  'ffxiv-crafter-stats',     // crafting-guide stat defaults
 ]
 
 export const HYDRATED_EVENT = 'ffxiv-state-hydrated'

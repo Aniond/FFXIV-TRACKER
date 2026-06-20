@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo, useRef } from 'react'
 import EorzeaClock from './EorzeaClock'
-import { windowState, fmtDur } from './etWindow'
+import { windowState, fmtDur } from './etWindow.js'
 import { MINING_NODES, NODE_TYPES, TYPE_ORDER, ITEM_TAG, ITEM_COLOR } from './miningData'
 import { EXP_SHORT } from './crosslinkNodes.js'
 import { useRecipeUsage, usageFor, cookingLink } from './recipeLinks'

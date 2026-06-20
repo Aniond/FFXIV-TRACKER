@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react'
-import { windowState, fmtDur } from './etWindow'
+import { windowState, fmtDur } from './etWindow.js'
 import './CraftingJob.css' // We can reuse the CSS for now
 
 const winState = windowState

@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useMemo } from 'react'
 import ActivityNav from './ActivityNav'
-import { windowState, fmtDur } from './etWindow'
+import { windowState, fmtDur } from './etWindow.js'
 import { useSyncedState, SET_CODEC, readState, writeState } from './syncedState'
 import { navigate } from './router'
 import { MINING_NODES } from './miningData'
@@ -163,6 +163,73 @@ function IngredientRow({ ing, recipeByName, onCopy, onNav, depth = 0 }) {
 
 
 /* ── Recipe card (crest + name, CUL/ilvl/stars, buff chips, ingredient rows) ─ */
+const formatGil = (value) => (
+  Number.isFinite(Number(value)) && Number(value) > 0
+    ? `${Math.round(Number(value)).toLocaleString()} gil`
+    : 'Unknown'
+)
+
+function AdvisorPill({ label, value }) {
+  return (
+    <span className="aibuff" style={{ '--bc': 'var(--gold)' }}>
+      {label}: {value}
+    </span>
+  )
+}
+
+function CraftAdvisorResult({ result }) {
+  if (!result) return null
+  if (typeof result === 'string') {
+    return (
+      <div className="aireply" style={{ marginTop: '12px', fontSize: '13px', whiteSpace: 'pre-wrap', fontFamily: 'monospace' }}>
+        {result}
+      </div>
+    )
+  }
+
+  const warnings = Array.isArray(result.warnings) ? result.warnings : []
+  const missing = Array.isArray(result.missing) ? result.missing : []
+  const ingredients = Array.isArray(result.ingredients) ? result.ingredients : []
+  const macro = Array.isArray(result.macro) ? result.macro : []
+
+  return (
+    <div className="aireply" style={{ marginTop: '12px', fontSize: '13px' }}>
+      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 10 }}>
+        <AdvisorPill label="Craftable" value={result.craftable ? 'Yes' : 'Risky'} />
+        <AdvisorPill label="HQ" value={result.hq_confidence || 'unknown'} />
+        <AdvisorPill label="Cost" value={formatGil(result.estimated_cost)} />
+      </div>
+      {result.summary && <p style={{ margin: '0 0 8px' }}>{result.summary}</p>}
+      {result.best_path && <p style={{ margin: '0 0 8px' }}><b>Best path:</b> {result.best_path}</p>}
+      {result.recommended_food && <p style={{ margin: '0 0 8px' }}><b>Food:</b> {result.recommended_food}</p>}
+      {(warnings.length > 0 || missing.length > 0) && (
+        <div style={{ marginBottom: 10 }}>
+          {[...warnings, ...missing].map((w, i) => (
+            <div key={i} style={{ color: 'var(--text-muted)', marginTop: 4 }}>- {w}</div>
+          ))}
+        </div>
+      )}
+      {ingredients.length > 0 && (
+        <div style={{ marginBottom: 10 }}>
+          <b>Ingredient plan</b>
+          {ingredients.slice(0, 12).map((ing, i) => (
+            <div key={i} style={{ color: 'var(--text-muted)', marginTop: 4 }}>
+              {ing.amount ? `${ing.amount}x ` : ''}{ing.name}: {ing.action || ing.source || 'Check source'}
+              {ing.cost ? ` (${formatGil(ing.cost)})` : ''}{ing.note ? ` - ${ing.note}` : ''}
+            </div>
+          ))}
+        </div>
+      )}
+      {macro.length > 0 && (
+        <pre style={{ margin: '10px 0 0', whiteSpace: 'pre-wrap', fontFamily: 'monospace' }}>
+          {macro.join('\n')}
+        </pre>
+      )}
+      {result.advice && <p style={{ margin: '10px 0 0', color: 'var(--text-muted)' }}>{result.advice}</p>}
+    </div>
+  )
+}
+
 export function RecipeCard({ recipe, recipeByName, onCopy, onNav }) {
   const [open, setOpen] = useState(false)
   const [guideOpen, setGuideOpen] = useState(false)
@@ -193,7 +260,7 @@ export function RecipeCard({ recipe, recipeByName, onCopy, onNav }) {
     setGuideError(null)
     try {
       const res = await aiCraftGuide(recipe, stats.level, stats.craft, stats.control, stats.cp)
-      setGuideResult(res.guide)
+      setGuideResult(res.advisor || res.guide)
     } catch (err) {
       setGuideError(err.message)
     } finally {
@@ -249,7 +316,7 @@ export function RecipeCard({ recipe, recipeByName, onCopy, onNav }) {
 
           {guideOpen && (
             <div className="aiprompt__box" style={{ marginBottom: '12px', padding: '12px', background: 'rgba(0,0,0,0.2)', borderRadius: '8px', border: '1px solid var(--border)' }}>
-              <h4 style={{ margin: '0 0 8px 0', fontSize: '13px', color: 'var(--text)' }}>AI Crafting Guide</h4>
+              <h4 style={{ margin: '0 0 8px 0', fontSize: '13px', color: 'var(--text)' }}>AI Crafting Advisor</h4>
               <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginBottom: '8px' }}>
                 <label style={{ display: 'flex', flexDirection: 'column', fontSize: '11px', color: 'var(--text-muted)' }}>
                   Level
@@ -269,14 +336,10 @@ export function RecipeCard({ recipe, recipeByName, onCopy, onNav }) {
                 </label>
               </div>
               <button className="rc__act is-active" style={{ width: '100%', justifyContent: 'center' }} onClick={handleGenerateGuide} disabled={guideLoading}>
-                {guideLoading ? 'Generating...' : 'Generate Macro & Guide'}
+                {guideLoading ? 'Analyzing...' : 'Analyze Craft'}
               </button>
               {guideError && <div style={{ color: 'var(--red)', marginTop: '8px', fontSize: '12px' }}>{guideError}</div>}
-              {guideResult && (
-                <div className="aireply" style={{ marginTop: '12px', fontSize: '13px', whiteSpace: 'pre-wrap', fontFamily: 'monospace' }}>
-                  {guideResult}
-                </div>
-              )}
+              <CraftAdvisorResult result={guideResult} />
             </div>
           )}
 

@@ -127,6 +127,7 @@ const STATE_KEYS = new Set([
   'ffxiv-fav-nodes',         // starred nodes (dashboard timers)
   'ffxiv-search-history',    // recent AI searches
   'ffxiv-profile-collapsed', // collapsed profile panels
+  'ffxiv-crafter-stats',     // crafting-guide stat defaults
 ]);
 const STATE_VALUE_MAX = 64 * 1024; // bytes of JSON per key — plenty for checklists
 

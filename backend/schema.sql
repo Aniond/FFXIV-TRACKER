@@ -7,6 +7,13 @@ CREATE TABLE IF NOT EXISTS users (
   pref_view    VARCHAR(10) NOT NULL DEFAULT 'cards',
   pref_accent  VARCHAR(10) NOT NULL DEFAULT '#8fb6d6',
   pref_density VARCHAR(10) NOT NULL DEFAULT 'regular',
+  slug         VARCHAR(255) UNIQUE,
+  world        VARCHAR(100),
+  dc           VARCHAR(100),
+  lodestone_id VARCHAR(32),
+  xivapi_cache JSONB,
+  portrait_url TEXT,
+  lifetime_cleared INTEGER NOT NULL DEFAULT 0,
   created_at   TIMESTAMPTZ DEFAULT NOW()
 );
 
@@ -65,6 +72,13 @@ CREATE TABLE IF NOT EXISTS hunts (
 -- Admin tables (added by migrate-admin.js)
 
 ALTER TABLE users ADD COLUMN IF NOT EXISTS banned BOOLEAN NOT NULL DEFAULT false;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS slug VARCHAR(255) UNIQUE;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS world VARCHAR(100);
+ALTER TABLE users ADD COLUMN IF NOT EXISTS dc VARCHAR(100);
+ALTER TABLE users ADD COLUMN IF NOT EXISTS lodestone_id VARCHAR(32);
+ALTER TABLE users ADD COLUMN IF NOT EXISTS xivapi_cache JSONB;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS portrait_url TEXT;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS lifetime_cleared INTEGER NOT NULL DEFAULT 0;
 
 CREATE TABLE IF NOT EXISTS ai_queries (
   id          SERIAL PRIMARY KEY,
@@ -102,6 +116,16 @@ CREATE TABLE IF NOT EXISTS user_searches (
 CREATE INDEX IF NOT EXISTS idx_user_searches_lookup
   ON user_searches (query_norm, created_at DESC);
 
+-- Account-synced UI state (added by migrate-state.js).
+
+CREATE TABLE IF NOT EXISTS user_state (
+  user_id    INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  key        VARCHAR(64) NOT NULL,
+  value      JSONB NOT NULL,
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  PRIMARY KEY (user_id, key)
+);
+
 -- Crafting recipes (added + seeded by migrate-cooking.js from Teamcraft data).
 -- Currently Dawntrail Culinarian (CUL). See backend/scrape-cooking.js.
 
@@ -114,5 +138,25 @@ CREATE TABLE IF NOT EXISTS recipes (
   food_buff   JSONB,
   ingredients JSONB,
   expansion   VARCHAR(50) DEFAULT 'Dawntrail',
+  is_subcraft BOOLEAN NOT NULL DEFAULT false,
   created_at  TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_recipes_job_expansion ON recipes(job, expansion);
+CREATE INDEX IF NOT EXISTS idx_submissions_user_id ON submissions(user_id);
+CREATE INDEX IF NOT EXISTS idx_ai_queries_created_at ON ai_queries(created_at);
+
+-- Manual ingredient source/location overrides (added by migrate-cooking.js,
+-- seeded by migrate-overrides.js).
+
+CREATE TABLE IF NOT EXISTS ingredient_overrides (
+  item_id   INTEGER PRIMARY KEY,
+  item_name VARCHAR(255),
+  source    VARCHAR(20),
+  node_name VARCHAR(255),
+  zone      VARCHAR(100),
+  coords    VARCHAR(50),
+  notes     TEXT,
+  price     INTEGER,
+  currency  VARCHAR(60)
 );

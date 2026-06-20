@@ -1,6 +1,6 @@
-import { eorzeaMinuteOfDay } from './etWindow'
+import { eorzeaMinuteOfDay } from './etWindow.js'
 
-const API = 'https://api.ffxivlog.com'
+const API = import.meta.env?.VITE_API_URL || 'https://api.ffxivlog.com'
 
 function getToken() {
   return localStorage.getItem('ffxiv-jwt')
@@ -166,6 +166,18 @@ async function aiSearch(query, history = [], shoppingList = []) {
   return body
 }
 
+// POST to the AI crafting guide generator.
+async function aiCraftGuide(recipe, level, craft, control, cp) {
+  const r = await apiFetch('/api/ai/search/craft_guide', {
+    method: 'POST',
+    body: JSON.stringify({ recipe, job: recipe.job || 'CUL', level, craft, control, cp }),
+  })
+  const body = await r.json().catch(() => ({}))
+  if (!r.ok) throw Object.assign(new Error(body.error || `Failed to generate guide (${r.status})`), { status: r.status })
+  return body
+}
+
+
 // ── Recipes ──────────────────────────────────────────────────────────────────
 
 // Public crafting recipes (currently Dawntrail Culinarian). No auth required.
@@ -263,7 +275,7 @@ export {
   fetchUserState, saveUserState,
   loadProgress, saveProgress, resetProgress, saveStash, savePreferences,
   fetchJobs, saveJobs, saveCharacterLink, refreshJobsFromLodestone,
-  fetchFlags, aiSearch, fetchRecipes, fetchPrices,
+  fetchFlags, aiSearch, aiCraftGuide, fetchRecipes, fetchPrices,
   adminStats, adminUsers, adminBanUser, adminQueries,
   adminSubmissions, adminUpdateSubmission, adminFlags, adminToggleFlag, adminApiUsage,
 }

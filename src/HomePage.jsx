@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo, useRef } from 'react'
-import { windowState as winState, fmtDur } from './etWindow'
+import { windowState as winState, fmtDur } from './etWindow.js'
 import { MINING_NODES } from './miningData'
 import { BOTANY_NODES } from './botanyData'
 import { getFavNodes } from './favNodes'
