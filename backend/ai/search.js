@@ -205,6 +205,46 @@ const RESPONSE_SCHEMA = {
 // ── Auth: JWT required, then flag/admin gate ────────────────────────────────
 const normalize = (q) => q.trim().replace(/\s+/g, ' ').toLowerCase();
 
+async function requireAiAccess(req, res) {
+  const u = await pool.query('SELECT banned FROM users WHERE id = $1', [req.user.id]);
+  if (!u.rows[0]) {
+    res.status(404).json({ error: 'User not found' });
+    return null;
+  }
+  if (u.rows[0].banned) {
+    res.status(403).json({ error: 'Account suspended' });
+    return null;
+  }
+
+  let isPublic = await isFlagEnabled(FLAG);
+  if (req.user.id === 1) isPublic = true;
+  const isAdmin = req.user.discord_id === process.env.ADMIN_DISCORD_ID;
+  if (!isPublic && !isAdmin) {
+    res.status(403).json({ error: 'AI search is not enabled yet' });
+    return null;
+  }
+
+  if (!isAdmin) {
+    const rl = await pool.query(
+      "SELECT COUNT(*)::int AS n FROM ai_queries WHERE user_id = $1 AND created_at > NOW() - INTERVAL '1 hour'",
+      [req.user.id]
+    );
+    if (rl.rows[0].n >= RATE_LIMIT) {
+      res.status(429).json({ error: `Rate limit reached (${RATE_LIMIT}/hour). Try again later.` });
+      return null;
+    }
+  }
+
+  return { isAdmin };
+}
+
+async function logAiUsage({ userId, queryText, tokensIn = 0, tokensOut = 0, cached = false }) {
+  return pool.query(
+    'INSERT INTO ai_usage (user_id, query_text, tokens_in, tokens_out, cached) VALUES ($1, $2, $3, $4, $5)',
+    [userId, queryText, tokensIn, tokensOut, cached]
+  );
+}
+
 // ── ingredient_overrides: authoritative ingredient source/location ──────────
 // These manual rows take precedence over the baked Teamcraft classification.
 // Injected into the (uncached) player turn so the model honours them without a
@@ -331,29 +371,7 @@ router.post('/', authenticate, async (req, res) => {
   if (query.length > 500) return res.status(400).json({ error: 'query too long (max 500 chars)' });
 
   try {
-    // Banned users can't use the assistant.
-    const u = await pool.query('SELECT banned FROM users WHERE id = $1', [req.user.id]);
-    if (!u.rows[0]) return res.status(404).json({ error: 'User not found' });
-    if (u.rows[0].banned) return res.status(403).json({ error: 'Account suspended' });
-
-    // Flag gate: while ENABLE_AI_PUBLIC is off, admin only.
-    let isPublic = await isFlagEnabled(FLAG);
-    if (req.user.id === 1) isPublic = true;
-    const isAdmin = req.user.discord_id === process.env.ADMIN_DISCORD_ID;
-    if (!isPublic && !isAdmin) {
-      return res.status(403).json({ error: 'AI search is not enabled yet' });
-    }
-
-    // Rate limit: 20 queries / hour / user (admins exempt for testing).
-    if (!isAdmin) {
-      const rl = await pool.query(
-        "SELECT COUNT(*)::int AS n FROM ai_queries WHERE user_id = $1 AND created_at > NOW() - INTERVAL '1 hour'",
-        [req.user.id]
-      );
-      if (rl.rows[0].n >= RATE_LIMIT) {
-        return res.status(429).json({ error: `Rate limit reached (${RATE_LIMIT}/hour). Try again later.` });
-      }
-    }
+    if (!(await requireAiAccess(req, res))) return;
 
     const queryNorm = normalize(query);
 
@@ -371,10 +389,7 @@ router.post('/', authenticate, async (req, res) => {
         [queryNorm, String(CACHE_SECONDS)]
       );
       if (cached.rows[0]) {
-        await pool.query(
-          'INSERT INTO ai_usage (user_id, query_text, tokens_in, tokens_out, cached) VALUES ($1, $2, 0, 0, true)',
-          [req.user.id, query]
-        );
+        await logAiUsage({ userId: req.user.id, queryText: query, cached: true });
         // Re-apply enforcement in case the row was cached before these fixes.
         const answer = withSourceUrls(sanitizeAnswer(applyOverrides(cached.rows[0].response, overrides)));
         return res.json({ ...answer, cached: true });
@@ -495,7 +510,6 @@ router.post('/', authenticate, async (req, res) => {
     } catch (err) {
       console.error("[ai/search] Chat error:", err);
       if (response && typeof response.text === 'function') {
-        console.error("[ai/search] Partial response was:", response.text());
         console.error("[ai/search] Finish Reason:", response.candidates?.[0]?.finishReason);
       }
       return res.status(500).json({ error: `AI Error: ${err.message}` });
@@ -505,10 +519,7 @@ router.post('/', authenticate, async (req, res) => {
     const tokensIn = usage.promptTokenCount || 0;
     const tokensOut = usage.candidatesTokenCount || 0;
     const logUsage = () =>
-      pool.query(
-        'INSERT INTO ai_usage (user_id, query_text, tokens_in, tokens_out, cached) VALUES ($1, $2, $3, $4, false)',
-        [req.user.id, query, tokensIn, tokensOut]
-      );
+      logAiUsage({ userId: req.user.id, queryText: query, tokensIn, tokensOut });
 
     if (response.promptFeedback?.blockReason) {
       await logUsage();
@@ -517,7 +528,7 @@ router.post('/', authenticate, async (req, res) => {
 
     if (response.candidates?.[0]?.finishReason === 'MAX_TOKENS') {
       await logUsage();
-      console.error("[ai/search] Hit MAX_TOKENS. Partial response:", response.text());
+      console.error("[ai/search] Hit MAX_TOKENS. Finish Reason:", response.candidates?.[0]?.finishReason);
       return res.status(422).json({ error: 'That query returned too many results — try narrowing it (a specific zone, item, or mark).' });
     }
 
@@ -566,6 +577,8 @@ router.post('/craft_guide', authenticate, async (req, res) => {
   }
 
   try {
+    if (!(await requireAiAccess(req, res))) return;
+
     const cleanRecipe = {
       name: String(recipe.name || 'Unknown Recipe').slice(0, 120),
       job: String(job || recipe.job || 'CUL').slice(0, 10),
@@ -656,6 +669,13 @@ JSON shape:
     });
     const result = await model.generateContent(prompt);
     const response = await result.response;
+    const usage = response.usageMetadata || {};
+    await logAiUsage({
+      userId: req.user.id,
+      queryText: `craft_guide: ${cleanRecipe.name}`,
+      tokensIn: usage.promptTokenCount || 0,
+      tokensOut: usage.candidatesTokenCount || 0,
+    });
     const raw = response.text().replace(/^```json\s*/i, '').replace(/\s*```$/i, '').trim();
     const advisor = JSON.parse(raw);
     return res.json({ advisor, guide: advisor.macro?.join('\n') || advisor.summary || '' });
