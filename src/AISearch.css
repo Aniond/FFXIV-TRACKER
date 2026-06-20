@@ -134,6 +134,16 @@
   font-size: 15px; line-height: 1.55;
 }
 .ai-summary__ico { flex: 0 0 auto; width: 18px; height: 18px; color: var(--gold); margin-top: 2px; }
+.ai-text-link {
+  color: var(--gold-bright);
+  background: none;
+  border: 0;
+  border-bottom: 1px dotted currentColor;
+  padding: 0;
+  font: inherit;
+  cursor: pointer;
+}
+.ai-text-link:hover { color: var(--parchment); }
 
 .ai-cards {
   display: grid;

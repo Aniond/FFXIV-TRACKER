@@ -364,6 +364,88 @@ export function RecipeCard({ recipe, recipeByName, onCopy, onNav }) {
 
 const GATHER_PATH = { BOTANY: '/gathering/botany', MINING: '/gathering/mining', FISHING: '/gathering/fishing' }
 
+function hrefForResult(r, ingredientIndex) {
+  if (!r?.name) return null
+  if (r.source_url) return r.source_url
+  if (r.category === 'hunt') return `/hunts?hunt=${encodeURIComponent(r.name)}`
+  if (r.category === 'recipe') return `/crafting/cooking?recipe=${encodeURIComponent(r.name)}`
+  if (r.category === 'item' || r.category === 'scrip') {
+    const meta = ingredientIndex?.get(norm(r.name))
+    const gatherPath = GATHER_PATH[meta?.source]
+    if (gatherPath) return `${gatherPath}?highlight=${encodeURIComponent(r.name)}`
+    return `/crafting/cooking?ingredient=${encodeURIComponent(r.name)}`
+  }
+  return PAGE_LINK[r.category]?.href || null
+}
+
+function isTextBoundary(text, index) {
+  if (index < 0 || index >= text.length) return true
+  return !/[a-z0-9']/i.test(text[index])
+}
+
+function findNextLink(text, links, from) {
+  const lower = text.toLowerCase()
+  let best = null
+  for (const link of links) {
+    const needle = link.name.toLowerCase()
+    let index = lower.indexOf(needle, from)
+    while (index !== -1) {
+      if (isTextBoundary(text, index - 1) && isTextBoundary(text, index + needle.length)) {
+        if (!best || index < best.index || (index === best.index && needle.length > best.name.length)) {
+          best = { ...link, index, length: needle.length }
+        }
+        break
+      }
+      index = lower.indexOf(needle, index + 1)
+    }
+  }
+  return best
+}
+
+function LinkedText({ text, links }) {
+  if (!text || !links?.length) return text
+  const parts = []
+  let pos = 0
+  let key = 0
+  while (pos < text.length) {
+    const match = findNextLink(text, links, pos)
+    if (!match) break
+    if (match.index > pos) parts.push(text.slice(pos, match.index))
+    const label = text.slice(match.index, match.index + match.length)
+    parts.push(
+      <button key={`${match.href}-${key++}`} type="button" className="ai-text-link" onClick={() => navigate(match.href)}>
+        {label}
+      </button>
+    )
+    pos = match.index + match.length
+  }
+  if (pos < text.length) parts.push(text.slice(pos))
+  return <>{parts}</>
+}
+
+function buildTextLinks(result, recipeData) {
+  const links = new Map()
+  for (const r of result?.results || []) {
+    const href = hrefForResult(r, recipeData?.ingredientIndex)
+    if (href && r.name) links.set(norm(r.name), { name: r.name, href })
+  }
+  for (const recipe of recipeData?.recipeByName?.values?.() || []) {
+    if (links.has(norm(recipe.name))) continue
+    links.set(norm(recipe.name), { name: recipe.name, href: `/crafting/cooking?recipe=${encodeURIComponent(recipe.name)}` })
+  }
+  for (const [key, ing] of recipeData?.ingredientIndex?.entries?.() || []) {
+    if (links.has(key)) continue
+    const gatherPath = GATHER_PATH[ing.source]
+    links.set(key, {
+      name: ing.name,
+      href: gatherPath
+        ? `${gatherPath}?highlight=${encodeURIComponent(ing.name)}`
+        : `/crafting/cooking?ingredient=${encodeURIComponent(ing.name)}`,
+    })
+  }
+  return [...links.values()].filter((link) => link.name.length > 2).sort((a, b) => b.name.length - a.name.length)
+}
+
 /* ── Ingredient / scrip card (Flint Corn etc.) — collapsible ─────────────── */
 function IngredientCard({ r, meta, onCopy, onNav }) {
   const [open, setOpen] = useState(false)
@@ -564,6 +646,7 @@ export default function AISearch() {
 
   const isAdmin = !!user?.is_admin
   const canUse = isAdmin || publicOn
+  const textLinks = useMemo(() => buildTextLinks(result, recipeData), [result, recipeData])
 
   // Auto-run a query passed via ?q= (e.g. from the dashboard's AI hero / chips).
   useEffect(() => {
@@ -728,7 +811,10 @@ export default function AISearch() {
           {result && !loading && (
             <div className="ai-result">
               {result.cached && <div className="ai-cached">Cached result</div>}
-              <div className="ai-summary"><I.spark className="ai-summary__ico" />{result.summary}</div>
+              <div className="ai-summary">
+                <I.spark className="ai-summary__ico" />
+                <span><LinkedText text={result.summary} links={textLinks} /></span>
+              </div>
 
               {result.results?.length > 0 && (
                 <div className="ai-cards">
@@ -743,7 +829,7 @@ export default function AISearch() {
               {result.tips?.length > 0 && (
                 <div className="ai-tips">
                   <div className="ai-tips__hd"><I.bulb />Tips</div>
-                  <ul>{result.tips.map((t, i) => <li key={i}>{t}</li>)}</ul>
+                  <ul>{result.tips.map((t, i) => <li key={i}><LinkedText text={t} links={textLinks} /></li>)}</ul>
                 </div>
               )}
             </div>

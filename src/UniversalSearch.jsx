@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo } from 'react'
 import { getToken, API } from './api.js'
 import { navigate } from './router.js'
 import { getUniversalIndex, searchIndex } from './universalIndex.js'
-import { readState } from './syncedState.js'
+import { readState, writeState } from './syncedState.js'
 import './UniversalSearch.css'
 
 /* ============================================================
@@ -62,8 +62,9 @@ export default function UniversalSearch({ rev = 0, showRecent = true }) {
   const [focused, setFocused] = useState(false)
   const [index, setIndex] = useState(null)
   const [sel, setSel] = useState(-1)
+  const [historyRev, setHistoryRev] = useState(0)
   const loggedIn = !!getToken()
-  const recent = useMemo(getHistory, [rev])
+  const recent = useMemo(getHistory, [rev, historyRev])
 
   useEffect(() => {
     if (focused) return
@@ -85,6 +86,12 @@ export default function UniversalSearch({ rev = 0, showRecent = true }) {
   useEffect(() => { setSel(-1) }, [q])
 
   const go = (href) => navigate(href)
+  const saveHistory = (next) => {
+    writeState(HISTORY_KEY, next)
+    setHistoryRev((v) => v + 1)
+  }
+  const clearHistory = () => saveHistory([])
+  const removeHistoryItem = (item) => saveHistory(recent.filter((r) => r.toLowerCase() !== item.toLowerCase()))
   const onAiRow = () => {
     if (loggedIn) goAI(q.trim())
     else window.location.href = `${API}/auth/discord` // full-page OAuth round-trip
@@ -160,9 +167,19 @@ export default function UniversalSearch({ rev = 0, showRecent = true }) {
 
       {showRecent && recent.length > 0 && (
         <div className="dh-hero__recent">
-          <div className="dh-hero__rlabel">Recent</div>
+          <div className="dh-hero__recent-head">
+            <div className="dh-hero__rlabel">Recent</div>
+            <button type="button" className="dh-hero__clear" onClick={clearHistory}>Clear history</button>
+          </div>
           {recent.map((r) => (
-            <button key={r} className="dh-hero__chip" onClick={() => (loggedIn ? goAI(r) : setQ(r))}><I.hist />{r}</button>
+            <span key={r} className="dh-hero__chip-wrap">
+              <button type="button" className="dh-hero__chip" onClick={() => (loggedIn ? goAI(r) : setQ(r))}>
+                <I.hist /><span className="dh-hero__chip-text">{r}</span>
+              </button>
+              <button type="button" className="dh-hero__chip-x" aria-label={`Remove ${r} from history`} onClick={() => removeHistoryItem(r)}>
+                X
+              </button>
+            </span>
           ))}
         </div>
       )}

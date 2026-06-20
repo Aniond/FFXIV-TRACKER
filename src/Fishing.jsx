@@ -97,7 +97,58 @@ function FishWindowChip({ name, zone }) {
   )
 }
 
-function SpotCard({ spot, caught, onToggleFish, onToggleAll, onCopy, highlighted, usage }) {
+function FishRow({ fish, spot, caught, onToggleFish, highlighted, usage }) {
+  const [open, setOpen] = useState(!!highlighted)
+  const key = fishKey(spot.id, fish.name)
+  const done = !!caught[key]
+  const usageInfo = usage && usageFor(usage, fish.name)
+  const hasExtra = !!(fish.note || fish.timed || FISH_CONDITIONS[fish.name] || usageInfo || fish.rarity !== 'common')
+
+  useEffect(() => {
+    if (highlighted) setOpen(true)
+  }, [highlighted])
+
+  function toggleOpen() {
+    if (hasExtra) setOpen((v) => !v)
+  }
+
+  return (
+    <div className={`fish${open ? ' is-open' : ''}${highlighted ? ' is-highlight' : ''}`} style={RVARS[fish.rarity]}>
+      <button type="button" className="fish__row" onClick={toggleOpen} aria-expanded={open} disabled={!hasExtra}>
+        <span className="fish__icon"><I.fish /></span>
+        <span className="fish__body">
+          <span className="fish__name">{fish.name}</span>
+          <span className="fish__summary">
+            {fish.rarity !== 'common' && <span className="fish__summary-pill">{RARITY_WORD[fish.rarity]}</span>}
+            {FISH_CONDITIONS[fish.name] && <span>Windowed</span>}
+            {usageInfo && <span>{usageInfo.count} recipe{usageInfo.count > 1 ? 's' : ''}</span>}
+          </span>
+        </span>
+        {hasExtra && <span className={`fish__expand${open ? ' is-open' : ''}`}><I.chevron /></span>}
+      </button>
+
+      <button className={`fish__check${done ? ' is-done' : ''}`} onClick={() => onToggleFish(key)} title={done ? 'Caught' : 'Mark caught'}>
+        <I.check />
+      </button>
+
+      {open && hasExtra && (
+        <div className="fish__details">
+          {(fish.note || fish.timed) && <span className="fish__meta">{fish.note || (fish.timed ? 'Windowed catch' : RARITY_WORD[fish.rarity])}</span>}
+          <FishWindowChip name={fish.name} zone={spot.zone} />
+          {usageInfo && (
+            <a className="fish__recipes" href={cookingLink(fish.name)}
+              title={`Used in: ${usageInfo.dishes.slice(0, 6).join(', ')}${usageInfo.dishes.length > 6 ? '...' : ''}`}>
+              Used in {usageInfo.count} recipe{usageInfo.count > 1 ? 's' : ''}
+            </a>
+          )}
+          <span className="fish__rarity">{RARITY_WORD[fish.rarity]}</span>
+        </div>
+      )}
+    </div>
+  )
+}
+
+function SpotCard({ spot, caught, onToggleFish, onToggleAll, onCopy, highlighted, highlightedFish, usage }) {
   const total = spot.fish.length
   const got = spot.fish.filter((f) => caught[fishKey(spot.id, f.name)]).length
   const allDone = got === total
@@ -157,34 +208,10 @@ function SpotCard({ spot, caught, onToggleFish, onToggleAll, onCopy, highlighted
 
       <div className="field-lbl">Catch ({got}/{total})</div>
       <div className="fish-list">
-        {spot.fish.map((f) => {
-          const key = fishKey(spot.id, f.name)
-          const done = !!caught[key]
-          return (
-            <div className="fish" key={f.name} style={RVARS[f.rarity]}>
-              <span className="fish__icon"><I.fish /></span>
-              <span className="fish__body">
-                <span className="fish__name">{f.name}</span>
-                {(f.note || f.timed) && <span className="fish__meta">{f.timed ? '⌚ ' : ''}{f.note || RARITY_WORD[f.rarity]}</span>}
-                <FishWindowChip name={f.name} zone={spot.zone} />
-              </span>
-              {(() => { // cross-link: this item is a cooking ingredient
-                const u = usage && usageFor(usage, f.name)
-                return u ? (
-                  <a className="fish__recipes" href={cookingLink(f.name)}
-                    title={`Used in: ${u.dishes.slice(0, 6).join(', ')}${u.dishes.length > 6 ? '…' : ''}`}
-                    onClick={(e) => e.stopPropagation()}>
-                    {u.count} recipe{u.count > 1 ? 's' : ''}
-                  </a>
-                ) : null
-              })()}
-              <span className="fish__rarity">{RARITY_WORD[f.rarity]}</span>
-              <button className={`fish__check${done ? ' is-done' : ''}`} onClick={() => onToggleFish(key)} title={done ? 'Caught' : 'Mark caught'}>
-                <I.check />
-              </button>
-            </div>
-          )
-        })}
+        {spot.fish.map((f) => (
+          <FishRow key={f.name} fish={f} spot={spot} caught={caught} onToggleFish={onToggleFish}
+            highlighted={highlightedFish === f.name} usage={usage} />
+        ))}
       </div>
     </article>
   )
@@ -198,6 +225,7 @@ export default function Fishing({ spots = FISHING_SPOTS }) {
   const [zone, setZone] = useState('All zones')
   const [toast, setToast] = useState(null)
   const [highlightId, setHighlightId] = useState(null)
+  const [highlightFish, setHighlightFish] = useState(null)
   const recipeUsage = useRecipeUsage() // item → dishes cross-links
   const toastTimer = useRef(null)
   useEffect(() => () => clearTimeout(toastTimer.current), []) // drop pending toast on unmount
@@ -244,9 +272,14 @@ export default function Fishing({ spots = FISHING_SPOTS }) {
     const target = spots.find((s) =>
       norm(s.name) === norm(h) || norm(s.zone) === norm(h) || s.fish.some((f) => norm(f.name) === norm(h)))
     if (!target) return
+    const fish = target.fish.find((f) => norm(f.name) === norm(h))
     setView('spots')
     setHighlightId(target.id)
-    const t = setTimeout(() => setHighlightId(null), 3000)
+    setHighlightFish(fish?.name || null)
+    const t = setTimeout(() => {
+      setHighlightId(null)
+      setHighlightFish(null)
+    }, 3000)
     return () => clearTimeout(t)
   }, [spots])
 
@@ -361,7 +394,9 @@ export default function Fishing({ spots = FISHING_SPOTS }) {
           ) : (
             <div className="spots">
               {filtered.map((s) => (
-                <SpotCard key={s.id} spot={s} caught={caught} highlighted={s.id === highlightId} onToggleFish={toggleFish} onToggleAll={toggleAll} onCopy={copyCoords} usage={recipeUsage} />
+                <SpotCard key={s.id} spot={s} caught={caught} highlighted={s.id === highlightId}
+                  highlightedFish={s.id === highlightId ? highlightFish : null}
+                  onToggleFish={toggleFish} onToggleAll={toggleAll} onCopy={copyCoords} usage={recipeUsage} />
               ))}
             </div>
           )}

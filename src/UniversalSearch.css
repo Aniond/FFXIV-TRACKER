@@ -58,13 +58,48 @@
 .dh-drop__go { width: 13px; height: 13px; color: var(--gold-dim, #8a7038); flex: 0 0 13px; }
 .dh-drop__row--ai .dh-drop__name { color: var(--gold-bright, #ecca82); }
 .dh-hero__recent { display: flex; flex-wrap: wrap; gap: 7px; margin-top: 15px; align-items: center; }
-.dh-hero__rlabel { width: 100%; font: 700 8.5px var(--fb, 'Manrope',system-ui,sans-serif); letter-spacing: .18em; text-transform: uppercase; color: var(--ink-faint, #6a6151); margin-bottom: -1px; }
+.dh-hero__recent-head { width: 100%; display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: -1px; }
+.dh-hero__rlabel { font: 700 8.5px var(--fb, 'Manrope',system-ui,sans-serif); letter-spacing: .18em; text-transform: uppercase; color: var(--ink-faint, #6a6151); }
+.dh-hero__clear {
+  font: 700 9px var(--fb, 'Manrope',system-ui,sans-serif);
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: var(--gold-dim, #8a7038);
+  background: transparent;
+  border: 0;
+  padding: 3px 0;
+  cursor: pointer;
+}
+.dh-hero__clear:hover { color: var(--gold-bright, #ecca82); }
+.dh-hero__chip-wrap {
+  display: inline-flex;
+  align-items: stretch;
+  max-width: calc(50% - 4px);
+}
 .dh-hero__chip {
   display: inline-flex; align-items: center; gap: 6px; font: 500 12px var(--fb, 'Manrope',system-ui,sans-serif); color: var(--ink, #cdbf9f);
   background: rgba(255,255,255,.025); border: 1px solid var(--bill-edge, #2e2719);
-  border-radius: 20px; padding: 6px 12px; cursor: pointer;
-  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: calc(50% - 4px);
+  border-radius: 20px 0 0 20px; padding: 6px 9px 6px 12px; cursor: pointer;
+  white-space: nowrap; overflow: hidden; min-width: 0;
   transition: border-color .12s, color .12s, background .12s;
 }
 .dh-hero__chip svg { width: 11px; height: 11px; flex: 0 0 11px; color: var(--ink-faint, #6a6151); }
+.dh-hero__chip-text { overflow: hidden; text-overflow: ellipsis; }
 .dh-hero__chip:hover { border-color: var(--gold-dim, #8a7038); color: var(--gold-bright, #ecca82); background: var(--gold-faint, rgba(201,163,91,.1)); }
+.dh-hero__chip-x {
+  flex: 0 0 26px;
+  width: 26px;
+  border: 1px solid var(--bill-edge, #2e2719);
+  border-left: 0;
+  border-radius: 0 20px 20px 0;
+  background: rgba(255,255,255,.02);
+  color: var(--ink-faint, #6a6151);
+  font: 700 10px var(--fb, 'Manrope',system-ui,sans-serif);
+  cursor: pointer;
+  transition: border-color .12s, color .12s, background .12s;
+}
+.dh-hero__chip-x:hover {
+  border-color: var(--gold-dim, #8a7038);
+  color: var(--gold-bright, #ecca82);
+  background: var(--gold-faint, rgba(201,163,91,.1));
+}
