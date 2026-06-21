@@ -49,6 +49,7 @@ const I = {
   scrip: (p) => (<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" {...p}><path d="M6 3h8l5 5v11a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2Z"/><path d="M14 3v5h5"/><path d="M8.5 13h7M8.5 16.5h5"/></svg>),
   gem: (p) => (<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" {...p}><path d="m12 21-9-12 3-6h12l3 6-9 12Z"/><path d="M3 9h18M9 3 6 9l6 12 6-12-3-6"/></svg>),
   knife: (p) => (<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" {...p}><path d="M6 22 17.5 4"/><path d="M17.5 4c1.5 2.5 2 5 0 9s-2 6-1.5 9"/></svg>),
+  check: (p) => (<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" {...p}><path d="M20 6 9 17l-5-5"/></svg>),
 }
 
 // ── Ingredient sourcing: badge / icon / colour / deep-link page per source ──
@@ -364,14 +365,36 @@ function planChecklist(plan) {
   return lines.join('\n')
 }
 
-function CraftPlan({ plan, onNav, onAddRecipe, onCopy }) {
+function planItemPriority(item) {
+  if (!item.window) return 4
+  const state = windowState(item.window)?.state
+  if (state === 'up') return 0
+  if (state === 'soon') return 1
+  if (state === 'closed') return 2
+  return 3
+}
+
+function sortedPlanItems(items) {
+  return [...items].sort((a, b) => planItemPriority(a) - planItemPriority(b) || a.name.localeCompare(b.name))
+}
+
+function CraftPlan({ plan, checkedIngs, onToggleItem, onNav, onAddRecipe, onCopy }) {
   if (!plan) return null
+  const flatItems = plan.groups.flatMap((group) => group.items)
+  const checkedCount = flatItems.filter((item) => checkedIngs?.has(item.name)).length
+  const totalCount = flatItems.length
+  const progress = totalCount ? Math.round((checkedCount / totalCount) * 100) : 0
+  const ready = totalCount > 0 && checkedCount === totalCount
   return (
     <section className="aiplan">
       <div className="aiplan__head">
         <div>
           <p>AI Craft Plan</p>
           <h2>{plan.recipe.name}</h2>
+          <div className={`aiplan__progress${ready ? ' is-ready' : ''}`}>
+            <span>{ready ? 'Ready to craft' : `${checkedCount}/${totalCount} complete`}</span>
+            <i><b style={{ width: `${progress}%` }} /></i>
+          </div>
         </div>
         <div className="aiplan__stats">
           {plan.craftCount > 0 && <span>{plan.craftCount} craft</span>}
@@ -400,14 +423,28 @@ function CraftPlan({ plan, onNav, onAddRecipe, onCopy }) {
           return (
             <div className={`aiplan__group is-${group.key}`} key={group.key}>
               <div className="aiplan__group-hd"><Icon />{meta.label}<span>{meta.hint}</span></div>
-              {group.items.map((item) => (
-                <button type="button" className="aiplan__item" key={`${group.key}-${item.name}-${item.source}`} onClick={() => onNav(itemPath(item.name))}>
+              {sortedPlanItems(group.items).map((item) => {
+                const checked = checkedIngs?.has(item.name)
+                const ws = item.window ? windowState(item.window) : null
+                return (
+                <button type="button" className={`aiplan__item${checked ? ' is-checked' : ''}${ws ? ` is-${ws.state}` : ''}`} key={`${group.key}-${item.name}-${item.source}`} onClick={() => onNav(itemPath(item.name))}>
+                  <span
+                    className="aiplan__check"
+                    role="checkbox"
+                    aria-checked={checked}
+                    onClick={(e) => { e.stopPropagation(); onToggleItem(item.name) }}
+                  >
+                    {checked ? <I.check /> : null}
+                  </span>
                   <span className="aiplan__qty">x{item.qty}</span>
                   <span className="aiplan__name">{item.name}</span>
-                  <span className="aiplan__detail">{planItemDetail(item) || 'Open item page'}</span>
+                  <span className="aiplan__detail">
+                    {ws ? `${ws.pre} ${fmtDur(ws.ms)} - ` : ''}{planItemDetail(item) || 'Open item page'}
+                  </span>
                   <I.arrow />
                 </button>
-              ))}
+                )
+              })}
             </div>
           )
         })}
@@ -831,8 +868,13 @@ export default function AISearch() {
       .catch(() => setReady(true))
   }, [])
 
-  // Keep timed-node countdowns ticking once there are results to show.
-  const hasTimed = useMemo(() => (result?.results || []).some((r) => r.category === 'mining' || r.category === 'botany'), [result])
+  const craftPlan = useMemo(() => findCraftPlan(result, recipeData), [result, recipeData])
+
+  // Keep timed-node countdowns ticking once there are results or plan rows to show.
+  const hasTimed = useMemo(() => (
+    (result?.results || []).some((r) => r.category === 'mining' || r.category === 'botany')
+    || (craftPlan?.timedCount || 0) > 0
+  ), [result, craftPlan])
   useEffect(() => {
     if (!hasTimed) return
     const id = setInterval(() => setTick((t) => t + 1), 1000)
@@ -842,7 +884,6 @@ export default function AISearch() {
   const isAdmin = !!user?.is_admin
   const canUse = isAdmin || publicOn
   const textLinks = useMemo(() => buildTextLinks(result, recipeData), [result, recipeData])
-  const craftPlan = useMemo(() => findCraftPlan(result, recipeData), [result, recipeData])
 
   // Auto-run a query passed via ?q= (e.g. from the dashboard's AI hero / chips).
   useEffect(() => {
@@ -1036,6 +1077,15 @@ export default function AISearch() {
 
               <CraftPlan
                 plan={craftPlan}
+                checkedIngs={checkedIngs}
+                onToggleItem={(name) => {
+                  setCheckedIngs((prev) => {
+                    const next = new Set(prev)
+                    if (next.has(name)) next.delete(name)
+                    else next.add(name)
+                    return next
+                  })
+                }}
                 onNav={navTo}
                 onAddRecipe={addRecipeToList}
                 onCopy={(text) => copyText(text)}

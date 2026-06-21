@@ -624,6 +624,20 @@
   margin: 0; color: var(--parchment);
   font: 800 18px var(--font-display); letter-spacing: .04em; line-height: 1.15;
 }
+.aiplan__progress {
+  display: flex; align-items: center; gap: 8px; margin-top: 8px;
+  color: var(--ink-dim); font: 700 11px var(--font-body);
+}
+.aiplan__progress.is-ready { color: var(--dot-up); }
+.aiplan__progress i {
+  width: 96px; height: 6px; border-radius: 999px; overflow: hidden;
+  background: rgba(0,0,0,.28); border: 1px solid var(--bill-edge);
+}
+.aiplan__progress b {
+  display: block; height: 100%; border-radius: inherit;
+  background: linear-gradient(90deg, var(--gold-dim), var(--gold-bright));
+}
+.aiplan__progress.is-ready b { background: var(--dot-up); }
 .aiplan__stats { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 5px; }
 .aiplan__stats span {
   color: var(--ink); background: rgba(0,0,0,.22); border: 1px solid var(--bill-edge);
@@ -651,11 +665,23 @@
   letter-spacing: 0; text-transform: none;
 }
 .aiplan__item {
-  width: 100%; display: grid; grid-template-columns: auto minmax(0, 1fr) minmax(130px, 1.2fr) auto;
+  width: 100%; display: grid; grid-template-columns: 18px auto minmax(0, 1fr) minmax(130px, 1.2fr) auto;
   align-items: center; gap: 8px; border: 0; background: transparent; color: var(--ink);
   padding: 7px 14px; cursor: pointer; text-align: left;
 }
 .aiplan__item:hover { background: rgba(201,163,91,.08); }
+.aiplan__item.is-up { background: rgba(90,170,114,.06); }
+.aiplan__item.is-soon { background: rgba(212,184,74,.06); }
+.aiplan__item.is-checked { opacity: .58; }
+.aiplan__item.is-checked .aiplan__name { text-decoration: line-through; text-decoration-color: var(--ink-dim); }
+.aiplan__check {
+  width: 16px; height: 16px; border-radius: 50%; display: grid; place-items: center;
+  border: 1.5px solid var(--ink-faint); color: #0a1e0f; background: transparent;
+}
+.aiplan__check svg { width: 9px; height: 9px; }
+.aiplan__item.is-checked .aiplan__check {
+  border-color: var(--dot-up); background: var(--dot-up);
+}
 .aiplan__qty { color: var(--gold-bright); font: 800 11px var(--font-body); white-space: nowrap; }
 .aiplan__name {
   min-width: 0; color: var(--parchment); font: 700 13px var(--font-body);
@@ -675,11 +701,11 @@
   .aiplan__group-hd { align-items: flex-start; flex-wrap: wrap; }
   .aiplan__group-hd span { margin-left: 0; width: 100%; }
   .aiplan__item {
-    grid-template-columns: auto minmax(0, 1fr) auto;
+    grid-template-columns: 18px auto minmax(0, 1fr) auto;
     min-height: 44px;
   }
   .aiplan__detail {
-    grid-column: 2 / -1;
+    grid-column: 3 / -1;
     white-space: normal;
     line-height: 1.3;
   }
