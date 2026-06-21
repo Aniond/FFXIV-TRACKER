@@ -11,6 +11,7 @@ import { API, getToken, fetchMe, fetchFlags, aiSearch, fetchRecipes, fetchJobs, 
 import { STAT_TYPES, STAT_KEY } from './cookingData'
 import { isFav, addFav } from './favNodes'
 import ShoppingListWidget from './ShoppingListWidget'
+import { itemPath } from './itemCatalog'
 import './AISearch.css'
 
 /* ============================================================
@@ -134,7 +135,6 @@ function buildIndexes(recipes) {
 function IngredientRow({ ing, recipeByName, onCopy, onNav, depth = 0 }) {
   const [open, setOpen] = useState(false)
   const source = ingSource(ing)
-  const itemId = ingItemId(ing)
   const m = metaForSource(source)
   const craftable = isCraftableIng(ing)
   const sub = craftable ? recipeByName?.get(norm(ing.name)) : null
@@ -151,9 +151,7 @@ function IngredientRow({ ing, recipeByName, onCopy, onNav, depth = 0 }) {
 
   function act() {
     if (canExpand) { setOpen((o) => !o); return }
-    if (craftable) { onNav(`/crafting/cooking?recipe=${encodeURIComponent(ing.name)}`); return }
-    if (m.page && hasGatherPageTarget(source, ing.name)) { onNav(`${m.page}?highlight=${encodeURIComponent(ing.name)}`); return }
-    if (isMarket && itemId) { window.open(`https://universalis.app/market/${itemId}`, '_blank', 'noopener'); return }
+    if (craftable || m.page || isMarket || canShowSource) { onNav(itemPath(ing.name)); return }
     if (canShowSource) setOpen((o) => !o)
   }
 
@@ -406,12 +404,7 @@ function hrefForResult(r, ingredientIndex) {
   if (r.source_url) return r.source_url
   if (r.category === 'hunt') return `/hunts?hunt=${encodeURIComponent(r.name)}`
   if (r.category === 'recipe') return `/crafting/cooking?recipe=${encodeURIComponent(r.name)}`
-  if (r.category === 'item' || r.category === 'scrip') {
-    const meta = ingredientIndex?.get(norm(r.name))
-    const gatherPath = GATHER_PATH[meta?.source]
-    if (gatherPath) return `${gatherPath}?highlight=${encodeURIComponent(r.name)}`
-    return `/crafting/cooking?ingredient=${encodeURIComponent(r.name)}`
-  }
+  if (r.category === 'item' || r.category === 'scrip') return itemPath(r.name)
   return PAGE_LINK[r.category]?.href || null
 }
 
@@ -472,12 +465,9 @@ function buildTextLinks(result, recipeData) {
   }
   for (const [key, ing] of recipeData?.ingredientIndex?.entries?.() || []) {
     if (links.has(key)) continue
-    const gatherPath = GATHER_PATH[ing.source]
     links.set(key, {
       name: ing.name,
-      href: gatherPath
-        ? `${gatherPath}?highlight=${encodeURIComponent(ing.name)}`
-        : `/crafting/cooking?ingredient=${encodeURIComponent(ing.name)}`,
+      href: itemPath(ing.name),
     })
   }
   return [...links.values()].filter((link) => link.name.length > 2).sort((a, b) => b.name.length - a.name.length)
@@ -522,6 +512,10 @@ function IngredientCard({ r, meta, onCopy, onNav }) {
                 Universalis<I.ext />
               </button>
             )}
+            <button type="button" className="airing__link"
+              onClick={(e) => { e.stopPropagation(); onNav(itemPath(r.name)) }}>
+              Item page<I.arrow />
+            </button>
             {gatherPath && (
               <button type="button" className="airing__link"
                 onClick={(e) => { e.stopPropagation(); onNav(`${gatherPath}?highlight=${encodeURIComponent(r.name)}`) }}>

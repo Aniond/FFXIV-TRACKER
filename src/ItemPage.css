@@ -1,0 +1,244 @@
+.item-ledger {
+  --item-gold: #c9a35b;
+  padding-bottom: 32px;
+}
+
+.item-hero {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 18px 16px 12px;
+}
+
+.item-hero__body {
+  min-width: 0;
+}
+
+.item-kicker {
+  margin: 0 0 4px;
+  font: 800 10px var(--font-body);
+  letter-spacing: .18em;
+  text-transform: uppercase;
+  color: var(--gold);
+}
+
+.item-hero h1 {
+  margin: 0;
+  font: 800 26px var(--font-display);
+  line-height: 1.08;
+  color: var(--parchment);
+  letter-spacing: .04em;
+}
+
+.item-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 10px;
+}
+
+.item-tags span {
+  border: 1px solid var(--bill-edge);
+  border-radius: 999px;
+  padding: 4px 9px;
+  color: var(--ink);
+  background: var(--bill);
+  font: 700 10px var(--font-body);
+  letter-spacing: .04em;
+}
+
+.item-grid {
+  display: grid;
+  gap: 12px;
+  padding: 8px 14px 0;
+}
+
+.item-panel {
+  background: var(--bill);
+  border: 1px solid var(--bill-edge);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+}
+
+.item-panel__hd {
+  padding: 13px 14px 9px;
+  border-bottom: 1px solid var(--bill-edge);
+}
+
+.item-panel h2 {
+  margin: 0;
+  color: var(--parchment);
+  font: 800 13px var(--font-display);
+  letter-spacing: .08em;
+}
+
+.source-list,
+.recipe-list {
+  display: flex;
+  flex-direction: column;
+}
+
+.source-card {
+  padding: 13px 14px;
+  border-left: 3px solid var(--item-gold);
+}
+
+.source-card + .source-card,
+.item-link-row + .item-link-row {
+  border-top: 1px solid var(--bill-edge);
+}
+
+.source-card--botany { --item-gold: #6fc08a; }
+.source-card--mining { --item-gold: #a07848; }
+.source-card--fishing { --item-gold: #38b8c0; }
+.source-card--vendor { --item-gold: #d4a84a; }
+.source-card--scrip-exchange { --item-gold: #c9a35b; }
+.source-card--gemstone { --item-gold: #c06ad4; }
+.source-card--market-board { --item-gold: #9fb4c8; }
+
+.source-card__top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 7px;
+}
+
+.source-card__badge,
+.source-card__qty {
+  color: var(--item-gold);
+  font: 800 10px var(--font-body);
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+
+.source-card__qty {
+  color: var(--ink-dim);
+  text-transform: none;
+  letter-spacing: .03em;
+}
+
+.source-card h3 {
+  margin: 0 0 6px;
+  color: var(--parchment);
+  font: 800 17px var(--font-display);
+  letter-spacing: .03em;
+  line-height: 1.2;
+}
+
+.source-card p {
+  margin: 0;
+  color: var(--ink);
+  font: 500 13px var(--font-body);
+  line-height: 1.45;
+}
+
+.source-card__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 11px;
+}
+
+.source-card__actions button,
+.item-link-row {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  border: 1px solid var(--bill-edge);
+  background: rgba(0,0,0,.2);
+  color: var(--ink);
+  border-radius: 8px;
+  padding: 7px 10px;
+  cursor: pointer;
+  font: 700 12px var(--font-body);
+}
+
+.source-card__actions button:hover,
+.item-link-row:hover {
+  border-color: var(--gold-dim);
+  color: var(--gold-bright);
+}
+
+.source-card__actions svg,
+.item-link-row svg {
+  width: 14px;
+  height: 14px;
+  flex: 0 0 14px;
+}
+
+.item-link-row {
+  width: 100%;
+  justify-content: space-between;
+  border: 0;
+  border-radius: 0;
+  padding: 12px 14px;
+  background: transparent;
+  text-align: left;
+}
+
+.item-link-row span {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  color: var(--parchment);
+}
+
+.item-link-row small {
+  color: var(--ink-dim);
+  font: 700 10px var(--font-body);
+}
+
+.item-empty,
+.item-state {
+  margin: 14px;
+  padding: 14px;
+  border: 1px solid var(--bill-edge);
+  border-radius: var(--radius-sm);
+  color: var(--ink-dim);
+  background: var(--bill);
+  font: 500 13px var(--font-body);
+}
+
+@media (min-width: 820px) {
+  .item-grid {
+    grid-template-columns: minmax(0, 1.25fr) minmax(320px, .75fr);
+    align-items: start;
+  }
+
+  .item-hero,
+  .item-grid {
+    padding-left: 24px;
+    padding-right: 24px;
+  }
+}
+
+@media (max-width: 520px) {
+  .item-hero {
+    padding: 14px 12px 10px;
+  }
+
+  .item-hero h1 {
+    font-size: 22px;
+  }
+
+  .item-grid {
+    padding: 6px 10px 0;
+  }
+
+  .source-card__top {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 3px;
+  }
+
+  .source-card__actions button,
+  .item-link-row {
+    min-height: 42px;
+  }
+
+  .item-link-row span {
+    flex-wrap: wrap;
+  }
+}

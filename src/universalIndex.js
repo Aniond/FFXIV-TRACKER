@@ -15,6 +15,7 @@ import { MINING_NODES } from './miningData.js'
 import { BOTANY_NODES } from './botanyData.js'
 import { FISHING_SPOTS } from './fishingData.js'
 import { API, fetchRecipes } from './api.js'
+import { itemPath } from './itemCatalog.js'
 
 const norm = (s) => String(s || '').trim().toLowerCase()
 
@@ -29,15 +30,15 @@ function staticEntries() {
   }
   for (const n of MINING_NODES) {
     add(n.name, `Mining node · ${n.zone}`, 'mining', `/gathering/mining?highlight=${encodeURIComponent(n.name)}`)
-    for (const it of n.items) add(it.name, `Mining · ${n.name}, ${n.zone}${n.window ? ' · timed' : ''}`, 'mining', `/gathering/mining?highlight=${encodeURIComponent(it.name)}`)
+    for (const it of n.items) add(it.name, `Mining · ${n.name}, ${n.zone}${n.window ? ' · timed' : ''}`, 'mining', itemPath(it.name))
   }
   for (const n of BOTANY_NODES) {
     add(n.name, `Botany node · ${n.zone}`, 'botany', `/gathering/botany?highlight=${encodeURIComponent(n.name)}`)
-    for (const it of n.items) add(it.name, `Botany · ${n.name}, ${n.zone}${n.window ? ' · timed' : ''}`, 'botany', `/gathering/botany?highlight=${encodeURIComponent(it.name)}`)
+    for (const it of n.items) add(it.name, `Botany · ${n.name}, ${n.zone}${n.window ? ' · timed' : ''}`, 'botany', itemPath(it.name))
   }
   for (const s of FISHING_SPOTS) {
     add(s.name, `Fishing spot · ${s.zone}`, 'fishing', `/gathering/fishing?highlight=${encodeURIComponent(s.name)}`)
-    for (const f of s.fish) add(f.name, `Fish · ${s.name}, ${s.zone}`, 'fishing', `/gathering/fishing?highlight=${encodeURIComponent(f.name)}`)
+    for (const f of s.fish) add(f.name, `Fish · ${s.name}, ${s.zone}`, 'fishing', itemPath(f.name))
   }
   return out
 }
@@ -76,7 +77,7 @@ async function liveEntries() {
           label: ing.name,
           sub: 'Ingredient · recipes that use it',
           cat: 'ingredient',
-          href: `/crafting/cooking?ingredient=${encodeURIComponent(ing.name)}`,
+          href: itemPath(ing.name),
         })
       }
     }

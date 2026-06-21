@@ -8,6 +8,7 @@ import Fishing from './Fishing'
 import Mining from './Mining'
 import Botany from './Botany'
 import AISearch from './AISearch'
+import ItemPage from './ItemPage'
 
 import SavedRecipes from './SavedRecipes'
 import Timers from './Timers'
@@ -19,7 +20,9 @@ import { useUrl } from './router'
 // (recipe caches, synced-state hydration, search index) survives.
 function pageFor(path) {
   const profileMatch = path.match(/^\/profile\/([^/]+)/)
+  const itemMatch = path.match(/^\/item\/([^/]+)/)
   if (path === '/admin') return <AdminDashboard />
+  if (itemMatch) return <ItemPage slug={itemMatch[1]} />
   if (path === '/ai' || path.startsWith('/crafting')) return <AISearch />
   if (path === '/hunts') return <App />
   if (path === '/saved-recipes') return <SavedRecipes />

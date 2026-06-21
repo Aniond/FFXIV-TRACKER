@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo } from 'react'
 import { windowState, fmtDur } from './etWindow.js'
+import { itemPath } from './itemCatalog'
 import './CraftingJob.css' // We can reuse the CSS for now
 
 const winState = windowState
@@ -57,14 +58,7 @@ export default function ShoppingListWidget({ list, isOpen, onNavigate, onOpen, o
   }, [list, checkedIngs])
 
   function itemAction(item) {
-    if (item.craftable) return () => onNavigate?.(`/crafting/cooking?recipe=${encodeURIComponent(item.name)}`)
-    if (item.source === 'botany') return () => onNavigate?.(`/gathering/botany?highlight=${encodeURIComponent(item.name)}`)
-    if (item.source === 'mining') return () => onNavigate?.(`/gathering/mining?highlight=${encodeURIComponent(item.name)}`)
-    if (item.source === 'fishing') return () => onNavigate?.(`/gathering/fishing?highlight=${encodeURIComponent(item.name)}`)
-    if (item.source === 'market' && (item.itemId || item.id)) {
-      return () => window.open(`https://universalis.app/market/${item.itemId || item.id}`, '_blank', 'noopener')
-    }
-    return null
+    return () => onNavigate?.(itemPath(item.name))
   }
 
   function ShopGroup({ label, iconName, items, isTimed=false }) {
