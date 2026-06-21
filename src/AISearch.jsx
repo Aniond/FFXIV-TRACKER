@@ -265,6 +265,157 @@ function CraftAdvisorResult({ result }) {
   )
 }
 
+const PLAN_SOURCE = {
+  BOTANY: { key: 'gather', label: 'Gather', icon: 'leaf', hint: 'Botany nodes' },
+  MINING: { key: 'gather', label: 'Gather', icon: 'pick', hint: 'Mining nodes' },
+  FISHING: { key: 'fish', label: 'Fish', icon: 'fish', hint: 'Fishing holes' },
+  VENDOR: { key: 'buy', label: 'Buy', icon: 'coin', hint: 'Vendors' },
+  SCRIP_EXCHANGE: { key: 'buy', label: 'Buy', icon: 'scrip', hint: 'Scrip exchange' },
+  GEMSTONE: { key: 'buy', label: 'Buy', icon: 'gem', hint: 'Gemstone traders' },
+  MARKET_BOARD: { key: 'market', label: 'Market fallback', icon: 'cart', hint: 'Market Board' },
+}
+
+const PLAN_ORDER = ['craft', 'gather', 'fish', 'buy', 'market']
+
+function buildCraftPlan(recipe, recipeByName) {
+  if (!recipe?.ingredients?.length) return null
+  const buckets = new Map(PLAN_ORDER.map((key) => [key, []]))
+  const totals = new Map()
+  const seenCrafts = new Set()
+
+  function addItem(bucket, ing, qty, source, extra = {}) {
+    const key = `${bucket}:${norm(ing.name)}:${source}`
+    const existing = totals.get(key)
+    if (existing) {
+      existing.qty += qty
+      return
+    }
+    const entry = { ...ing, ...extra, qty, source, bucket }
+    totals.set(key, entry)
+    buckets.get(bucket)?.push(entry)
+  }
+
+  function walk(ingredients, mult = 1, depth = 0) {
+    for (const ing of ingredients || []) {
+      const qty = ingAmount(ing) * mult
+      const source = ingSource(ing)
+      const sub = isCraftableIng(ing) ? recipeByName?.get(norm(ing.name)) : null
+      if (sub && depth < 4) {
+        const craftKey = norm(ing.name)
+        if (!seenCrafts.has(craftKey)) {
+          seenCrafts.add(craftKey)
+          addItem('craft', ing, qty, 'CRAFT', { recipe: sub })
+        }
+        walk(sub.ingredients, Math.ceil(qty / (sub.yields || 1)), depth + 1)
+        continue
+      }
+      const meta = PLAN_SOURCE[source] || PLAN_SOURCE.MARKET_BOARD
+      addItem(meta.key, ing, qty, source)
+    }
+  }
+
+  walk(recipe.ingredients)
+  const groups = PLAN_ORDER
+    .map((key) => ({ key, items: buckets.get(key) || [] }))
+    .filter((group) => group.items.length > 0)
+  if (!groups.length) return null
+  return {
+    recipe,
+    groups,
+    craftCount: buckets.get('craft')?.length || 0,
+    gatherCount: (buckets.get('gather')?.length || 0) + (buckets.get('fish')?.length || 0),
+    buyCount: (buckets.get('buy')?.length || 0) + (buckets.get('market')?.length || 0),
+    timedCount: [...totals.values()].filter((item) => item.window).length,
+  }
+}
+
+function findCraftPlan(result, recipeData) {
+  if (!result || !recipeData?.recipeByName) return null
+  for (const r of result.results || []) {
+    if (r.category !== 'recipe') continue
+    const recipe = recipeData.recipeByName.get(norm(r.name))
+    if (recipe) return buildCraftPlan(recipe, recipeData.recipeByName)
+  }
+  return null
+}
+
+function planSourceMeta(source) {
+  if (source === 'CRAFT') return { label: 'Craft first', icon: 'knife', hint: 'Subcrafts' }
+  const meta = PLAN_SOURCE[source] || PLAN_SOURCE.MARKET_BOARD
+  return meta
+}
+
+function planItemDetail(item) {
+  if (item.source === 'CRAFT') return 'Intermediate craft'
+  if (item.source === 'MARKET_BOARD') return 'Buy or use market fallback'
+  return [item.zone, item.nodeName || item.node_name, item.coords, costLabel(item), item.notes].filter(Boolean).join(' - ')
+}
+
+function planChecklist(plan) {
+  const lines = [`${plan.recipe.name} craft plan`]
+  for (const group of plan.groups) {
+    const meta = planSourceMeta(group.items[0]?.source)
+    lines.push('', meta.label)
+    for (const item of group.items) {
+      const detail = planItemDetail(item)
+      lines.push(`- ${item.qty}x ${item.name}${detail ? ` (${detail})` : ''}`)
+    }
+  }
+  return lines.join('\n')
+}
+
+function CraftPlan({ plan, onNav, onAddRecipe, onCopy }) {
+  if (!plan) return null
+  return (
+    <section className="aiplan">
+      <div className="aiplan__head">
+        <div>
+          <p>AI Craft Plan</p>
+          <h2>{plan.recipe.name}</h2>
+        </div>
+        <div className="aiplan__stats">
+          {plan.craftCount > 0 && <span>{plan.craftCount} craft</span>}
+          {plan.gatherCount > 0 && <span>{plan.gatherCount} gather</span>}
+          {plan.buyCount > 0 && <span>{plan.buyCount} buy</span>}
+          {plan.timedCount > 0 && <span>{plan.timedCount} timed</span>}
+        </div>
+      </div>
+      <div className="aiplan__actions">
+        <button type="button" onClick={() => onAddRecipe(plan.recipe.id)}><I.cart />Add Plan</button>
+        <button type="button" onClick={() => onCopy(planChecklist(plan))}><I.copy />Copy Checklist</button>
+        <button type="button" onClick={() => onNav(`/crafting/cooking?recipe=${encodeURIComponent(plan.recipe.name)}`)}>Cooking Log<I.arrow /></button>
+      </div>
+      <div className="aiplan__groups">
+        {plan.groups.map((group) => {
+          const meta = group.key === 'craft'
+            ? { label: 'Craft First', icon: 'knife', hint: 'Make these before the final recipe' }
+            : group.key === 'gather'
+              ? { label: 'Gather', icon: 'leaf', hint: 'Botany and mining items' }
+              : group.key === 'fish'
+                ? { label: 'Fish', icon: 'fish', hint: 'Fishing items' }
+                : group.key === 'buy'
+                  ? { label: 'Buy', icon: 'coin', hint: 'Vendor, scrip, and gemstone sources' }
+                  : { label: 'Market Fallback', icon: 'cart', hint: 'Use market board if you want speed' }
+          const Icon = I[meta.icon]
+          return (
+            <div className={`aiplan__group is-${group.key}`} key={group.key}>
+              <div className="aiplan__group-hd"><Icon />{meta.label}<span>{meta.hint}</span></div>
+              {group.items.map((item) => (
+                <button type="button" className="aiplan__item" key={`${group.key}-${item.name}-${item.source}`} onClick={() => onNav(itemPath(item.name))}>
+                  <span className="aiplan__qty">x{item.qty}</span>
+                  <span className="aiplan__name">{item.name}</span>
+                  <span className="aiplan__detail">{planItemDetail(item) || 'Open item page'}</span>
+                  <I.arrow />
+                </button>
+              ))}
+            </div>
+          )
+        })}
+      </div>
+    </section>
+  )
+}
+
 export function RecipeCard({ recipe, recipeByName, onCopy, onNav }) {
   const [open, setOpen] = useState(false)
   const [guideOpen, setGuideOpen] = useState(false)
@@ -691,6 +842,7 @@ export default function AISearch() {
   const isAdmin = !!user?.is_admin
   const canUse = isAdmin || publicOn
   const textLinks = useMemo(() => buildTextLinks(result, recipeData), [result, recipeData])
+  const craftPlan = useMemo(() => findCraftPlan(result, recipeData), [result, recipeData])
 
   // Auto-run a query passed via ?q= (e.g. from the dashboard's AI hero / chips).
   useEffect(() => {
@@ -745,7 +897,17 @@ export default function AISearch() {
 
   function showToast(m) { setToast(m); clearTimeout(toastTimer.current); toastTimer.current = setTimeout(() => setToast(null), 1500) }
   function copyCoords(text) { navigator.clipboard?.writeText(String(text).replace(/^~/, '')).catch(() => {}); showToast(`Copied ${text}`) }
+  function copyText(text, message = 'Copied checklist') { navigator.clipboard?.writeText(String(text)).catch(() => {}); showToast(message) }
   function navTo(url) { navigate(url) }
+  function addRecipeToList(id) {
+    setListIds((prev) => {
+      const next = new Set(prev)
+      next.add(id)
+      return next
+    })
+    showToast('Added plan to shopping list')
+    setSheetOpen(true)
+  }
 
   async function run(query) {
     const text = (query ?? q).trim()
@@ -871,6 +1033,13 @@ export default function AISearch() {
                 <I.spark className="ai-summary__ico" />
                 <span><LinkedText text={result.summary} links={textLinks} /></span>
               </div>
+
+              <CraftPlan
+                plan={craftPlan}
+                onNav={navTo}
+                onAddRecipe={addRecipeToList}
+                onCopy={(text) => copyText(text)}
+              />
 
               {result.results?.length > 0 && (
                 <div className="ai-cards">
