@@ -5,6 +5,8 @@ import { useSyncedState, SET_CODEC, readState, writeState } from './syncedState'
 import { navigate } from './router'
 import { MINING_NODES } from './miningData'
 import { BOTANY_NODES } from './botanyData'
+import { FISHING_SPOTS } from './fishingData'
+import { EXTRA_BOTANY_NODES, EXTRA_MINING_NODES, EXTRA_FISHING_SPOTS } from './crosslinkNodes'
 import { API, getToken, fetchMe, fetchFlags, aiSearch, fetchRecipes, fetchJobs, aiCraftGuide } from './api'
 import { STAT_TYPES, STAT_KEY } from './cookingData'
 import { isFav, addFav } from './favNodes'
@@ -64,7 +66,25 @@ const SRC_KEY = {
   SCRIP_EXCHANGE: 'scrip', GEMSTONE: 'gemstone', MARKET_BOARD: 'market', VENDOR: 'vendor',
   BOTANY: 'botany', MINING: 'mining', FISHING: 'fishing',
 }
-const metaForSource = (source) => SOURCE_META[SRC_KEY[source] || 'market']
+const API_SOURCE = {
+  scrip: 'SCRIP_EXCHANGE',
+  gemstone: 'GEMSTONE',
+  market: 'MARKET_BOARD',
+  vendor: 'VENDOR',
+  botany: 'BOTANY',
+  mining: 'MINING',
+  fishing: 'FISHING',
+}
+const sourceKey = (source) => {
+  const raw = String(source || '').trim()
+  const upper = raw.toUpperCase()
+  return SRC_KEY[upper] ? upper : (API_SOURCE[raw.toLowerCase()] || 'MARKET_BOARD')
+}
+const metaForSource = (source) => SOURCE_META[SRC_KEY[sourceKey(source)] || 'market']
+const ingAmount = (ing) => ing.amount ?? ing.qty ?? 1
+const ingItemId = (ing) => ing.id ?? ing.itemId ?? null
+const isCraftableIng = (ing) => !!(ing.subcraft || ing.craftable)
+const ingSource = (ing) => sourceKey(ing.source)
 
 // Short tier note from the scrip/gemstone currency name (Orange = Lv 100, Purple = Lv 90).
 function scripNote(currency) {
@@ -80,19 +100,25 @@ function scripNote(currency) {
 // One clean cost line from a recipe-ingredient record.
 function costLabel(ing) {
   if (!ing) return null
-  if ((ing.source === 'SCRIP_EXCHANGE' || ing.source === 'GEMSTONE') && ing.currency) return `${ing.currency} × ${ing.price}`
-  if (ing.source === 'VENDOR' && ing.price != null) return `${ing.price} gil`
-  if (ing.source === 'MARKET_BOARD') return 'Market Board'
+  const source = ingSource(ing)
+  if ((source === 'SCRIP_EXCHANGE' || source === 'GEMSTONE') && ing.currency) return `${ing.currency} x ${ing.price}`
+  if (source === 'VENDOR' && ing.price != null) return `${ing.price} gil`
+  if (source === 'MARKET_BOARD') return 'Market Board'
   return null
 }
-
 // Build lookup maps from the full /api/recipes payload (dishes + subcrafts, all
 // expansions). recipeByName resolves recipe + subcraft cards; ingredientIndex
 // carries each ingredient's source/cost plus the Dawntrail dishes that use it.
 function buildIndexes(recipes) {
   const recipeByName = new Map()
+  const byName = {}
+  const byId = {}
   const ingredientIndex = new Map()
-  for (const r of recipes || []) recipeByName.set(norm(r.name), r)
+  for (const r of recipes || []) {
+    recipeByName.set(norm(r.name), r)
+    byName[norm(r.name)] = r
+    byId[String(r.id)] = r
+  }
   for (const r of recipes || []) {
     for (const ing of (r.ingredients || [])) {
       const k = norm(ing.name)
@@ -101,35 +127,38 @@ function buildIndexes(recipes) {
       if (!r.is_subcraft && r.expansion === 'Dawntrail') e.usedIn.push(r.name)
     }
   }
-  return { recipeByName, ingredientIndex }
+  return { recipeByName, ingredientIndex, byName, byId }
 }
 
 /* ── Actionable ingredient chip (used inside recipe cards) ────────────────── */
 function IngredientRow({ ing, recipeByName, onCopy, onNav, depth = 0 }) {
   const [open, setOpen] = useState(false)
-  const m = metaForSource(ing.source)
-  const sub = ing.subcraft ? recipeByName?.get(norm(ing.name)) : null
-  const canExpand = !!(ing.subcraft && sub && depth < 2)
-  const Ico = ing.subcraft ? I.knife : I[m.icon]
+  const source = ingSource(ing)
+  const itemId = ingItemId(ing)
+  const m = metaForSource(source)
+  const craftable = isCraftableIng(ing)
+  const sub = craftable ? recipeByName?.get(norm(ing.name)) : null
+  const canExpand = !!(craftable && sub && depth < 2)
+  const canShowSource = ['VENDOR', 'SCRIP_EXCHANGE', 'GEMSTONE'].includes(source) || !!ing.notes || !!ing.coords
+  const Ico = craftable ? I.knife : I[m.icon]
   const ws = ing.window ? windowState(ing.window) : null
-  const accent = ing.subcraft ? '#7c93e8' : m.color
-  const isMarket = !ing.subcraft && ing.source === 'MARKET_BOARD'
-  // Scrip / gemstone / vendor show their cost inline.
-  const cost = (ing.source === 'SCRIP_EXCHANGE' || ing.source === 'GEMSTONE') && ing.currency
-      ? `${ing.currency} × ${ing.price}`
-    : (ing.source === 'VENDOR' && ing.price != null) ? `${ing.price} gil`
+  const accent = craftable ? '#7c93e8' : m.color
+  const isMarket = !craftable && source === 'MARKET_BOARD'
+  const cost = (source === 'SCRIP_EXCHANGE' || source === 'GEMSTONE') && ing.currency
+    ? `${ing.currency} x ${ing.price}`
+    : (source === 'VENDOR' && ing.price != null) ? `${ing.price} gil`
     : null
 
-  // Where tapping the row goes.
   function act() {
     if (canExpand) { setOpen((o) => !o); return }
-    if (ing.subcraft) return // craftable but no sub-recipe to expand
-    if (m.page) { onNav(`${m.page}?highlight=${encodeURIComponent(ing.name)}`); return }
-    if (isMarket && ing.id) window.open(`https://universalis.app/market/${ing.id}`, '_blank', 'noopener')
+    if (craftable) { onNav(`/crafting/cooking?recipe=${encodeURIComponent(ing.name)}`); return }
+    if (m.page && hasGatherPageTarget(source, ing.name)) { onNav(`${m.page}?highlight=${encodeURIComponent(ing.name)}`); return }
+    if (isMarket && itemId) { window.open(`https://universalis.app/market/${itemId}`, '_blank', 'noopener'); return }
+    if (canShowSource) setOpen((o) => !o)
   }
-  // Market rows read as "buy it" — dim, no nav glyph (per brief).
+
   const goGlyph = canExpand ? <I.chevron className={open ? 'is-open' : ''} />
-    : (m.page && !ing.subcraft) ? <I.arrow />
+    : (m.page || isMarket || canShowSource || craftable) ? <I.arrow />
     : null
 
   return (
@@ -137,10 +166,10 @@ function IngredientRow({ ing, recipeByName, onCopy, onNav, depth = 0 }) {
       <div className={`airow${isMarket ? ' airow--market' : ''}`} role="button" tabIndex={0} style={{ '--ic': accent }}
         onClick={act} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); act() } }}>
         <span className="airow__ico"><Ico /></span>
-        <span className="airow__name">{ing.name}<span className="airow__qty">×{ing.amount}</span></span>
-        {ing.subcraft && <span className="airow__tag">Craft</span>}
+        <span className="airow__name">{ing.name}<span className="airow__qty">x{ingAmount(ing)}</span></span>
+        {craftable && <span className="airow__tag">Craft</span>}
         <div className="airow__meta">
-          {!ing.subcraft && <span className="airow__src" style={{ '--ic': accent }}><Ico />{m.badge}</span>}
+          {!craftable && <span className="airow__src" style={{ '--ic': accent }}><Ico />{m.badge}</span>}
           {cost && <span className="airow__cost">{cost}</span>}
           {ws && <span className={`airow__timer is-${ws.state}`}>{ws.pre} {fmtDur(ws.ms)}</span>}
           {ing.coords && (
@@ -157,10 +186,18 @@ function IngredientRow({ ing, recipeByName, onCopy, onNav, depth = 0 }) {
           ))}
         </div>
       )}
+      {open && !canExpand && canShowSource && (
+        <div className="airow__tip">
+          {[m.badge, ing.zone, ing.nodeName || ing.node_name, cost, ing.notes].filter(Boolean).join(' - ')}
+          {ing.coords && (
+            <button type="button" className="airow__coords" title="Tap to copy"
+              onClick={(e) => { e.stopPropagation(); onCopy(ing.coords) }}>{ing.coords}</button>
+          )}
+        </div>
+      )}
     </div>
   )
 }
-
 
 /* ── Recipe card (crest + name, CUL/ilvl/stars, buff chips, ingredient rows) ─ */
 const formatGil = (value) => (
@@ -268,7 +305,7 @@ export function RecipeCard({ recipe, recipeByName, onCopy, onNav }) {
     }
   }
 
-  const buffs = recipe.food_buff || []
+  const buffs = recipe.food_buff || recipe.buffs || []
   const accent = STAT_TYPES[STAT_KEY[buffs[0]?.stat]]?.color || 'var(--gold)'
   const hasTimed = recipe.ingredients.some((i) => i.window)
   // Timed gathering ingredients first (matches the cooking page ordering).
@@ -300,15 +337,15 @@ export function RecipeCard({ recipe, recipeByName, onCopy, onNav }) {
       {open && (
         <div className="airecipe__body">
           <div className="airecipe__meta" style={{ marginBottom: 8 }}>
-            <span className="airecipe__job">CUL</span>
-            <span>ilvl {recipe.item_level}</span>
+            <span className="airecipe__job">{recipe.job || 'CUL'}</span>
+            <span>ilvl {recipe.item_level ?? recipe.ilvl ?? 0}</span>
             {recipe.stars > 0 && <><span className="airecipe__dot">·</span><span className="airecipe__stars">{'★'.repeat(recipe.stars)}</span></>}
           </div>
           {buffs.length > 0 && (
             <div className="aibuffs" style={{ marginBottom: 10 }}>
               {buffs.map((b, i) => {
                 const color = STAT_TYPES[STAT_KEY[b.stat]]?.color || 'var(--gold)'
-                const val = b.relative ? `+${b.valueHQ}%` : `+${b.valueHQ}`
+                const val = b.val || (b.relative ? `+${b.valueHQ}%` : `+${b.valueHQ}`)
                 return <span key={i} className="aibuff" style={{ '--bc': color }}>{b.stat} {val}</span>
               })}
             </div>
@@ -449,7 +486,7 @@ function buildTextLinks(result, recipeData) {
 /* ── Ingredient / scrip card (Flint Corn etc.) — collapsible ─────────────── */
 function IngredientCard({ r, meta, onCopy, onNav }) {
   const [open, setOpen] = useState(false)
-  const source = meta?.source || (r.category === 'scrip' ? 'SCRIP_EXCHANGE' : 'MARKET_BOARD')
+  const source = ingSource(meta || { source: r.category === 'scrip' ? 'SCRIP_EXCHANGE' : 'MARKET_BOARD' })
   const m = metaForSource(source)
   const Ico = I[m.icon]
   const cost = costLabel(meta)
@@ -479,9 +516,9 @@ function IngredientCard({ r, meta, onCopy, onNav }) {
             : (detail && <p className="aicard__detail">{detail}</p>)}
           {note && <div className="airing__note">{note}</div>}
           <div className="aicard__foot">
-            {source === 'MARKET_BOARD' && meta?.id && (
+            {source === 'MARKET_BOARD' && ingItemId(meta || {}) && (
               <button type="button" className="airing__link"
-                onClick={(e) => { e.stopPropagation(); window.open(`https://universalis.app/market/${meta.id}`, '_blank', 'noopener') }}>
+                onClick={(e) => { e.stopPropagation(); window.open(`https://universalis.app/market/${ingItemId(meta)}`, '_blank', 'noopener') }}>
                 Universalis<I.ext />
               </button>
             )}
@@ -539,6 +576,19 @@ const TIMED_BY_COORDS = (() => {
   ;[...MINING_NODES, ...BOTANY_NODES].forEach((n) => { if (n.window) m.set(normCoords(n.coords), n) })
   return m
 })()
+
+const GATHER_PAGE_ITEMS = (() => {
+  const make = () => new Set()
+  const sets = { MINING: make(), BOTANY: make(), FISHING: make() }
+  const addNode = (set, n) => { set.add(norm(n.name)); (n.items || []).forEach((i) => set.add(norm(i.name))) }
+  const addSpot = (set, s) => { set.add(norm(s.name)); (s.fish || []).forEach((f) => set.add(norm(f.name))) }
+  ;[...MINING_NODES, ...EXTRA_MINING_NODES].forEach((n) => addNode(sets.MINING, n))
+  ;[...BOTANY_NODES, ...EXTRA_BOTANY_NODES].forEach((n) => addNode(sets.BOTANY, n))
+  ;[...FISHING_SPOTS, ...EXTRA_FISHING_SPOTS].forEach((s) => addSpot(sets.FISHING, s))
+  return sets
+})()
+
+const hasGatherPageTarget = (source, name) => !!GATHER_PAGE_ITEMS[source]?.has(norm(name))
 
 // Dispatcher: rich Recipe / Ingredient cards when we have the data, else the
 // standard gather/hunt card.
@@ -651,7 +701,12 @@ export default function AISearch() {
   // Auto-run a query passed via ?q= (e.g. from the dashboard's AI hero / chips).
   useEffect(() => {
     if (!ready || !canUse || didAuto.current) return
-    const iq = new URLSearchParams(window.location.search).get('q')
+    const params = new URLSearchParams(window.location.search)
+    const recipe = params.get('recipe')
+    const ingredient = params.get('ingredient')
+    const iq = params.get('q')
+      || (recipe ? `How do I make ${recipe}?` : null)
+      || (ingredient ? `Where do I get ${ingredient}?` : null)
     if (iq && iq.trim()) { didAuto.current = true; setQ(iq.trim()); run(iq.trim()) }
   }, [ready, canUse])
 
@@ -672,11 +727,18 @@ export default function AISearch() {
       if (!r) continue
       const add = (ings, mult = 1) => {
         for (const i of ings) {
-          const qty = i.amount * mult
+          const qty = ingAmount(i) * mult
+          const normalized = {
+            ...i,
+            source: SRC_KEY[ingSource(i)] || 'market',
+            craftable: isCraftableIng(i),
+            itemId: ingItemId(i),
+            qty,
+          }
           if (totals[i.name]) totals[i.name].qty += qty
-          else totals[i.name] = { ...i, qty }
+          else totals[i.name] = normalized
           
-          if (i.craftable) {
+          if (isCraftableIng(i)) {
             const sub = recipeData.byName[i.name.trim().toLowerCase()]
             if (sub && sub.ingredients) add(sub.ingredients, Math.ceil(qty / (sub.yields || 1)))
           }
@@ -840,6 +902,7 @@ export default function AISearch() {
       <ShoppingListWidget 
         list={shoppingListData}
         isOpen={sheetOpen}
+        onNavigate={navTo}
         onOpen={() => setSheetOpen(true)}
         onClose={() => setSheetOpen(false)}
         onClear={() => { setListIds(new Set()); setCheckedIngs(new Set()) }}

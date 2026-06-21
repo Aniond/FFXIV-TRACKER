@@ -4,6 +4,7 @@ import { RecipeCard } from './AISearch'
 import { fetchRecipes, fetchPrices } from './api'
 import { adaptRecipes } from './cookingData'
 import { useSyncedState, SET_CODEC } from './syncedState'
+import { navigate } from './router'
 import './CraftingJob.css'
 
 const I = {
@@ -70,8 +71,8 @@ export default function SavedRecipes() {
   // We don't support shopping lists on the saved recipes page directly yet, so we pass noops.
   function toggleList() {}
   
-  function handleNav(ing) {
-    // Basic deep-link support; see CraftingJob.jsx
+  function handleNav(url) {
+    navigate(url)
   }
   function copyCoords(text) {
     navigator.clipboard?.writeText(String(text).replace(/^~/, '')).catch(() => {})

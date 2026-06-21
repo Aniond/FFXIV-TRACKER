@@ -24,7 +24,7 @@ const I = {
   x:         p => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" {...p}><path d="M18 6 6 18M6 6l12 12"/></svg>,
 }
 
-export default function ShoppingListWidget({ list, isOpen, onOpen, onClose, onClear, checkedIngs, onCheckIng }) {
+export default function ShoppingListWidget({ list, isOpen, onNavigate, onOpen, onClose, onClear, checkedIngs, onCheckIng }) {
   const [, setTick] = useState(0)
   useEffect(() => {
     if (!isOpen) return
@@ -56,6 +56,17 @@ export default function ShoppingListWidget({ list, isOpen, onOpen, onClose, onCl
     return { craft, timed, botany, mining, fishing, vendor, scrip, gemstone, market, checkedList }
   }, [list, checkedIngs])
 
+  function itemAction(item) {
+    if (item.craftable) return () => onNavigate?.(`/crafting/cooking?recipe=${encodeURIComponent(item.name)}`)
+    if (item.source === 'botany') return () => onNavigate?.(`/gathering/botany?highlight=${encodeURIComponent(item.name)}`)
+    if (item.source === 'mining') return () => onNavigate?.(`/gathering/mining?highlight=${encodeURIComponent(item.name)}`)
+    if (item.source === 'fishing') return () => onNavigate?.(`/gathering/fishing?highlight=${encodeURIComponent(item.name)}`)
+    if (item.source === 'market' && (item.itemId || item.id)) {
+      return () => window.open(`https://universalis.app/market/${item.itemId || item.id}`, '_blank', 'noopener')
+    }
+    return null
+  }
+
   function ShopGroup({ label, iconName, items, isTimed=false }) {
     const IcoEl = I[iconName]
     return (
@@ -71,9 +82,17 @@ export default function ShoppingListWidget({ list, isOpen, onOpen, onClose, onCl
             : 'var(--dot-avail)'
           if (ws) dc = ws.state==='up' ? 'var(--dot-avail)' : ws.state==='soon' ? 'var(--dot-soon)' : 'var(--dot-closed)'
           const isChecked = checkedIngs?.has(item.name)
+          const action = itemAction(item)
           return (
-            <div className={`slist__item${isChecked ? ' is-checked' : ''}`} key={item.name}>
-              <span className="chip__cb" role="checkbox" aria-checked={isChecked} onClick={() => onCheckIng(item.name)} style={{ marginRight: '8px' }}>
+            <div
+              className={`slist__item${isChecked ? ' is-checked' : ''}${action ? ' is-link' : ''}`}
+              key={item.name}
+              role={action ? 'button' : undefined}
+              tabIndex={action ? 0 : undefined}
+              onClick={action || undefined}
+              onKeyDown={action ? (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); action() } } : undefined}
+            >
+              <span className="chip__cb" role="checkbox" aria-checked={isChecked} onClick={(e) => { e.stopPropagation(); onCheckIng(item.name) }} style={{ marginRight: '8px' }}>
                 {isChecked ? <span className="chip__cb-check"><I.check/></span> : <span className="chip__cb-ring"/>}
               </span>
               <span className="slist__item-dot" style={{ background:dc, boxShadow:`0 0 5px ${dc}` }}/>
