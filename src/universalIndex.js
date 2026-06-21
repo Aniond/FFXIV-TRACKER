@@ -18,6 +18,75 @@ import { API, fetchRecipes } from './api.js'
 import { itemPath } from './itemCatalog.js'
 
 const norm = (s) => String(s || '').trim().toLowerCase()
+const compact = (s) => norm(s).replace(/[^a-z0-9]+/g, '')
+const words = (s) => norm(s).split(/[^a-z0-9]+/).filter(Boolean)
+
+function typoBudget(s) {
+  if (s.length <= 4) return 0
+  if (s.length <= 8) return 1
+  return 2
+}
+
+function editDistanceAtMost(a, b, max) {
+  if (max < 0) return false
+  if (Math.abs(a.length - b.length) > max) return false
+  let prev = Array.from({ length: b.length + 1 }, (_, i) => i)
+  for (let i = 1; i <= a.length; i++) {
+    const curr = [i]
+    let rowMin = curr[0]
+    for (let j = 1; j <= b.length; j++) {
+      const cost = a[i - 1] === b[j - 1] ? 0 : 1
+      const v = Math.min(
+        prev[j] + 1,
+        curr[j - 1] + 1,
+        prev[j - 1] + cost,
+      )
+      curr[j] = v
+      rowMin = Math.min(rowMin, v)
+    }
+    if (rowMin > max) return false
+    prev = curr
+  }
+  return prev[b.length] <= max
+}
+
+function matchesInitialAndLastToken(q, labelWords) {
+  if (q.length < 4 || labelWords.length < 2) return false
+  const [first] = labelWords
+  const last = labelWords[labelWords.length - 1]
+  return q[0] === first[0] && last.startsWith(q.slice(1))
+}
+
+function fuzzyWordsMatch(queryWords, labelWords) {
+  if (!queryWords.length || !labelWords.length) return false
+  return queryWords.every((qw) => {
+    const max = typoBudget(qw)
+    return labelWords.some((lw) => (
+      lw.startsWith(qw)
+      || qw.startsWith(lw)
+      || editDistanceAtMost(qw, lw, max)
+    ))
+  })
+}
+
+function matchScore(label, query) {
+  const l = norm(label)
+  const q = norm(query)
+  if (l === q) return 0
+  if (l.startsWith(q)) return 1
+  if (l.includes(` ${q}`)) return 2
+  if (l.includes(q)) return 3
+
+  const cl = compact(label)
+  const cq = compact(query)
+  if (cq.length >= 3 && cl.includes(cq)) return 4
+
+  const labelWords = words(label)
+  if (matchesInitialAndLastToken(cq, labelWords)) return 5
+  if (fuzzyWordsMatch(words(query), labelWords)) return 6
+
+  return null
+}
 
 function staticEntries() {
   const out = []
@@ -97,21 +166,17 @@ export function getUniversalIndex() {
 }
 
 /**
- * Rank: exact > starts-with > word-boundary > substring; gathering items
- * (where to find it) sort above ingredient rows (what uses it) on ties.
+ * Rank: exact > starts-with > word-boundary > substring > compact/abbrev >
+ * typo-tolerant; gathering items (where to find it) sort above ingredient rows
+ * (what uses it) on ties.
  */
 export function searchIndex(entries, query, limit = 8) {
   const q = norm(query)
   if (q.length < 2) return []
   const scored = []
   for (const e of entries) {
-    const l = norm(e.label)
-    let score
-    if (l === q) score = 0
-    else if (l.startsWith(q)) score = 1
-    else if (l.includes(` ${q}`)) score = 2
-    else if (l.includes(q)) score = 3
-    else continue
+    const score = matchScore(e.label, q)
+    if (score === null) continue
     scored.push([score, e])
   }
   // On equal text-match quality: "where to find it" (gathering/hunt) beats

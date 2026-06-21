@@ -10,6 +10,7 @@ const ENTRIES = [
   E('Iceberg Lettuce', 'botany'), E('Lettuce Soup', 'recipe'),
   E('Bianaq Bream', 'fishing'), E('Chupacabra', 'hunt'),
   E('Raw Ametrine'), E('Rarefied Raw Ametrine'),
+  E('Calamari Ripieni', 'recipe'), E('Blood Tomato', 'botany'),
 ]
 
 test('requires at least 2 characters', () => {
@@ -47,4 +48,13 @@ test('where-to-find rows outrank what-uses-it rows on equal match', () => {
   const dup = [E('Goldentail', 'ingredient'), E('Goldentail', 'fishing')]
   const r = searchIndex(dup, 'goldentail')
   assert.deepEqual(r.map((e) => e.cat), ['fishing', 'ingredient'])
+})
+
+test('understands small typos in single and multi-word searches', () => {
+  assert.equal(searchIndex(ENTRIES, 'chupacbra')[0].label, 'Chupacabra')
+  assert.equal(searchIndex(ENTRIES, 'calamri ripeni')[0].label, 'Calamari Ripieni')
+})
+
+test('understands compact shorthand for multi-word items', () => {
+  assert.equal(searchIndex(ENTRIES, 'btomato')[0].label, 'Blood Tomato')
 })
