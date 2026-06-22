@@ -25,6 +25,7 @@ const { GoogleGenerativeAI, SchemaType } = require('@google/generative-ai');
 const pool = require('../db');
 const { fetchPricesForIds, DEFAULT_DC } = require('../routes/prices');
 const { authenticate, isFlagEnabled } = require('../middleware');
+const { buildFishingLevelRecommendation } = require('./gatheringRecommendations');
 
 const router = express.Router();
 
@@ -378,6 +379,19 @@ router.post('/', authenticate, async (req, res) => {
     // Authoritative ingredient overrides — fetched up front so both the cached
     // and fresh paths can enforce them deterministically (BUG 1).
     const overrides = await getOverrides();
+
+    const gatheringRecommendation = buildFishingLevelRecommendation(query, GAME_DATA);
+    if (gatheringRecommendation) {
+      withSourceUrls(gatheringRecommendation);
+      await Promise.all([
+        logAiUsage({ userId: req.user.id, queryText: query }),
+        pool.query(
+          'INSERT INTO user_searches (user_id, query_norm, response) VALUES ($1, $2, $3)',
+          [req.user.id, queryNorm, JSON.stringify(gatheringRecommendation)]
+        ),
+      ]);
+      return res.json({ ...gatheringRecommendation, cached: false });
+    }
 
     // 60s identical-query cache (skipped if this is a follow-up in a conversation)
     const isFollowUp = Array.isArray(history) && history.length > 0;
