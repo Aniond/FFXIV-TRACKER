@@ -7,7 +7,10 @@ import { MINING_NODES } from './miningData'
 import { BOTANY_NODES } from './botanyData'
 import { FISHING_SPOTS } from './fishingData'
 import { EXTRA_BOTANY_NODES, EXTRA_MINING_NODES, EXTRA_FISHING_SPOTS } from './crosslinkNodes'
-import { API, getToken, fetchMe, fetchFlags, aiSearch, fetchRecipes, fetchJobs, aiCraftGuide } from './api'
+import {
+  API, getToken, fetchMe, fetchFlags, aiSearch, fetchSavedAiResults,
+  saveAiResult, deleteSavedAiResult, fetchRecipes, fetchJobs, aiCraftGuide,
+} from './api'
 import { STAT_TYPES, STAT_KEY } from './cookingData'
 import { isFav, addFav } from './favNodes'
 import ShoppingListWidget from './ShoppingListWidget'
@@ -45,6 +48,9 @@ const I = {
   pick: (p) => (<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" {...p}><path d="M3 21 13 11"/><path d="M4 9c4-4 12-5 16-2-3-1-7 0-9 2 3-1 6 0 7 2-4-3-11-2-14-2Z"/><path d="m12.5 11.5 2 2"/></svg>),
   fish: (p) => (<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" {...p}><path d="M3 12c3-5 8-6 12-6 3 0 5 2 6 6-1 4-3 6-6 6-4 0-9-1-12-6Z"/><path d="M3 12c-1 1.5-1 3 0 4.5M3 12c-1-1.5-1-3 0-4.5"/><circle cx="15" cy="11" r="1" fill="currentColor" stroke="none"/></svg>),
   cart: (p) => (<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" {...p}><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>),
+  save: (p) => (<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" {...p}><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2Z"/><path d="M17 21v-8H7v8"/><path d="M7 3v5h8"/></svg>),
+  archive: (p) => (<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" {...p}><path d="M21 8v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8"/><path d="M23 3H1v5h22Z"/><path d="M10 12h4"/></svg>),
+  trash: (p) => (<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" {...p}><path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v5M14 11v5"/></svg>),
   coin: (p) => (<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" {...p}><circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="4"/></svg>),
   scrip: (p) => (<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" {...p}><path d="M6 3h8l5 5v11a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2Z"/><path d="M14 3v5h5"/><path d="M8.5 13h7M8.5 16.5h5"/></svg>),
   gem: (p) => (<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" {...p}><path d="m12 21-9-12 3-6h12l3 6-9 12Z"/><path d="M3 9h18M9 3 6 9l6 12 6-12-3-6"/></svg>),
@@ -107,6 +113,13 @@ function costLabel(ing) {
   if (source === 'VENDOR' && ing.price != null) return `${ing.price} gil`
   if (source === 'MARKET_BOARD') return 'Market Board'
   return null
+}
+
+function formatSavedDate(value) {
+  if (!value) return ''
+  const d = new Date(value)
+  if (Number.isNaN(d.getTime())) return ''
+  return d.toLocaleString([], { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })
 }
 // Build lookup maps from the full /api/recipes payload (dishes + subcrafts, all
 // expansions). recipeByName resolves recipe + subcraft cards; ingredientIndex
@@ -846,7 +859,13 @@ export default function AISearch() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
   const [result, setResult] = useState(null)
+  const [resultQuery, setResultQuery] = useState('')
   const [chatHistory, setChatHistory] = useState([])
+  const [savedResults, setSavedResults] = useState([])
+  const [savedOpen, setSavedOpen] = useState(false)
+  const [savedLoading, setSavedLoading] = useState(false)
+  const [savingResult, setSavingResult] = useState(false)
+  const [savedResultId, setSavedResultId] = useState(null)
   const [recipeData, setRecipeData] = useState(null) // { recipeByName, ingredientIndex }
   const [listIds, setListIds] = useSyncedState('ffxiv-shopping-list', [], SET_CODEC)
   const [checkedIngs, setCheckedIngs] = useSyncedState('ffxiv-shopping-checked', [], SET_CODEC)
@@ -906,6 +925,15 @@ export default function AISearch() {
       .catch(() => {})
   }, [canUse, recipeData])
 
+  useEffect(() => {
+    if (!canUse || !user) return
+    setSavedLoading(true)
+    fetchSavedAiResults()
+      .then(setSavedResults)
+      .catch(() => {})
+      .finally(() => setSavedLoading(false))
+  }, [canUse, user])
+
   const shoppingListData = useMemo(() => {
     if (!listIds.size || !recipeData?.byId || !recipeData?.byName) return {}
     const totals = {}
@@ -950,17 +978,55 @@ export default function AISearch() {
     setSheetOpen(true)
   }
 
+  async function saveCurrentResult() {
+    if (!result || !resultQuery || savingResult || savedResultId) return
+    setSavingResult(true)
+    try {
+      const saved = await saveAiResult(resultQuery, result)
+      setSavedResults((prev) => [saved, ...prev.filter((item) => item.id !== saved.id)])
+      setSavedResultId(saved.id)
+      showToast('Saved to outbox')
+    } catch (err) {
+      showToast(err.message || 'Could not save result')
+    } finally {
+      setSavingResult(false)
+    }
+  }
+
+  async function deleteSavedResult(id) {
+    if (!id) return
+    try {
+      await deleteSavedAiResult(id)
+      setSavedResults((prev) => prev.filter((item) => item.id !== id))
+      if (savedResultId === id) setSavedResultId(null)
+      showToast('Deleted from outbox')
+    } catch (err) {
+      showToast(err.message || 'Could not delete result')
+    }
+  }
+
+  function openSavedResult(saved) {
+    setResult(saved.response)
+    setResultQuery(saved.query_text)
+    setSavedResultId(saved.id)
+    setError(null)
+    setLoading(false)
+    setQ(saved.query_text)
+    setSavedOpen(false)
+  }
+
   async function run(query) {
     const text = (query ?? q).trim()
     if (!text || loading) return
     setQ(text)
-    setLoading(true); setError(null); setResult(null)
+    setLoading(true); setError(null); setResult(null); setSavedResultId(null)
     try {
       // Pass the current shopping list recipe names to the AI
       const currentListNames = Array.from(listIds).map(id => recipeData?.byId[id]?.name).filter(Boolean);
       const data = await aiSearch(text, chatHistory, currentListNames)
       
       setResult(data)
+      setResultQuery(text)
       setChatHistory(prev => [...prev, { q: text, a: data.summary }])
       pushHistory(text)
 
@@ -1068,11 +1134,84 @@ export default function AISearch() {
           )}
 
           {result && !loading && (
-            <div className="ai-result">
-              {result.cached && <div className="ai-cached">Cached result</div>}
+            <section className="ai-result ai-outbox">
+              <div className="ai-outbox__head">
+                <div className="ai-outbox__request">
+                  <span>Request</span>
+                  <h2>{resultQuery || q}</h2>
+                </div>
+                <div className="ai-outbox__actions">
+                  {result.cached && <span className="ai-cached">Cached</span>}
+                  <button
+                    type="button"
+                    className="ai-outbox__btn"
+                    onClick={saveCurrentResult}
+                    disabled={savingResult || !!savedResultId}
+                    title={savedResultId ? 'Saved to outbox' : 'Save this result'}
+                  >
+                    {savedResultId ? <I.check /> : <I.save />}
+                    {savedResultId ? 'Saved' : (savingResult ? 'Saving' : 'Save')}
+                  </button>
+                  {savedResultId && (
+                    <button
+                      type="button"
+                      className="ai-outbox__btn ai-outbox__btn--danger"
+                      onClick={() => deleteSavedResult(savedResultId)}
+                      title="Delete this saved result"
+                    >
+                      <I.trash />Delete
+                    </button>
+                  )}
+                  <button
+                    type="button"
+                    className="ai-outbox__btn"
+                    onClick={() => setSavedOpen((open) => !open)}
+                    title="Open saved AI results"
+                  >
+                    <I.archive />Outbox
+                    {savedResults.length > 0 && <b>{savedResults.length}</b>}
+                  </button>
+                </div>
+              </div>
+
+              {savedOpen && (
+                <div className="ai-outbox__archive">
+                  <div className="ai-outbox__archive-hd">
+                    <span>Saved results</span>
+                    {savedLoading && <em>Loading...</em>}
+                  </div>
+                  {!savedLoading && savedResults.length === 0 ? (
+                    <p>No saved AI results yet.</p>
+                  ) : (
+                    <div className="ai-outbox__saved-list">
+                      {savedResults.map((saved) => (
+                        <div className="ai-outbox__saved" key={saved.id}>
+                          <button type="button" onClick={() => openSavedResult(saved)}>
+                            <strong>{saved.query_text}</strong>
+                            <span>{formatSavedDate(saved.created_at)}</span>
+                          </button>
+                          <button
+                            type="button"
+                            className="ai-outbox__delete"
+                            onClick={() => deleteSavedResult(saved.id)}
+                            aria-label={`Delete saved result for ${saved.query_text}`}
+                            title="Delete saved result"
+                          >
+                            <I.trash />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+
               <div className="ai-summary">
                 <I.spark className="ai-summary__ico" />
-                <span><LinkedText text={result.summary} links={textLinks} /></span>
+                <div>
+                  <span className="ai-summary__label">Answer</span>
+                  <span><LinkedText text={result.summary} links={textLinks} /></span>
+                </div>
               </div>
 
               <CraftPlan
@@ -1107,7 +1246,7 @@ export default function AISearch() {
                   <ul>{result.tips.map((t, i) => <li key={i}><LinkedText text={t} links={textLinks} /></li>)}</ul>
                 </div>
               )}
-            </div>
+            </section>
           )}
         </>
       )}

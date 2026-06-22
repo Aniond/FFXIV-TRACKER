@@ -177,6 +177,30 @@ async function aiCraftGuide(recipe, level, craft, control, cp) {
   return body
 }
 
+async function fetchSavedAiResults() {
+  const r = await apiFetch('/api/ai/search/saved')
+  const body = await r.json().catch(() => ([]))
+  if (!r.ok) throw Object.assign(new Error(body.error || `Saved AI fetch failed (${r.status})`), { status: r.status })
+  return Array.isArray(body) ? body : []
+}
+
+async function saveAiResult(query, response) {
+  const r = await apiFetch('/api/ai/search/saved', {
+    method: 'POST',
+    body: JSON.stringify({ query, response }),
+  })
+  const body = await r.json().catch(() => ({}))
+  if (!r.ok) throw Object.assign(new Error(body.error || `Saved AI save failed (${r.status})`), { status: r.status })
+  return body
+}
+
+async function deleteSavedAiResult(id) {
+  const r = await apiFetch(`/api/ai/search/saved/${encodeURIComponent(id)}`, { method: 'DELETE' })
+  const body = await r.json().catch(() => ({}))
+  if (!r.ok) throw Object.assign(new Error(body.error || `Saved AI delete failed (${r.status})`), { status: r.status })
+  return body
+}
+
 
 // ── Recipes ──────────────────────────────────────────────────────────────────
 
@@ -275,7 +299,8 @@ export {
   fetchUserState, saveUserState,
   loadProgress, saveProgress, resetProgress, saveStash, savePreferences,
   fetchJobs, saveJobs, saveCharacterLink, refreshJobsFromLodestone,
-  fetchFlags, aiSearch, aiCraftGuide, fetchRecipes, fetchPrices,
+  fetchFlags, aiSearch, aiCraftGuide, fetchSavedAiResults, saveAiResult, deleteSavedAiResult,
+  fetchRecipes, fetchPrices,
   adminStats, adminUsers, adminBanUser, adminQueries,
   adminSubmissions, adminUpdateSubmission, adminFlags, adminToggleFlag, adminApiUsage,
 }

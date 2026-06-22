@@ -377,6 +377,83 @@ function sanitizeAnswer(answer) {
   return answer;
 }
 
+let savedAiResultsReady = false;
+async function ensureSavedAiResultsTable() {
+  if (savedAiResultsReady) return;
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS saved_ai_results (
+      id          SERIAL PRIMARY KEY,
+      user_id     INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      query_text  TEXT NOT NULL,
+      response    JSONB NOT NULL,
+      created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    )
+  `);
+  await pool.query(`
+    CREATE INDEX IF NOT EXISTS idx_saved_ai_results_user_created
+      ON saved_ai_results (user_id, created_at DESC)
+  `);
+  savedAiResultsReady = true;
+}
+
+router.get('/saved', authenticate, async (req, res) => {
+  try {
+    await ensureSavedAiResultsTable();
+    const r = await pool.query(
+      `SELECT id, query_text, response, created_at
+       FROM saved_ai_results
+       WHERE user_id = $1
+       ORDER BY created_at DESC
+       LIMIT 50`,
+      [req.user.id]
+    );
+    res.json(r.rows);
+  } catch (err) {
+    console.error('[ai/saved] Error loading saved AI results:', err);
+    res.status(500).json({ error: 'failed to load saved AI results' });
+  }
+});
+
+router.post('/saved', authenticate, async (req, res) => {
+  const query = typeof req.body.query === 'string' ? req.body.query.trim() : '';
+  const response = req.body.response && typeof req.body.response === 'object' ? req.body.response : null;
+  if (!query) return res.status(400).json({ error: 'query is required' });
+  if (query.length > 500) return res.status(400).json({ error: 'query too long (max 500 chars)' });
+  if (!response) return res.status(400).json({ error: 'response is required' });
+
+  try {
+    await ensureSavedAiResultsTable();
+    const r = await pool.query(
+      `INSERT INTO saved_ai_results (user_id, query_text, response)
+       VALUES ($1, $2, $3)
+       RETURNING id, query_text, response, created_at`,
+      [req.user.id, query, JSON.stringify(response)]
+    );
+    res.status(201).json(r.rows[0]);
+  } catch (err) {
+    console.error('[ai/saved] Error saving AI result:', err);
+    res.status(500).json({ error: 'failed to save AI result' });
+  }
+});
+
+router.delete('/saved/:id', authenticate, async (req, res) => {
+  const id = Number.parseInt(req.params.id, 10);
+  if (!Number.isInteger(id)) return res.status(400).json({ error: 'invalid saved result id' });
+
+  try {
+    await ensureSavedAiResultsTable();
+    const r = await pool.query(
+      'DELETE FROM saved_ai_results WHERE id = $1 AND user_id = $2 RETURNING id',
+      [id, req.user.id]
+    );
+    if (!r.rowCount) return res.status(404).json({ error: 'saved result not found' });
+    res.json({ ok: true, id });
+  } catch (err) {
+    console.error('[ai/saved] Error deleting saved AI result:', err);
+    res.status(500).json({ error: 'failed to delete saved AI result' });
+  }
+});
+
 router.post('/', authenticate, async (req, res) => {
   const query = typeof req.body.query === 'string' ? req.body.query.trim() : '';
   const history = Array.isArray(req.body.history) ? req.body.history : [];

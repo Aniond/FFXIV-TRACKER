@@ -116,6 +116,17 @@ CREATE TABLE IF NOT EXISTS user_searches (
 CREATE INDEX IF NOT EXISTS idx_user_searches_lookup
   ON user_searches (query_norm, created_at DESC);
 
+CREATE TABLE IF NOT EXISTS saved_ai_results (
+  id          SERIAL PRIMARY KEY,
+  user_id     INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  query_text  TEXT NOT NULL,
+  response    JSONB NOT NULL,
+  created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_saved_ai_results_user_created
+  ON saved_ai_results (user_id, created_at DESC);
+
 -- Account-synced UI state (added by migrate-state.js).
 
 CREATE TABLE IF NOT EXISTS user_state (
