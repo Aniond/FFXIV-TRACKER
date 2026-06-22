@@ -1,0 +1,1614 @@
+{
+  "generatedFrom": "/wiki/Dawntrail_Fishing_Locations, /wiki/Endwalker_Fishing_Locations",
+  "count": 78,
+  "spots": {
+    "tuliyollal|downripple": {
+      "key": "tuliyollal|downripple",
+      "zone": "Tuliyollal",
+      "spot": "Downripple",
+      "expansion": "Dawntrail",
+      "fish": [
+        "Mosquito Fish",
+        "Pel Frog",
+        "Petticoat Tetra",
+        "Icuvlo's Barter"
+      ],
+      "baits": [
+        "Honeybee",
+        "Versatile Lure",
+        "Popper Lure",
+        "Golden Stonefly Nymph",
+        "Red Maggots"
+      ]
+    },
+    "tuliyollal|the for'ard cabins": {
+      "key": "tuliyollal|the for'ard cabins",
+      "zone": "Tuliyollal",
+      "spot": "The For'ard Cabins",
+      "expansion": "Dawntrail",
+      "fish": [
+        "Stardust Shrimp",
+        "Reasonscale Silverside",
+        "Shallows Sot",
+        "Ghostfish",
+        "Permit",
+        "Inktopus",
+        "Cabinkeep Permit"
+      ],
+      "baits": [
+        "Metal Spinner",
+        "Versatile Lure",
+        "Crimson Lugworm",
+        "Ghost Nipper",
+        "Shucked Clam"
+      ]
+    },
+    "tuliyollal|hightide harbor": {
+      "key": "tuliyollal|hightide harbor",
+      "zone": "Tuliyollal",
+      "spot": "Hightide Harbor",
+      "expansion": "Dawntrail",
+      "fish": [
+        "King Puffer",
+        "Blue Purse",
+        "Floating Fife",
+        "Reasonscale Silverside",
+        "Goldfin Cavalli",
+        "Purse of Riches",
+        "Harbor Cloud"
+      ],
+      "baits": [
+        "Metal Spinner",
+        "Versatile Lure",
+        "Crimson Lugworm",
+        "Ghost Nipper",
+        "Shucked Clam"
+      ]
+    },
+    "urqopacha|sunken stars": {
+      "key": "urqopacha|sunken stars",
+      "zone": "Urqopacha",
+      "spot": "Sunken Stars",
+      "expansion": "Dawntrail",
+      "fish": [
+        "Urqotrout",
+        "Sea Alpaca",
+        "Marbled Hatchetfish",
+        "Starsnipper",
+        "Yok Huy Stonecutter",
+        "Moongripper"
+      ],
+      "baits": [
+        "Versatile Lure",
+        "Silkmoth Pupa",
+        "White Worm"
+      ]
+    },
+    "urqopacha|chirwagur lake": {
+      "key": "urqopacha|chirwagur lake",
+      "zone": "Urqopacha",
+      "spot": "Chirwagur Lake",
+      "expansion": "Dawntrail",
+      "fish": [
+        "Chirwagur Loach",
+        "Alright Alright Alright",
+        "Shooting Starscale",
+        "Zorlortor",
+        "Ole Ole Ole"
+      ],
+      "baits": [
+        "Versatile Lure",
+        "Silkmoth Pupa",
+        "White Worm"
+      ]
+    },
+    "urqopacha|karvarhur the first": {
+      "key": "urqopacha|karvarhur the first",
+      "zone": "Urqopacha",
+      "spot": "Karvarhur the First",
+      "expansion": "Dawntrail",
+      "fish": [
+        "First Feastfish",
+        "Urqofrog",
+        "Zeh Tortoh",
+        "Morsel Trout",
+        "Deepwarden",
+        "Qor Pirarucu",
+        "Prime Adjudicator"
+      ],
+      "baits": [
+        "Honeybee",
+        "Versatile Lure",
+        "Popper Lure",
+        "Golden Stonefly Nymph",
+        "Red Maggots"
+      ]
+    },
+    "kozama'uka|bopo'uihih": {
+      "key": "kozama'uka|bopo'uihih",
+      "zone": "Kozama'uka",
+      "spot": "Bopo'uihih",
+      "expansion": "Dawntrail",
+      "fish": [
+        "Kozama'uka Skipper",
+        "Bopo'u Sleeper",
+        "Poison Dyefrog",
+        "Pleated Matamata",
+        "Uyuy Xage",
+        "Oily Ropefish",
+        "Muttering Matamata"
+      ],
+      "baits": [
+        "Metal Spinner",
+        "Honeybee",
+        "Versatile Lure",
+        "Popper Lure",
+        "Golden Stonefly Nymph",
+        "Red Maggots"
+      ]
+    },
+    "kozama'uka|waters hanu": {
+      "key": "kozama'uka|waters hanu",
+      "zone": "Kozama'uka",
+      "spot": "Waters Hanu",
+      "expansion": "Dawntrail",
+      "fish": [
+        "Kozama'uka Skipper",
+        "Bopo'u Sleeper",
+        "Plattershell",
+        "Yok Huy Pleco",
+        "Cazuela Crab",
+        "Pote'uka"
+      ],
+      "baits": [
+        "Metal Spinner",
+        "Honeybee",
+        "Versatile Lure",
+        "Popper Lure",
+        "Golden Stonefly Nymph",
+        "Red Maggots"
+      ]
+    },
+    "kozama'uka|miyakabek'zu": {
+      "key": "kozama'uka|miyakabek'zu",
+      "zone": "Kozama'uka",
+      "spot": "Miyakabek'zu",
+      "expansion": "Dawntrail",
+      "fish": [
+        "Driftwood Catfish",
+        "Kozama'uka Skipper",
+        "Bopo'u Sleeper",
+        "Candiru",
+        "Trahira",
+        "Riverlong Candiru"
+      ],
+      "baits": [
+        "Metal Spinner",
+        "Honeybee",
+        "Versatile Lure",
+        "Popper Lure",
+        "Golden Stonefly Nymph",
+        "Red Maggots"
+      ]
+    },
+    "kozama'uka|the dewspun bank": {
+      "key": "kozama'uka|the dewspun bank",
+      "zone": "Kozama'uka",
+      "spot": "The Dewspun Bank",
+      "expansion": "Dawntrail",
+      "fish": [
+        "Oho Hunu",
+        "Bronze Pleco",
+        "Crenicichla",
+        "Crenicichla Miyaka"
+      ],
+      "baits": [
+        "Honeybee",
+        "Versatile Lure",
+        "Popper Lure",
+        "Golden Stonefly Nymph",
+        "Red Maggots"
+      ]
+    },
+    "kozama'uka|peaks poga": {
+      "key": "kozama'uka|peaks poga",
+      "zone": "Kozama'uka",
+      "spot": "Peaks Poga",
+      "expansion": "Dawntrail",
+      "fish": [
+        "Oho Hunu",
+        "Bronze Pleco",
+        "Hunu Peacock Bass",
+        "Pelubane",
+        "Giant Trahira",
+        "Punutiy Pain"
+      ],
+      "baits": [
+        "Honeybee",
+        "Versatile Lure",
+        "Popper Lure",
+        "Golden Stonefly Nymph",
+        "Red Maggots"
+      ]
+    },
+    "kozama'uka|ku'uxage": {
+      "key": "kozama'uka|ku'uxage",
+      "zone": "Kozama'uka",
+      "spot": "Ku'uxage",
+      "expansion": "Dawntrail",
+      "fish": [
+        "Red Maggots",
+        "Ku'uxage Bitterling",
+        "Tonguesnatcher",
+        "Corn Dace",
+        "Ka Puyhu",
+        "Purple Palate",
+        "Shuckfin Dace"
+      ],
+      "baits": [
+        "Honeybee",
+        "Versatile Lure",
+        "Popper Lure",
+        "Golden Stonefly Nymph",
+        "Red Maggots"
+      ]
+    },
+    "kozama'uka|miyakabek'zoma": {
+      "key": "kozama'uka|miyakabek'zoma",
+      "zone": "Kozama'uka",
+      "spot": "Miyakabek'zoma",
+      "expansion": "Dawntrail",
+      "fish": [
+        "Dumplingfish",
+        "Banded Candiru",
+        "Oxydoras",
+        "Ligaka Guppy",
+        "Honeycomb Sponge",
+        "Iron Oxydoras"
+      ],
+      "baits": [
+        "Metal Spinner",
+        "Honeybee",
+        "Versatile Lure",
+        "Popper Lure",
+        "Golden Stonefly Nymph",
+        "Red Maggots"
+      ]
+    },
+    "kozama'uka|marsh ligaka": {
+      "key": "kozama'uka|marsh ligaka",
+      "zone": "Kozama'uka",
+      "spot": "Marsh Ligaka",
+      "expansion": "Dawntrail",
+      "fish": [
+        "Dumplingfish",
+        "Spotted Stingray",
+        "Yellow Peacock Bass",
+        "Shovelnose Catfish",
+        "Ligaka Guppy",
+        "Excavator Catfish"
+      ],
+      "baits": [
+        "Metal Spinner",
+        "Honeybee",
+        "Versatile Lure",
+        "Popper Lure",
+        "Golden Stonefly Nymph",
+        "Red Maggots"
+      ]
+    },
+    "yak t'el|xd'aa talat tsoly": {
+      "key": "yak t'el|xd'aa talat tsoly",
+      "zone": "Yak T'el",
+      "spot": "Xd'aa Talat Tsoly",
+      "expansion": "Dawntrail",
+      "fish": [
+        "Shimmering Shadow",
+        "Ut'ohmu Dawnfish",
+        "Belonesox",
+        "Xd'aa Talat Cichlid",
+        "Ilyon Asoh Cichlid",
+        "Ut'ohmu Trout",
+        "Freshwater Algae",
+        "Xbr'aal Loach"
+      ],
+      "baits": [
+        "Honeybee",
+        "Versatile Lure",
+        "Popper Lure",
+        "Golden Stonefly Nymph",
+        "Red Maggots"
+      ]
+    },
+    "yak t'el|yak awak tsoly": {
+      "key": "yak t'el|yak awak tsoly",
+      "zone": "Yak T'el",
+      "spot": "Yak Awak Tsoly",
+      "expansion": "Dawntrail",
+      "fish": [
+        "Shimmering Shadow",
+        "Ut'ohmu Dawnfish",
+        "Apoda",
+        "Mirror Carp",
+        "Yak Awak Core",
+        "Awaksbane Apoda",
+        "Odorous Waterweed",
+        "Tsoly Tea Grass",
+        "Tsoly Sponge",
+        "Tsoly Sweetfish"
+      ],
+      "baits": [
+        "Metal Spinner",
+        "Honeybee",
+        "Versatile Lure",
+        "Popper Lure",
+        "Golden Stonefly Nymph",
+        "Red Maggots"
+      ]
+    },
+    "yak t'el|iq rrax tsoly": {
+      "key": "yak t'el|iq rrax tsoly",
+      "zone": "Yak T'el",
+      "spot": "Iq Rrax Tsoly",
+      "expansion": "Dawntrail",
+      "fish": [
+        "Tsoly Mu",
+        "Iq Rrax Leaffish",
+        "Archmatron Angelfish",
+        "Yak T'el Salamander",
+        "Shadowtongue",
+        "Iq Rrax Whelk",
+        "Desiccant Mollusk",
+        "Moss Sample",
+        "Iron Shadowtongue"
+      ],
+      "baits": [
+        "Honeybee",
+        "Versatile Lure",
+        "Popper Lure",
+        "Golden Stonefly Nymph",
+        "Red Maggots"
+      ]
+    },
+    "yak t'el|xobr'it tsoly": {
+      "key": "yak t'el|xobr'it tsoly",
+      "zone": "Yak T'el",
+      "spot": "Xobr'it Tsoly",
+      "expansion": "Dawntrail",
+      "fish": [
+        "Cloud-eye Carp",
+        "Xobr'it Lobster",
+        "Sunbright Axolotl",
+        "Horned Frog",
+        "Lotl-in-waiting"
+      ],
+      "baits": [
+        "Honeybee",
+        "Versatile Lure",
+        "Popper Lure",
+        "Golden Stonefly Nymph",
+        "Red Maggots",
+        "Cloud-eye Carp"
+      ]
+    },
+    "yak t'el|ankledeep": {
+      "key": "yak t'el|ankledeep",
+      "zone": "Yak T'el",
+      "spot": "Ankledeep",
+      "expansion": "Dawntrail",
+      "fish": [
+        "Mudfish",
+        "Turali Beaded Lizard",
+        "Yak T'el Catfish",
+        "Ankledeep Catfish",
+        "Anklefish",
+        "Crystalfish",
+        "Thick-boned Fish",
+        "Smokeshell",
+        "Shin Snuffler"
+      ],
+      "baits": [
+        "Honeybee",
+        "Versatile Lure",
+        "Popper Lure",
+        "Red Maggots"
+      ]
+    },
+    "yak t'el|cenote moxutural": {
+      "key": "yak t'el|cenote moxutural",
+      "zone": "Yak T'el",
+      "spot": "Cenote Moxutural",
+      "expansion": "Dawntrail",
+      "fish": [
+        "Mudfish",
+        "Yak T'el Catfish",
+        "Checkered Cichlid",
+        "Moxutural Gar",
+        "Freakish Fish",
+        "Waterweed Fish",
+        "Freshwater Mudfish",
+        "Moxutural Greatgar"
+      ],
+      "baits": [
+        "Honeybee",
+        "Versatile Lure",
+        "Popper Lure",
+        "Golden Stonefly Nymph",
+        "Red Maggots"
+      ]
+    },
+    "yak t'el|cenote jayunja": {
+      "key": "yak t'el|cenote jayunja",
+      "zone": "Yak T'el",
+      "spot": "Cenote Jayunja",
+      "expansion": "Dawntrail",
+      "fish": [
+        "Mudfish",
+        "Yak T'el Catfish",
+        "Variatus",
+        "Flawless Saucer",
+        "Welkin Catfish",
+        "Aether-infused Algae",
+        "Shellfish of Living Light",
+        "Meteorfish",
+        "Promising Shellfish",
+        "Moonmarking Saucer"
+      ],
+      "baits": [
+        "Honeybee",
+        "Versatile Lure",
+        "Popper Lure",
+        "Red Maggots"
+      ]
+    },
+    "yak t'el|sapsweet cenote": {
+      "key": "yak t'el|sapsweet cenote",
+      "zone": "Yak T'el",
+      "spot": "Sapsweet Cenote",
+      "expansion": "Dawntrail",
+      "fish": [
+        "Mudfish",
+        "Yak T'el Catfish",
+        "Glittergill",
+        "Twig Catfish",
+        "Autarch's Supper"
+      ],
+      "baits": [
+        "Honeybee",
+        "Versatile Lure",
+        "Popper Lure",
+        "Red Maggots"
+      ]
+    },
+    "yak t'el|bitterbark cenote": {
+      "key": "yak t'el|bitterbark cenote",
+      "zone": "Yak T'el",
+      "spot": "Bitterbark Cenote",
+      "expansion": "Dawntrail",
+      "fish": [
+        "Mudfish",
+        "Yak T'el Catfish",
+        "Blind Brotula",
+        "Yak T'el Caiman",
+        "Cenote Oyster",
+        "Cexudross Fish",
+        "Bitterbark Caiman"
+      ],
+      "baits": [
+        "Metal Spinner",
+        "Honeybee",
+        "Versatile Lure",
+        "Popper Lure",
+        "Red Maggots"
+      ]
+    },
+    "yak t'el|xty'iinbek tsoly": {
+      "key": "yak t'el|xty'iinbek tsoly",
+      "zone": "Yak T'el",
+      "spot": "Xty'iinbek Tsoly",
+      "expansion": "Dawntrail",
+      "fish": [
+        "Timeworn Br'aaxskin Map",
+        "Sharknose Goby",
+        "Yak T'el Crab",
+        "Xty'iinbek Sleeper",
+        "Chain Shark",
+        "Ut'ohmu Tiika",
+        "Stardust Sleeper"
+      ],
+      "baits": [
+        "Versatile Lure",
+        "Crimson Lugworm",
+        "Ghost Nipper",
+        "Shucked Clam"
+      ]
+    },
+    "solution nine|residential sector": {
+      "key": "solution nine|residential sector",
+      "zone": "Solution Nine",
+      "spot": "Residential Sector",
+      "expansion": "Dawntrail",
+      "fish": [
+        "Custodian Carp",
+        "Mosaic Loach",
+        "Stickleback",
+        "Everkeep Yabby",
+        "Pixel Loach"
+      ],
+      "baits": [
+        "Versatile Lure",
+        "Popper Lure",
+        "Red Maggots"
+      ]
+    },
+    "shaaloani|niikwerepi": {
+      "key": "shaaloani|niikwerepi",
+      "zone": "Shaaloani",
+      "spot": "Niikwerepi",
+      "expansion": "Dawntrail",
+      "fish": [
+        "Shaaloani Salmon",
+        "Niikwerepi Trout",
+        "Bonytail Chub",
+        "Pyariyoanaan Cichlid",
+        "Hwittayoanaan Cichlid"
+      ],
+      "baits": [
+        "Versatile Lure",
+        "Popper Lure",
+        "Red Maggots"
+      ]
+    },
+    "shaaloani|lake toari": {
+      "key": "shaaloani|lake toari",
+      "zone": "Shaaloani",
+      "spot": "Lake Toari",
+      "expansion": "Dawntrail",
+      "fish": [
+        "Toari Sucker",
+        "Turali Paddlefish",
+        "Trailtrout",
+        "Niikwerepi Trout",
+        "Bonytail Chub",
+        "Ttokatoa"
+      ],
+      "baits": [
+        "Versatile Lure",
+        "Popper Lure",
+        "Red Maggots"
+      ]
+    },
+    "shaaloani|westbound zorgor": {
+      "key": "shaaloani|westbound zorgor",
+      "zone": "Shaaloani",
+      "spot": "Westbound Zorgor",
+      "expansion": "Dawntrail",
+      "fish": [
+        "Zorgor Scorpion",
+        "Cloudribbon",
+        "Vagrant Cascade",
+        "Zorgor Condor",
+        "Zorgor Core",
+        "Sunray Ray",
+        "Vagrant Keeper",
+        "Yowekwa Inkhead"
+      ],
+      "baits": [
+        "Metal Spinner",
+        "Versatile Lure",
+        "Cactuar Jig",
+        "Dragonfly (Item)"
+      ]
+    },
+    "shaaloani|eastbound zorgor": {
+      "key": "shaaloani|eastbound zorgor",
+      "zone": "Shaaloani",
+      "spot": "Eastbound Zorgor",
+      "expansion": "Dawntrail",
+      "fish": [
+        "Hellsnow Shark",
+        "Azure Glider",
+        "Cloud Wasp",
+        "Raging Hanuhead",
+        "Zorgor Core",
+        "Cloudsail",
+        "Azure Diver"
+      ],
+      "baits": [
+        "Versatile Lure",
+        "Cactuar Jig",
+        "Dragonfly (Item)"
+      ]
+    },
+    "heritage found|outskirts shallows": {
+      "key": "heritage found|outskirts shallows",
+      "zone": "Heritage Found",
+      "spot": "Outskirts Shallows",
+      "expansion": "Dawntrail",
+      "fish": [
+        "Timeworn Br'aaxskin Map",
+        "Tiger Muskellunge",
+        "Outskirts Sniffer",
+        "Heritage Loach",
+        "Pumpkin Perch",
+        "Sprouting Perch"
+      ],
+      "baits": [
+        "Versatile Lure",
+        "Popper Lure",
+        "Red Maggots"
+      ]
+    },
+    "heritage found|the driftdowns": {
+      "key": "heritage found|the driftdowns",
+      "zone": "Heritage Found",
+      "spot": "The Driftdowns",
+      "expansion": "Dawntrail",
+      "fish": [
+        "Timeworn Br'aaxskin Map",
+        "Outskirts Sniffer",
+        "Heritage Loach",
+        "Driftdowns Trout",
+        "Moon Croppie",
+        "Thunderswift Trout",
+        "Burst Lungfish"
+      ],
+      "baits": [
+        "Metal Spinner",
+        "Versatile Lure",
+        "Popper Lure",
+        "Red Maggots"
+      ]
+    },
+    "heritage found|crackling canyons": {
+      "key": "heritage found|crackling canyons",
+      "zone": "Heritage Found",
+      "spot": "Crackling Canyons",
+      "expansion": "Dawntrail",
+      "fish": [
+        "Timeworn Br'aaxskin Map",
+        "Thundering Redbelly",
+        "Electrobetta",
+        "Crackling Flounder",
+        "Yyasulani Bowfin",
+        "Thunderous Flounder",
+        "Goldentail"
+      ],
+      "baits": [
+        "Versatile Lure",
+        "Popper Lure",
+        "Red Maggots"
+      ]
+    },
+    "heritage found|alexandrian ruins": {
+      "key": "heritage found|alexandrian ruins",
+      "zone": "Heritage Found",
+      "spot": "Alexandrian Ruins",
+      "expansion": "Dawntrail",
+      "fish": [
+        "Timeworn Br'aaxskin Map",
+        "Goldgrouper",
+        "Thundering Redbelly",
+        "Electrobetta",
+        "Yyasulani Bowfin",
+        "Heirloom Goldgrouper"
+      ],
+      "baits": [
+        "Versatile Lure",
+        "Popper Lure",
+        "Red Maggots"
+      ]
+    },
+    "living memory|the knowable": {
+      "key": "living memory|the knowable",
+      "zone": "Living Memory",
+      "spot": "The Knowable",
+      "expansion": "Dawntrail",
+      "fish": [
+        "Knight Goby",
+        "Rosebud Frog",
+        "Harlequin Lancer",
+        "Windspath Eel",
+        "Harlequin Queen"
+      ],
+      "baits": [
+        "Versatile Lure",
+        "Popper Lure",
+        "Red Maggots"
+      ]
+    },
+    "living memory|mu springs eternal": {
+      "key": "living memory|mu springs eternal",
+      "zone": "Living Memory",
+      "spot": "Mu Springs Eternal",
+      "expansion": "Dawntrail",
+      "fish": [
+        "Cleyran Carp",
+        "Knight Goby",
+        "Rosebud Frog",
+        "Giant Snakehead",
+        "Gigagiant Snakehead",
+        "Timeworn Gargantuaskin Map"
+      ],
+      "baits": [
+        "Versatile Lure",
+        "Popper Lure",
+        "Red Maggots"
+      ]
+    },
+    "living memory|leynode aero": {
+      "key": "living memory|leynode aero",
+      "zone": "Living Memory",
+      "spot": "Leynode Aero",
+      "expansion": "Dawntrail",
+      "fish": [
+        "Neo Arowana",
+        "Knight Goby",
+        "Datnioides",
+        "Rosebud Frog",
+        "Datnioides Aeroplanos"
+      ],
+      "baits": [
+        "Versatile Lure",
+        "Popper Lure",
+        "Red Maggots"
+      ]
+    },
+    "living memory|canal town south": {
+      "key": "living memory|canal town south",
+      "zone": "Living Memory",
+      "spot": "Canal Town South",
+      "expansion": "Dawntrail",
+      "fish": [
+        "Canal Drum",
+        "Iris Wrasse",
+        "Hydro Louvar",
+        "Canal Bream",
+        "Butterfly Ray",
+        "Gondola Louvar"
+      ],
+      "baits": [
+        "Versatile Lure",
+        "Ghost Nipper",
+        "Shucked Clam"
+      ]
+    },
+    "living memory|canal town north": {
+      "key": "living memory|canal town north",
+      "zone": "Living Memory",
+      "spot": "Canal Town North",
+      "expansion": "Dawntrail",
+      "fish": [
+        "Devotion Clam",
+        "Forgotten One",
+        "Copper Shark",
+        "Iris Wrasse",
+        "Canal Bream",
+        "Shined Copper Shark"
+      ],
+      "baits": [
+        "Versatile Lure",
+        "Ghost Nipper",
+        "Shucked Clam"
+      ]
+    },
+    "living memory|proto alexandria": {
+      "key": "living memory|proto alexandria",
+      "zone": "Living Memory",
+      "spot": "Proto Alexandria",
+      "expansion": "Dawntrail",
+      "fish": [
+        "Golden Day",
+        "Ultimoat Carp",
+        "Scarlet Queen",
+        "Starglass Gibel",
+        "Esperance Carp"
+      ],
+      "baits": [
+        "Versatile Lure",
+        "Popper Lure",
+        "Red Maggots"
+      ]
+    },
+    "old sharlayan|scholar's harbor": {
+      "key": "old sharlayan|scholar's harbor",
+      "zone": "Old Sharlayan",
+      "spot": "Scholar's Harbor",
+      "expansion": "Endwalker",
+      "fish": [
+        "Northern Herring",
+        "Cobalt Chromis",
+        "Dog-faced Puffer",
+        "Guitarfish",
+        "Pecten",
+        "Aetherolectric Guitarfish"
+      ],
+      "baits": [
+        "Versatile Lure",
+        "Mackerel Strip",
+        "Shrimp Ball"
+      ]
+    },
+    "old sharlayan|oinops": {
+      "key": "old sharlayan|oinops",
+      "zone": "Old Sharlayan",
+      "spot": "Oinops",
+      "expansion": "Endwalker",
+      "fish": [
+        "Academician",
+        "Astacus",
+        "Peacock Bass",
+        "Swordspine Snook",
+        "Greatsword Snook"
+      ],
+      "baits": [
+        "Versatile Lure",
+        "Gold Salmon Roe",
+        "Mayfly",
+        "Leech (Bait)"
+      ]
+    },
+    "old sharlayan|reflecting pool": {
+      "key": "old sharlayan|reflecting pool",
+      "zone": "Old Sharlayan",
+      "spot": "Reflecting Pool",
+      "expansion": "Endwalker",
+      "fish": [
+        "Astacus",
+        "Ponderer",
+        "Tidal Dahlia",
+        "Catastrophizer"
+      ],
+      "baits": [
+        "Versatile Lure",
+        "Sky Spoon Lure",
+        "Gold Salmon Roe",
+        "Mayfly",
+        "Leech (Bait)"
+      ]
+    },
+    "labyrinthos|unmoved source alpha": {
+      "key": "labyrinthos|unmoved source alpha",
+      "zone": "Labyrinthos",
+      "spot": "Unmoved Source Alpha",
+      "expansion": "Endwalker",
+      "fish": [
+        "Butterfly Fry",
+        "Giant Aetherlouse",
+        "Fat Snook",
+        "Tessera",
+        "Topminnow",
+        "Jumbo Snook"
+      ],
+      "baits": [
+        "Versatile Lure",
+        "Sky Spoon Lure",
+        "Gold Salmon Roe",
+        "Mayfly",
+        "Leech (Bait)"
+      ]
+    },
+    "labyrinthos|the mover alpha": {
+      "key": "labyrinthos|the mover alpha",
+      "zone": "Labyrinthos",
+      "spot": "The Mover Alpha",
+      "expansion": "Endwalker",
+      "fish": [
+        "Xenocypris",
+        "Butterfly Fry",
+        "Greengill Salmon",
+        "Mesonauta",
+        "Prochilodus Luminosus",
+        "Mossgill Salmon"
+      ],
+      "baits": [
+        "Versatile Lure",
+        "Sky Spoon Lure",
+        "Gold Salmon Roe",
+        "Mayfly",
+        "Leech (Bait)"
+      ]
+    },
+    "labyrinthos|unmoved source beta": {
+      "key": "labyrinthos|unmoved source beta",
+      "zone": "Labyrinthos",
+      "spot": "Unmoved Source Beta",
+      "expansion": "Endwalker",
+      "fish": [
+        "Xenocypris",
+        "Butterfly Fry",
+        "Raiamas",
+        "Red Bowfin",
+        "Swampsucker Bowfin"
+      ],
+      "baits": [
+        "Versatile Lure",
+        "Sky Spoon Lure",
+        "Gold Salmon Roe",
+        "Mayfly",
+        "Leech (Bait)"
+      ]
+    },
+    "labyrinthos|the mover beta": {
+      "key": "labyrinthos|the mover beta",
+      "zone": "Labyrinthos",
+      "spot": "The Mover Beta",
+      "expansion": "Endwalker",
+      "fish": [
+        "Blowgun",
+        "Xenocypris",
+        "Butterfly Fry",
+        "Darksteel Knifefish",
+        "Macrobrachium Lar",
+        "The Fury's Aegis",
+        "Onyx Knifefish"
+      ],
+      "baits": [
+        "Versatile Lure",
+        "Sky Spoon Lure",
+        "Gold Salmon Roe",
+        "Mayfly",
+        "Leech (Bait)"
+      ]
+    },
+    "labyrinthos|deepmoat": {
+      "key": "labyrinthos|deepmoat",
+      "zone": "Labyrinthos",
+      "spot": "Deepmoat",
+      "expansion": "Endwalker",
+      "fish": [
+        "Xenocypris",
+        "Butterfly Fry",
+        "Labyrinthos Tilapia",
+        "Astacus Aetherius",
+        "Circuit Tilapia",
+        "Hyphalosaurus"
+      ],
+      "baits": [
+        "Versatile Lure",
+        "Sky Spoon Lure",
+        "Gold Salmon Roe",
+        "Mayfly",
+        "Leech (Bait)"
+      ]
+    },
+    "radz-at-han|meghaduta": {
+      "key": "radz-at-han|meghaduta",
+      "zone": "Radz-at-Han",
+      "spot": "Meghaduta",
+      "expansion": "Endwalker",
+      "fish": [
+        "Silver Characin",
+        "Longear Sunfish",
+        "Seema Duta",
+        "Trunkblessed",
+        "Earful"
+      ],
+      "baits": [
+        "Versatile Lure",
+        "Sky Spoon Lure",
+        "Gold Salmon Roe",
+        "Mayfly",
+        "Leech (Bait)"
+      ]
+    },
+    "thavnair|yedlihmad": {
+      "key": "thavnair|yedlihmad",
+      "zone": "Thavnair",
+      "spot": "Yedlihmad",
+      "expansion": "Endwalker",
+      "fish": [
+        "Thavnairian Goby",
+        "Qeyiq Sole",
+        "Gwl Crab",
+        "Pantherscale Grouper",
+        "Lale Crab"
+      ],
+      "baits": [
+        "Versatile Lure",
+        "Mackerel Strip",
+        "Shrimp Ball"
+      ]
+    },
+    "thavnair|the thavnairian coast": {
+      "key": "thavnair|the thavnairian coast",
+      "zone": "Thavnair",
+      "spot": "The Thavnairian Coast",
+      "expansion": "Endwalker",
+      "fish": [
+        "Thavnairian Goby",
+        "Qeyiq Sole",
+        "Fate's Design",
+        "Paksa Fish",
+        "Shadowdart Sardine",
+        "Chalky Coral",
+        "Jhinga",
+        "Durdina Fish"
+      ],
+      "baits": [
+        "Metal Spinner",
+        "Versatile Lure",
+        "Mackerel Strip",
+        "Shrimp Ball"
+      ]
+    },
+    "thavnair|the great runoff": {
+      "key": "thavnair|the great runoff",
+      "zone": "Thavnair",
+      "spot": "The Great Runoff",
+      "expansion": "Endwalker",
+      "fish": [
+        "Thavnairian Goby",
+        "Garjana Wrasse",
+        "Qeyiq Sole",
+        "Golden Barramundi",
+        "Vidyutvat Wrasse",
+        "Sarikuyruk"
+      ],
+      "baits": [
+        "Metal Spinner",
+        "Versatile Lure",
+        "Shrimp Ball"
+      ]
+    },
+    "thavnair|giantsgall grounds": {
+      "key": "thavnair|giantsgall grounds",
+      "zone": "Thavnair",
+      "spot": "Giantsgall Grounds",
+      "expansion": "Endwalker",
+      "fish": [
+        "Bronze Pipira",
+        "Kadjaya's Castaway",
+        "Bluegill",
+        "Marid Frog",
+        "Hippo Frog"
+      ],
+      "baits": [
+        "Versatile Lure",
+        "Sky Spoon Lure",
+        "Gold Salmon Roe",
+        "Mayfly",
+        "Leech (Bait)"
+      ]
+    },
+    "thavnair|the wakeful torana": {
+      "key": "thavnair|the wakeful torana",
+      "zone": "Thavnair",
+      "spot": "The Wakeful Torana",
+      "expansion": "Endwalker",
+      "fish": [
+        "Green Swordtail",
+        "Red Drum",
+        "Ksirapayin",
+        "Wakeful Watcher",
+        "Wakeful Warden"
+      ],
+      "baits": [
+        "Versatile Lure",
+        "Gold Salmon Roe",
+        "Mayfly",
+        "Leech (Bait)"
+      ]
+    },
+    "thavnair|ksiroda": {
+      "key": "thavnair|ksiroda",
+      "zone": "Thavnair",
+      "spot": "Ksiroda",
+      "expansion": "Endwalker",
+      "fish": [
+        "Green Swordtail",
+        "Bicuda",
+        "Forgeflame",
+        "Ksirapayin",
+        "Seedtoad",
+        "Bigcuda"
+      ],
+      "baits": [
+        "Metal Spinner",
+        "Versatile Lure",
+        "Sky Spoon Lure",
+        "Gold Salmon Roe",
+        "Mayfly",
+        "Leech (Bait)"
+      ]
+    },
+    "thavnair|pavana's remorse": {
+      "key": "thavnair|pavana's remorse",
+      "zone": "Thavnair",
+      "spot": "Pavana's Remorse",
+      "expansion": "Endwalker",
+      "fish": [
+        "Green Swordtail",
+        "Banana Eel",
+        "Half-moon Betta",
+        "Radzbalik",
+        "Browned Banana Eel"
+      ],
+      "baits": [
+        "Versatile Lure",
+        "Gold Salmon Roe",
+        "Mayfly",
+        "Leech (Bait)"
+      ]
+    },
+    "thavnair|the perfumed tides": {
+      "key": "thavnair|the perfumed tides",
+      "zone": "Thavnair",
+      "spot": "The Perfumed Tides",
+      "expansion": "Endwalker",
+      "fish": [
+        "Mackerel Strip",
+        "Basilosaurus",
+        "Fiery Goby",
+        "Narunnairian Octopus",
+        "Puff-paya",
+        "Roosterfish",
+        "Thavnairian Calamari",
+        "Basilosaurus Rex",
+        "Gharlichthys"
+      ],
+      "baits": [
+        "Versatile Lure",
+        "Mackerel Strip",
+        "Shrimp Ball"
+      ]
+    },
+    "thavnair|the font of maya": {
+      "key": "thavnair|the font of maya",
+      "zone": "Thavnair",
+      "spot": "The Font of Maya",
+      "expansion": "Endwalker",
+      "fish": [
+        "Green Swordtail",
+        "Flowerhorn",
+        "Handy Hamsa",
+        "Radzbalik",
+        "Thavnairian Caiman",
+        "Mayashell",
+        "Mayaman"
+      ],
+      "baits": [
+        "Versatile Lure",
+        "Sky Spoon Lure",
+        "Gold Salmon Roe",
+        "Mayfly",
+        "Leech (Bait)"
+      ]
+    },
+    "garlemald|the eblan thaw": {
+      "key": "garlemald|the eblan thaw",
+      "zone": "Garlemald",
+      "spot": "The Eblan Thaw",
+      "expansion": "Endwalker",
+      "fish": [
+        "Icepike",
+        "Garlean Clam",
+        "Eblan Trout",
+        "Animulus",
+        "Cerule Core",
+        "Rimepike",
+        "Snowy Parexus"
+      ],
+      "baits": [
+        "Versatile Lure",
+        "Gold Salmon Roe",
+        "Mayfly",
+        "Leech (Bait)"
+      ]
+    },
+    "garlemald|the stainless course": {
+      "key": "garlemald|the stainless course",
+      "zone": "Garlemald",
+      "spot": "The Stainless Course",
+      "expansion": "Endwalker",
+      "fish": [
+        "Garlean Clam",
+        "Eblan Trout",
+        "Dark Crown",
+        "Bluetail",
+        "Imperial Pleco",
+        "Sovereign Shadow",
+        "Kitty Herring"
+      ],
+      "baits": [
+        "Metal Spinner",
+        "Versatile Lure",
+        "Sky Spoon Lure",
+        "Gold Salmon Roe",
+        "Mayfly",
+        "Leech (Bait)"
+      ]
+    },
+    "mare lamentorum|greatest endsvale": {
+      "key": "mare lamentorum|greatest endsvale",
+      "zone": "Mare Lamentorum",
+      "spot": "Greatest Endsvale",
+      "expansion": "Endwalker",
+      "fish": [
+        "Lunar Cichlid",
+        "Replipirarucu",
+        "Star-blue Guppy",
+        "Teareye",
+        "Disappirarucu",
+        "Ossicula"
+      ],
+      "baits": [
+        "Metal Spinner",
+        "Versatile Lure",
+        "Sky Spoon Lure",
+        "Gold Salmon Roe",
+        "Mayfly",
+        "Leech (Bait)"
+      ]
+    },
+    "mare lamentorum|the chlorophospond": {
+      "key": "mare lamentorum|the chlorophospond",
+      "zone": "Mare Lamentorum",
+      "spot": "The Chlorophospond",
+      "expansion": "Endwalker",
+      "fish": [
+        "Lunar Deathworm",
+        "Calicia",
+        "Feverfish",
+        "Protomyke 987",
+        "Chlorophos Deathworm",
+        "Lopoceras Elegans"
+      ],
+      "baits": [
+        "Versatile Lure",
+        "Grey Worm",
+        "Chimera Worm"
+      ]
+    },
+    "mare lamentorum|the frozen fissure": {
+      "key": "mare lamentorum|the frozen fissure",
+      "zone": "Mare Lamentorum",
+      "spot": "The Frozen Fissure",
+      "expansion": "Endwalker",
+      "fish": [
+        "Lunar Lamenter",
+        "Calicia",
+        "Feverfish",
+        "Fleeting Brand",
+        "Regotoise",
+        "Frozen Regotoise"
+      ],
+      "baits": [
+        "Versatile Lure",
+        "Grey Worm",
+        "Chimera Worm"
+      ]
+    },
+    "ultima thule|apohelos 18-α": {
+      "key": "ultima thule|apohelos 18-α",
+      "zone": "Ultima Thule",
+      "spot": "Apohelos 18-α",
+      "expansion": "Endwalker",
+      "fish": [
+        "Timeworn Kumbhiraskin Map",
+        "Dragonscale",
+        "Eehs Forhnesh",
+        "Star Eater",
+        "Superstring",
+        "Ypupîara",
+        "Eehs Fan",
+        "Stargilt Lobster"
+      ],
+      "baits": [
+        "Versatile Lure",
+        "Grey Worm",
+        "Chimera Worm"
+      ]
+    },
+    "ultima thule|apohelos 18-β": {
+      "key": "ultima thule|apohelos 18-β",
+      "zone": "Ultima Thule",
+      "spot": "Apohelos 18-β",
+      "expansion": "Endwalker",
+      "fish": [
+        "Timeworn Kumbhiraskin Map",
+        "Foun Myhk",
+        "Glassfish",
+        "Star Eater",
+        "Superstring",
+        "Foun Ahlm"
+      ],
+      "baits": [
+        "Versatile Lure",
+        "Grey Worm",
+        "Chimera Worm"
+      ]
+    },
+    "ultima thule|apohelos 18-γ": {
+      "key": "ultima thule|apohelos 18-γ",
+      "zone": "Ultima Thule",
+      "spot": "Apohelos 18-γ",
+      "expansion": "Endwalker",
+      "fish": [
+        "Timeworn Kumbhiraskin Map",
+        "Cosmic Noise",
+        "Star Eater",
+        "Superstring",
+        "Vacuum Shrimp",
+        "Cosmic Haze"
+      ],
+      "baits": [
+        "Versatile Lure",
+        "Grey Worm",
+        "Chimera Worm"
+      ]
+    },
+    "ultima thule|the wellspring of regret": {
+      "key": "ultima thule|the wellspring of regret",
+      "zone": "Ultima Thule",
+      "spot": "The Wellspring of Regret",
+      "expansion": "Endwalker",
+      "fish": [
+        "Aoide",
+        "Comet Tail",
+        "Katoptron",
+        "Protoflesh",
+        "Starscryer",
+        "Wildlife Sample",
+        "Soggy Alien Kelp",
+        "Stellar Herring",
+        "Methane Puffer"
+      ],
+      "baits": [
+        "Versatile Lure",
+        "Sky Spoon Lure",
+        "Gold Salmon Roe",
+        "Mayfly",
+        "Leech (Bait)"
+      ]
+    },
+    "ultima thule|abode of the ea": {
+      "key": "ultima thule|abode of the ea",
+      "zone": "Ultima Thule",
+      "spot": "Abode of the Ea",
+      "expansion": "Endwalker",
+      "fish": [
+        "Katoptron",
+        "Protoflesh",
+        "Wandering Starscale",
+        "Nondescript Fish",
+        "Meteoric Bonito",
+        "Sticky Fingers",
+        "Starscale Ephemeris"
+      ],
+      "baits": [
+        "Versatile Lure",
+        "Sky Spoon Lure",
+        "Gold Salmon Roe",
+        "Mayfly",
+        "Leech (Bait)"
+      ]
+    },
+    "ultima thule|limne 18": {
+      "key": "ultima thule|limne 18",
+      "zone": "Ultima Thule",
+      "spot": "Limne 18",
+      "expansion": "Endwalker",
+      "fish": [
+        "Timeworn Kumbhiraskin Map",
+        "Stardust",
+        "Alien Mertone",
+        "Class Twenty-four",
+        "Monster Carrot",
+        "Sophos Deka-okto",
+        "Terrifyingway",
+        "Unidentified Flying Biomass II",
+        "Wormhole Worm",
+        "Forbiddingway"
+      ],
+      "baits": [
+        "Versatile Lure",
+        "Stardust",
+        "Panic Jig"
+      ]
+    },
+    "ultima thule|limne 3-α": {
+      "key": "ultima thule|limne 3-α",
+      "zone": "Ultima Thule",
+      "spot": "Limne 3-α",
+      "expansion": "Endwalker",
+      "fish": [
+        "Timeworn Kumbhiraskin Map",
+        "Stardust",
+        "Alyketos",
+        "Argonaut",
+        "Echinos",
+        "Space Bishop",
+        "Triaina",
+        "Unidentified Flying Biomass II",
+        "Wormhole Worm",
+        "Argonauta argo"
+      ],
+      "baits": [
+        "Versatile Lure",
+        "Stardust",
+        "Panic Jig"
+      ]
+    },
+    "ultima thule|limne 3-β": {
+      "key": "ultima thule|limne 3-β",
+      "zone": "Ultima Thule",
+      "spot": "Limne 3-β",
+      "expansion": "Endwalker",
+      "fish": [
+        "Timeworn Kumbhiraskin Map",
+        "Stardust",
+        "Phallaina",
+        "E.B.E.-9318",
+        "Horizon Event",
+        "Triaina",
+        "Unbegotten",
+        "Unidentified Flying Biomass II",
+        "Wormhole Worm",
+        "E.B.E.-852738",
+        "Sidereal Whale"
+      ],
+      "baits": [
+        "Versatile Lure",
+        "Stardust",
+        "Panic Jig"
+      ]
+    },
+    "elysion|elysian fields": {
+      "key": "elysion|elysian fields",
+      "zone": "Elysion",
+      "spot": "Elysian Fields",
+      "expansion": "Endwalker",
+      "fish": [
+        "Comet Tail",
+        "Protoflesh",
+        "Chemically Rich Fish",
+        "Fresh Seaweed",
+        "Chromatic Fish",
+        "Karellian Fishy Fish"
+      ],
+      "baits": [
+        "Versatile Lure",
+        "Gold Salmon Roe",
+        "Mayfly"
+      ]
+    },
+    "elysion|elysian seas α": {
+      "key": "elysion|elysian seas α",
+      "zone": "Elysion",
+      "spot": "Elysian Seas α",
+      "expansion": "Endwalker",
+      "fish": [
+        "Katoptron",
+        "Protoflesh",
+        "Elysian Nudibranch",
+        "Saltwater Fish",
+        "Supremest Crustacean"
+      ],
+      "baits": [
+        "Versatile Lure",
+        "Gold Salmon Roe",
+        "Mayfly"
+      ]
+    },
+    "elysion|elysian seas β": {
+      "key": "elysion|elysian seas β",
+      "zone": "Elysion",
+      "spot": "Elysian Seas β",
+      "expansion": "Endwalker",
+      "fish": [
+        "Comet Tail",
+        "Protoflesh",
+        "Cosmic Sponge",
+        "Elysian Stickleback",
+        "Seaweed Snapper"
+      ],
+      "baits": [
+        "Versatile Lure",
+        "Gold Salmon Roe",
+        "Mayfly"
+      ]
+    },
+    "elysion|elysian playgrounds α": {
+      "key": "elysion|elysian playgrounds α",
+      "zone": "Elysion",
+      "spot": "Elysian Playgrounds α",
+      "expansion": "Endwalker",
+      "fish": [
+        "Protoflesh",
+        "Wandering Starscale",
+        "Astral Algae",
+        "Paraichthyoid",
+        "Babycray"
+      ],
+      "baits": [
+        "Versatile Lure",
+        "Gold Salmon Roe",
+        "Mayfly"
+      ]
+    },
+    "elysion|elysian playgrounds β": {
+      "key": "elysion|elysian playgrounds β",
+      "zone": "Elysion",
+      "spot": "Elysian Playgrounds β",
+      "expansion": "Endwalker",
+      "fish": [
+        "Katoptron",
+        "Protoflesh",
+        "Wandering Starscale",
+        "Dragon's Delight",
+        "Silky Cosmocoral",
+        "Weird Fish"
+      ],
+      "baits": [
+        "Versatile Lure",
+        "Gold Salmon Roe",
+        "Mayfly"
+      ]
+    },
+    "elpis|rumination's ramble": {
+      "key": "elpis|rumination's ramble",
+      "zone": "Elpis",
+      "spot": "Rumination's Ramble",
+      "expansion": "Endwalker",
+      "fish": [
+        "Iribainion",
+        "Isle Skipper",
+        "Mangar",
+        "Albino Loach",
+        "Golden Shiner",
+        "Planetes"
+      ],
+      "baits": [
+        "Versatile Lure",
+        "Sky Spoon Lure",
+        "Gold Salmon Roe",
+        "Mayfly",
+        "Leech (Bait)"
+      ]
+    },
+    "elpis|the lower hungering gardens": {
+      "key": "elpis|the lower hungering gardens",
+      "zone": "Elpis",
+      "spot": "The Lower Hungering Gardens",
+      "expansion": "Endwalker",
+      "fish": [
+        "Iribainion",
+        "Isle Skipper",
+        "Dermogenys",
+        "Colossoma",
+        "Phyllinos",
+        "Gilt Dermogenys"
+      ],
+      "baits": [
+        "Versatile Lure",
+        "Sky Spoon Lure",
+        "Gold Salmon Roe",
+        "Mayfly",
+        "Leech (Bait)"
+      ]
+    },
+    "elpis|lethe": {
+      "key": "elpis|lethe",
+      "zone": "Elpis",
+      "spot": "Lethe",
+      "expansion": "Endwalker",
+      "fish": [
+        "Iribainion",
+        "Isle Skipper",
+        "Smaragdos",
+        "Antheia",
+        "Timeworn Ophiotauroskin Map",
+        "Antheian Dahlia",
+        "Furcacauda"
+      ],
+      "baits": [
+        "Versatile Lure",
+        "Sky Spoon Lure",
+        "Gold Salmon Roe",
+        "Mayfly",
+        "Leech (Bait)"
+      ]
+    }
+  }
+}

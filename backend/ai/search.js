@@ -57,6 +57,13 @@ try {
   console.error('[ai/search] foodBuffs.json missing - run scripts/scrape-food-buffs.js:', err.message);
 }
 
+let FISHING_BAITS = { spots: {} };
+try {
+  FISHING_BAITS = JSON.parse(fs.readFileSync(path.join(__dirname, 'fishingBaits.json'), 'utf8'));
+} catch (err) {
+  console.error('[ai/search] fishingBaits.json missing - run scripts/scrape-fishing-baits.js:', err.message);
+}
+
 const compactRecipes = (rows) => rows.map((r) => ({
   job: r.job,
   name: r.name,
@@ -387,7 +394,7 @@ router.post('/', authenticate, async (req, res) => {
     // and fresh paths can enforce them deterministically (BUG 1).
     const overrides = await getOverrides();
 
-    const gatheringRecommendation = buildGatheringLevelRecommendation(query, GAME_DATA, FOOD_BUFFS);
+    const gatheringRecommendation = buildGatheringLevelRecommendation(query, GAME_DATA, FOOD_BUFFS, FISHING_BAITS);
     if (gatheringRecommendation) {
       withSourceUrls(gatheringRecommendation);
       await Promise.all([

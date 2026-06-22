@@ -8,6 +8,7 @@ const {
   extractRequestedLevel,
   foodTierLevel,
   recommendFood,
+  recommendedBait,
   spotLevel,
 } = require('../backend/ai/gatheringRecommendations.js')
 
@@ -84,6 +85,16 @@ const DATA = {
   ],
 }
 
+const BAITS = {
+  spots: {
+    'shaaloani|lake toari': {
+      zone: 'Shaaloani',
+      spot: 'Lake Toari',
+      baits: ['Versatile Lure', 'Metal Spinner', 'Honeybee'],
+    },
+  },
+}
+
 test('extracts gathering levels from natural language', () => {
   assert.equal(extractRequestedLevel('I am level 95 Fisher, where should I fish?'), 95)
   assert.equal(extractRequestedLevel('recommend fishing at lvl 91'), 91)
@@ -109,6 +120,12 @@ test('selects food by practical tier instead of always choosing the same food', 
   assert.equal(recommendFood(FOODS, 'crafting', 95).name, 'Crafter Stew')
 })
 
+test('prefers spot-specific bait catalog over the default lure', () => {
+  const spot = { zone: 'Shaaloani', name: 'Lake Toari', baits: ['Versatile Lure'] }
+  assert.equal(recommendedBait(spot, BAITS).name, 'Metal Spinner')
+  assert.equal(recommendedBait({ zone: 'Unknown', name: 'Unknown', baits: ['Versatile Lure'] }, BAITS).name, 'Versatile Lure')
+})
+
 test('asks for a level when recommendation intent is missing the level', () => {
   const answer = buildGatheringLevelRecommendation('where should I fish while leveling?', DATA, FOODS)
   assert.equal(answer.type, 'fishing')
@@ -117,13 +134,14 @@ test('asks for a level when recommendation intent is missing the level', () => {
 })
 
 test('recommends a fishing zone, target fish, bait, and food for the requested level', () => {
-  const answer = buildGatheringLevelRecommendation('I am level 95 fisher, recommend where to gather', DATA, FOODS)
+  const answer = buildGatheringLevelRecommendation('I am level 95 fisher, recommend where to gather', DATA, FOODS, BAITS)
   assert.equal(answer.type, 'fishing')
   assert.equal(answer.results[0].name, 'Cloudribbon')
   assert.equal(answer.results[0].zone, 'Shaaloani')
-  assert.match(answer.results[0].detail, /Bait: Metal Spinner/)
+  assert.match(answer.results[0].detail, /Recommended bait: Metal Spinner/)
   assert.match(answer.results[0].detail, /Food: Highland Supper/)
   assert.match(answer.summary, /Focus on Cloudribbon/)
+  assert.match(answer.summary, /use Metal Spinner/)
 })
 
 test('recommends a mining zone, target item, and food for the requested level', () => {

@@ -27,6 +27,8 @@ const GATHERING_INTENT = /\b(gather|gathering|gatherer|dol)\b/i;
 
 const GATHER_STATS = new Set(['GAT', 'PER', 'GP']);
 const CRAFT_STATS = new Set(['CMS', 'CTL', 'CP']);
+const DEFAULT_BAIT = 'Versatile Lure';
+const normKey = (s) => String(s || '').trim().toLowerCase();
 
 function extractRequestedLevel(query) {
   const text = String(query || '');
@@ -47,6 +49,29 @@ function extractRequestedLevel(query) {
 function fishList(spot) {
   const fish = spot.fish || spot.fishes || [];
   return fish.map((f) => String(f).trim()).filter(Boolean);
+}
+
+function baitCatalogRow(spot, baitCatalog) {
+  const key = `${normKey(spot.zone)}|${normKey(spot.name)}`;
+  return baitCatalog?.spots?.[key] || null;
+}
+
+function baitsForSpot(spot, baitCatalog) {
+  const row = baitCatalogRow(spot, baitCatalog);
+  const catalogBaits = row?.baits || [];
+  const spotBaits = spot.baits || [];
+  const baits = catalogBaits.length ? catalogBaits : spotBaits;
+  return baits.map((bait) => (Array.isArray(bait) ? bait[0] : bait)).filter(Boolean);
+}
+
+function recommendedBait(spot, baitCatalog) {
+  const baits = baitsForSpot(spot, baitCatalog);
+  const preferred = baits.find((bait) => bait !== DEFAULT_BAIT) || baits[0] || DEFAULT_BAIT;
+  return {
+    name: preferred,
+    baits,
+    source: baitCatalogRow(spot, baitCatalog) ? 'catalog' : 'fallback',
+  };
 }
 
 function itemList(node) {
@@ -129,11 +154,14 @@ function targetItem(node) {
   return itemList(node).find((item) => !/crystal|shard|cluster|aetherial/i.test(item)) || itemList(node)[0] || node.name;
 }
 
-function spotDetail(spot, level, food) {
+function spotDetail(spot, level, food, baitInfo) {
+  const baits = baitInfo?.baits?.length ? baitInfo.baits : baitsForSpot(spot);
+  const otherBaits = baits.filter((b) => b !== baitInfo?.name).slice(0, 3);
   const parts = [
     `Spot: ${spot.name}`,
     level ? `Recommended around level ${level}` : null,
-    spot.baits?.length ? `Bait: ${spot.baits.slice(0, 2).join(', ')}` : null,
+    baitInfo?.name ? `Recommended bait: ${baitInfo.name}` : null,
+    otherBaits.length ? `Other bait options: ${otherBaits.join(', ')}` : null,
     food ? `Food: ${food.name} (${foodStats(food)})` : null,
     spot.weather && spot.weather !== 'Any' ? `Weather: ${spot.weather}` : null,
     spot.time && spot.time !== 'Any' ? `Time: ${spot.time}` : null,
@@ -172,7 +200,7 @@ function missingLevelAnswer(kind) {
   };
 }
 
-function buildFishingAnswer(requestedLevel, gameData, foods) {
+function buildFishingAnswer(requestedLevel, gameData, foods, baitCatalog) {
   const food = recommendFood(foods, 'gathering', requestedLevel);
   const spots = (gameData?.fishing || [])
     .filter((spot) => spot?.zone && spot?.name && fishList(spot).length)
@@ -192,14 +220,15 @@ function buildFishingAnswer(requestedLevel, gameData, foods) {
 
   const best = picks[0];
   const fish = targetFish(best.spot);
-  const bait = best.spot.baits?.[0] || 'Versatile Lure';
+  const bait = recommendedBait(best.spot, baitCatalog);
   const foodText = food ? ` Eat ${food.name} for ${foodStats(food)}.` : '';
   const seenFish = new Set();
   return {
     type: 'fishing',
-    summary: `At Fisher level ${requestedLevel}, fish in ${best.spot.zone} at ${best.spot.name}. Focus on ${fish}, use ${bait}.${foodText}`,
+    summary: `At Fisher level ${requestedLevel}, fish in ${best.spot.zone} at ${best.spot.name}. Focus on ${fish}, use ${bait.name}.${foodText}`,
     results: picks.map(({ spot, level }) => {
       const name = targetFishNotSeen(spot, seenFish);
+      const baitInfo = recommendedBait(spot, baitCatalog);
       return {
         name,
         category: 'fishing',
@@ -207,7 +236,7 @@ function buildFishingAnswer(requestedLevel, gameData, foods) {
         coords: spot.coords || '',
         timed: false,
         window: '',
-        detail: spotDetail(spot, level, food),
+        detail: spotDetail(spot, level, food, baitInfo),
       };
     }),
     tips: [
@@ -257,13 +286,13 @@ function buildNodeAnswer(kind, requestedLevel, gameData, foods) {
   };
 }
 
-function buildGatheringLevelRecommendation(query, gameData, foods = []) {
+function buildGatheringLevelRecommendation(query, gameData, foods = [], baitCatalog = null) {
   if (!LEVEL_RECOMMENDATION_INTENT.test(query)) return null;
   const kind = recommendationKind(query);
   if (!kind) return null;
   const requestedLevel = extractRequestedLevel(query);
   if (!requestedLevel) return missingLevelAnswer(kind);
-  if (kind === 'fishing') return buildFishingAnswer(requestedLevel, gameData, foods);
+  if (kind === 'fishing') return buildFishingAnswer(requestedLevel, gameData, foods, baitCatalog);
   if (kind === 'mining' || kind === 'botany') return buildNodeAnswer(kind, requestedLevel, gameData, foods);
   return buildNodeAnswer('botany', requestedLevel, gameData, foods);
 }
@@ -273,5 +302,6 @@ module.exports = {
   extractRequestedLevel,
   foodTierLevel,
   recommendFood,
+  recommendedBait,
   spotLevel,
 };
