@@ -25,7 +25,7 @@ const { GoogleGenerativeAI, SchemaType } = require('@google/generative-ai');
 const pool = require('../db');
 const { fetchPricesForIds, DEFAULT_DC } = require('../routes/prices');
 const { authenticate, isFlagEnabled } = require('../middleware');
-const { buildFishingLevelRecommendation } = require('./gatheringRecommendations');
+const { buildGatheringLevelRecommendation } = require('./gatheringRecommendations');
 
 const router = express.Router();
 
@@ -50,6 +50,13 @@ try {
 // PRIMARY SOURCE: the recipes table — the same data /api/recipes serves and
 // the admin endpoints edit, so the AI never drifts from the site. The baked
 // cooking-recipes.json scrape seed is only the boot fallback (DB unreachable).
+let FOOD_BUFFS = [];
+try {
+  FOOD_BUFFS = JSON.parse(fs.readFileSync(path.join(__dirname, 'foodBuffs.json'), 'utf8'));
+} catch (err) {
+  console.error('[ai/search] foodBuffs.json missing - run scripts/scrape-food-buffs.js:', err.message);
+}
+
 const compactRecipes = (rows) => rows.map((r) => ({
   job: r.job,
   name: r.name,
@@ -380,7 +387,7 @@ router.post('/', authenticate, async (req, res) => {
     // and fresh paths can enforce them deterministically (BUG 1).
     const overrides = await getOverrides();
 
-    const gatheringRecommendation = buildFishingLevelRecommendation(query, GAME_DATA);
+    const gatheringRecommendation = buildGatheringLevelRecommendation(query, GAME_DATA, FOOD_BUFFS);
     if (gatheringRecommendation) {
       withSourceUrls(gatheringRecommendation);
       await Promise.all([

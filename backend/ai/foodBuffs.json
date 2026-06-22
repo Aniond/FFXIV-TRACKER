@@ -1,0 +1,2632 @@
+[
+  {
+    "id": 4716,
+    "name": "Frumenty",
+    "level": 1,
+    "itemLevel": 4,
+    "categories": [
+      "crafting"
+    ],
+    "bonuses": [
+      {
+        "stat": "CP",
+        "relative": true,
+        "value": 10,
+        "valueHQ": 13,
+        "max": 10,
+        "maxHQ": 12
+      }
+    ]
+  },
+  {
+    "id": 4673,
+    "name": "Mutton Stew",
+    "level": 1,
+    "itemLevel": 9,
+    "categories": [
+      "gathering"
+    ],
+    "bonuses": [
+      {
+        "stat": "GP",
+        "relative": true,
+        "value": 6,
+        "valueHQ": 7,
+        "max": 19,
+        "maxHQ": 24
+      },
+      {
+        "stat": "GAT",
+        "relative": true,
+        "value": 2,
+        "valueHQ": 3,
+        "max": 2,
+        "maxHQ": 3
+      }
+    ]
+  },
+  {
+    "id": 4666,
+    "name": "Salt Cod",
+    "level": 1,
+    "itemLevel": 9,
+    "categories": [
+      "crafting"
+    ],
+    "bonuses": [
+      {
+        "stat": "CTL",
+        "relative": true,
+        "value": 8,
+        "valueHQ": 10,
+        "max": 4,
+        "maxHQ": 5
+      }
+    ]
+  },
+  {
+    "id": 4680,
+    "name": "Zoni",
+    "level": 1,
+    "itemLevel": 9,
+    "categories": [
+      "gathering"
+    ],
+    "bonuses": [
+      {
+        "stat": "GP",
+        "relative": true,
+        "value": 6,
+        "valueHQ": 7,
+        "max": 19,
+        "maxHQ": 24
+      },
+      {
+        "stat": "PER",
+        "relative": false,
+        "value": 5,
+        "valueHQ": 6,
+        "max": null,
+        "maxHQ": null
+      }
+    ]
+  },
+  {
+    "id": 4681,
+    "name": "Jack-o'-lantern",
+    "level": 1,
+    "itemLevel": 10,
+    "categories": [
+      "gathering"
+    ],
+    "bonuses": [
+      {
+        "stat": "PER",
+        "relative": true,
+        "value": 6,
+        "valueHQ": 7,
+        "max": 6,
+        "maxHQ": 7
+      }
+    ]
+  },
+  {
+    "id": 4726,
+    "name": "Mint Lassi",
+    "level": 1,
+    "itemLevel": 10,
+    "categories": [
+      "crafting"
+    ],
+    "bonuses": [
+      {
+        "stat": "CMS",
+        "relative": true,
+        "value": 12,
+        "valueHQ": 15,
+        "max": 8,
+        "maxHQ": 10
+      }
+    ]
+  },
+  {
+    "id": 4708,
+    "name": "Rabbit Pie",
+    "level": 1,
+    "itemLevel": 10,
+    "categories": [
+      "gathering"
+    ],
+    "bonuses": [
+      {
+        "stat": "GAT",
+        "relative": true,
+        "value": 6,
+        "valueHQ": 7,
+        "max": 6,
+        "maxHQ": 7
+      },
+      {
+        "stat": "PER",
+        "relative": true,
+        "value": 2,
+        "valueHQ": 3,
+        "max": 2,
+        "maxHQ": 3
+      }
+    ]
+  },
+  {
+    "id": 4682,
+    "name": "Parsnip Salad",
+    "level": 1,
+    "itemLevel": 13,
+    "categories": [
+      "gathering"
+    ],
+    "bonuses": [
+      {
+        "stat": "PER",
+        "relative": true,
+        "value": 6,
+        "valueHQ": 7,
+        "max": 6,
+        "maxHQ": 7
+      },
+      {
+        "stat": "GP",
+        "relative": true,
+        "value": 2,
+        "valueHQ": 3,
+        "max": 8,
+        "maxHQ": 10
+      }
+    ]
+  },
+  {
+    "id": 4674,
+    "name": "Lentils and Chestnuts",
+    "level": 1,
+    "itemLevel": 16,
+    "categories": [
+      "gathering"
+    ],
+    "bonuses": [
+      {
+        "stat": "GP",
+        "relative": true,
+        "value": 6,
+        "valueHQ": 7,
+        "max": 20,
+        "maxHQ": 25
+      },
+      {
+        "stat": "PER",
+        "relative": true,
+        "value": 2,
+        "valueHQ": 3,
+        "max": 2,
+        "maxHQ": 3
+      }
+    ]
+  },
+  {
+    "id": 4683,
+    "name": "Roasted Nopales",
+    "level": 1,
+    "itemLevel": 16,
+    "categories": [
+      "gathering"
+    ],
+    "bonuses": [
+      {
+        "stat": "PER",
+        "relative": true,
+        "value": 6,
+        "valueHQ": 7,
+        "max": 6,
+        "maxHQ": 8
+      },
+      {
+        "stat": "GAT",
+        "relative": true,
+        "value": 2,
+        "valueHQ": 3,
+        "max": 2,
+        "maxHQ": 3
+      }
+    ]
+  },
+  {
+    "id": 4709,
+    "name": "Apple Tart",
+    "level": 1,
+    "itemLevel": 17,
+    "categories": [
+      "gathering"
+    ],
+    "bonuses": [
+      {
+        "stat": "GAT",
+        "relative": true,
+        "value": 6,
+        "valueHQ": 7,
+        "max": 7,
+        "maxHQ": 9
+      },
+      {
+        "stat": "GP",
+        "relative": true,
+        "value": 2,
+        "valueHQ": 3,
+        "max": 8,
+        "maxHQ": 10
+      }
+    ]
+  },
+  {
+    "id": 4667,
+    "name": "Raw Oyster",
+    "level": 1,
+    "itemLevel": 17,
+    "categories": [
+      "crafting"
+    ],
+    "bonuses": [
+      {
+        "stat": "CTL",
+        "relative": true,
+        "value": 8,
+        "valueHQ": 10,
+        "max": 8,
+        "maxHQ": 10
+      }
+    ]
+  },
+  {
+    "id": 4717,
+    "name": "Stone Soup",
+    "level": 1,
+    "itemLevel": 17,
+    "categories": [
+      "crafting"
+    ],
+    "bonuses": [
+      {
+        "stat": "CP",
+        "relative": true,
+        "value": 10,
+        "valueHQ": 13,
+        "max": 17,
+        "maxHQ": 21
+      }
+    ]
+  },
+  {
+    "id": 4722,
+    "name": "Mashed Popotoes",
+    "level": 1,
+    "itemLevel": 18,
+    "categories": [
+      "crafting"
+    ],
+    "bonuses": [
+      {
+        "stat": "CMS",
+        "relative": true,
+        "value": 12,
+        "valueHQ": 15,
+        "max": 12,
+        "maxHQ": 15
+      }
+    ]
+  },
+  {
+    "id": 4675,
+    "name": "Antelope Stew",
+    "level": 1,
+    "itemLevel": 20,
+    "categories": [
+      "gathering"
+    ],
+    "bonuses": [
+      {
+        "stat": "GP",
+        "relative": true,
+        "value": 6,
+        "valueHQ": 7,
+        "max": 21,
+        "maxHQ": 26
+      },
+      {
+        "stat": "GAT",
+        "relative": true,
+        "value": 2,
+        "valueHQ": 3,
+        "max": 3,
+        "maxHQ": 4
+      }
+    ]
+  },
+  {
+    "id": 4710,
+    "name": "Shepherd's Pie",
+    "level": 1,
+    "itemLevel": 22,
+    "categories": [
+      "gathering"
+    ],
+    "bonuses": [
+      {
+        "stat": "GAT",
+        "relative": true,
+        "value": 6,
+        "valueHQ": 7,
+        "max": 8,
+        "maxHQ": 10
+      },
+      {
+        "stat": "PER",
+        "relative": true,
+        "value": 2,
+        "valueHQ": 3,
+        "max": 3,
+        "maxHQ": 4
+      }
+    ]
+  },
+  {
+    "id": 4684,
+    "name": "Spinach Saute",
+    "level": 1,
+    "itemLevel": 22,
+    "categories": [
+      "gathering"
+    ],
+    "bonuses": [
+      {
+        "stat": "PER",
+        "relative": true,
+        "value": 6,
+        "valueHQ": 7,
+        "max": 8,
+        "maxHQ": 10
+      },
+      {
+        "stat": "GAT",
+        "relative": true,
+        "value": 2,
+        "valueHQ": 3,
+        "max": 3,
+        "maxHQ": 4
+      }
+    ]
+  },
+  {
+    "id": 4711,
+    "name": "Eel Pie",
+    "level": 1,
+    "itemLevel": 25,
+    "categories": [
+      "gathering"
+    ],
+    "bonuses": [
+      {
+        "stat": "GAT",
+        "relative": true,
+        "value": 6,
+        "valueHQ": 7,
+        "max": 9,
+        "maxHQ": 11
+      },
+      {
+        "stat": "PER",
+        "relative": true,
+        "value": 2,
+        "valueHQ": 3,
+        "max": 3,
+        "maxHQ": 4
+      }
+    ]
+  },
+  {
+    "id": 4718,
+    "name": "Pea Soup",
+    "level": 1,
+    "itemLevel": 26,
+    "categories": [
+      "crafting"
+    ],
+    "bonuses": [
+      {
+        "stat": "CP",
+        "relative": true,
+        "value": 10,
+        "valueHQ": 13,
+        "max": 21,
+        "maxHQ": 26
+      }
+    ]
+  },
+  {
+    "id": 4668,
+    "name": "Boiled Bream",
+    "level": 1,
+    "itemLevel": 27,
+    "categories": [
+      "crafting"
+    ],
+    "bonuses": [
+      {
+        "stat": "CTL",
+        "relative": true,
+        "value": 8,
+        "valueHQ": 10,
+        "max": 12,
+        "maxHQ": 15
+      }
+    ]
+  },
+  {
+    "id": 4723,
+    "name": "Cheese Risotto",
+    "level": 1,
+    "itemLevel": 27,
+    "categories": [
+      "crafting"
+    ],
+    "bonuses": [
+      {
+        "stat": "CMS",
+        "relative": true,
+        "value": 12,
+        "valueHQ": 15,
+        "max": 16,
+        "maxHQ": 20
+      }
+    ]
+  },
+  {
+    "id": 4676,
+    "name": "Orobon Stew",
+    "level": 1,
+    "itemLevel": 28,
+    "categories": [
+      "gathering"
+    ],
+    "bonuses": [
+      {
+        "stat": "GP",
+        "relative": true,
+        "value": 6,
+        "valueHQ": 7,
+        "max": 22,
+        "maxHQ": 27
+      },
+      {
+        "stat": "GAT",
+        "relative": true,
+        "value": 2,
+        "valueHQ": 3,
+        "max": 3,
+        "maxHQ": 4
+      }
+    ]
+  },
+  {
+    "id": 4669,
+    "name": "Baked Sole",
+    "level": 1,
+    "itemLevel": 29,
+    "categories": [
+      "crafting"
+    ],
+    "bonuses": [
+      {
+        "stat": "CTL",
+        "relative": true,
+        "value": 8,
+        "valueHQ": 10,
+        "max": 14,
+        "maxHQ": 17
+      }
+    ]
+  },
+  {
+    "id": 4685,
+    "name": "Alligator Salad",
+    "level": 1,
+    "itemLevel": 30,
+    "categories": [
+      "gathering"
+    ],
+    "bonuses": [
+      {
+        "stat": "PER",
+        "relative": true,
+        "value": 6,
+        "valueHQ": 7,
+        "max": 10,
+        "maxHQ": 12
+      },
+      {
+        "stat": "GP",
+        "relative": true,
+        "value": 2,
+        "valueHQ": 3,
+        "max": 9,
+        "maxHQ": 11
+      }
+    ]
+  },
+  {
+    "id": 4712,
+    "name": "Blood Currant Tart",
+    "level": 1,
+    "itemLevel": 32,
+    "categories": [
+      "gathering"
+    ],
+    "bonuses": [
+      {
+        "stat": "GAT",
+        "relative": true,
+        "value": 6,
+        "valueHQ": 7,
+        "max": 10,
+        "maxHQ": 12
+      },
+      {
+        "stat": "GP",
+        "relative": true,
+        "value": 2,
+        "valueHQ": 3,
+        "max": 9,
+        "maxHQ": 11
+      }
+    ]
+  },
+  {
+    "id": 4670,
+    "name": "Tuna Miq'abob",
+    "level": 1,
+    "itemLevel": 32,
+    "categories": [
+      "crafting"
+    ],
+    "bonuses": [
+      {
+        "stat": "CTL",
+        "relative": true,
+        "value": 8,
+        "valueHQ": 10,
+        "max": 16,
+        "maxHQ": 20
+      }
+    ]
+  },
+  {
+    "id": 4719,
+    "name": "Cawl Cennin",
+    "level": 1,
+    "itemLevel": 34,
+    "categories": [
+      "crafting"
+    ],
+    "bonuses": [
+      {
+        "stat": "CP",
+        "relative": true,
+        "value": 10,
+        "valueHQ": 13,
+        "max": 24,
+        "maxHQ": 30
+      }
+    ]
+  },
+  {
+    "id": 4686,
+    "name": "Sauerkraut",
+    "level": 1,
+    "itemLevel": 35,
+    "categories": [
+      "gathering"
+    ],
+    "bonuses": [
+      {
+        "stat": "PER",
+        "relative": true,
+        "value": 6,
+        "valueHQ": 7,
+        "max": 11,
+        "maxHQ": 14
+      },
+      {
+        "stat": "GP",
+        "relative": true,
+        "value": 2,
+        "valueHQ": 3,
+        "max": 9,
+        "maxHQ": 11
+      }
+    ]
+  },
+  {
+    "id": 4724,
+    "name": "Cheese Souffle",
+    "level": 1,
+    "itemLevel": 36,
+    "categories": [
+      "crafting"
+    ],
+    "bonuses": [
+      {
+        "stat": "CMS",
+        "relative": true,
+        "value": 12,
+        "valueHQ": 15,
+        "max": 20,
+        "maxHQ": 25
+      }
+    ]
+  },
+  {
+    "id": 4677,
+    "name": "Ratatouille",
+    "level": 1,
+    "itemLevel": 37,
+    "categories": [
+      "gathering"
+    ],
+    "bonuses": [
+      {
+        "stat": "GP",
+        "relative": true,
+        "value": 6,
+        "valueHQ": 7,
+        "max": 23,
+        "maxHQ": 29
+      },
+      {
+        "stat": "PER",
+        "relative": true,
+        "value": 2,
+        "valueHQ": 3,
+        "max": 5,
+        "maxHQ": 6
+      }
+    ]
+  },
+  {
+    "id": 4687,
+    "name": "Stuffed Artichoke",
+    "level": 1,
+    "itemLevel": 39,
+    "categories": [
+      "gathering"
+    ],
+    "bonuses": [
+      {
+        "stat": "PER",
+        "relative": true,
+        "value": 6,
+        "valueHQ": 7,
+        "max": 13,
+        "maxHQ": 16
+      },
+      {
+        "stat": "GAT",
+        "relative": true,
+        "value": 2,
+        "valueHQ": 3,
+        "max": 5,
+        "maxHQ": 6
+      }
+    ]
+  },
+  {
+    "id": 4671,
+    "name": "Salt Cod Puffs",
+    "level": 1,
+    "itemLevel": 42,
+    "categories": [
+      "crafting"
+    ],
+    "bonuses": [
+      {
+        "stat": "CTL",
+        "relative": true,
+        "value": 8,
+        "valueHQ": 10,
+        "max": 18,
+        "maxHQ": 23
+      }
+    ]
+  },
+  {
+    "id": 4720,
+    "name": "Fish Soup",
+    "level": 1,
+    "itemLevel": 43,
+    "categories": [
+      "crafting"
+    ],
+    "bonuses": [
+      {
+        "stat": "CP",
+        "relative": true,
+        "value": 10,
+        "valueHQ": 13,
+        "max": 26,
+        "maxHQ": 33
+      }
+    ]
+  },
+  {
+    "id": 4727,
+    "name": "Rolanberry Lassi",
+    "level": 1,
+    "itemLevel": 46,
+    "categories": [
+      "crafting"
+    ],
+    "bonuses": [
+      {
+        "stat": "CMS",
+        "relative": true,
+        "value": 12,
+        "valueHQ": 15,
+        "max": 24,
+        "maxHQ": 30
+      }
+    ]
+  },
+  {
+    "id": 4678,
+    "name": "Beef Stew",
+    "level": 1,
+    "itemLevel": 50,
+    "categories": [
+      "gathering"
+    ],
+    "bonuses": [
+      {
+        "stat": "GP",
+        "relative": true,
+        "value": 6,
+        "valueHQ": 7,
+        "max": 24,
+        "maxHQ": 30
+      },
+      {
+        "stat": "GAT",
+        "relative": true,
+        "value": 2,
+        "valueHQ": 3,
+        "max": 6,
+        "maxHQ": 7
+      }
+    ]
+  },
+  {
+    "id": 4713,
+    "name": "Crowned Pie",
+    "level": 1,
+    "itemLevel": 50,
+    "categories": [
+      "gathering"
+    ],
+    "bonuses": [
+      {
+        "stat": "GAT",
+        "relative": true,
+        "value": 6,
+        "valueHQ": 7,
+        "max": 14,
+        "maxHQ": 17
+      },
+      {
+        "stat": "GP",
+        "relative": true,
+        "value": 2,
+        "valueHQ": 3,
+        "max": 10,
+        "maxHQ": 12
+      }
+    ]
+  },
+  {
+    "id": 6144,
+    "name": "Dagger Soup",
+    "level": 1,
+    "itemLevel": 50,
+    "categories": [
+      "crafting"
+    ],
+    "bonuses": [
+      {
+        "stat": "CTL",
+        "relative": true,
+        "value": 8,
+        "valueHQ": 10,
+        "max": 22,
+        "maxHQ": 27
+      }
+    ]
+  },
+  {
+    "id": 4715,
+    "name": "Trapper's Quiche",
+    "level": 1,
+    "itemLevel": 50,
+    "categories": [
+      "gathering"
+    ],
+    "bonuses": [
+      {
+        "stat": "GAT",
+        "relative": true,
+        "value": 6,
+        "valueHQ": 7,
+        "max": 14,
+        "maxHQ": 17
+      },
+      {
+        "stat": "PER",
+        "relative": true,
+        "value": 2,
+        "valueHQ": 3,
+        "max": 6,
+        "maxHQ": 7
+      }
+    ]
+  },
+  {
+    "id": 4721,
+    "name": "Bouillabaisse",
+    "level": 1,
+    "itemLevel": 55,
+    "categories": [
+      "crafting"
+    ],
+    "bonuses": [
+      {
+        "stat": "CP",
+        "relative": true,
+        "value": 10,
+        "valueHQ": 13,
+        "max": 34,
+        "maxHQ": 43
+      }
+    ]
+  },
+  {
+    "id": 4679,
+    "name": "Dzemael Gratin",
+    "level": 1,
+    "itemLevel": 55,
+    "categories": [
+      "gathering"
+    ],
+    "bonuses": [
+      {
+        "stat": "GP",
+        "relative": true,
+        "value": 6,
+        "valueHQ": 7,
+        "max": 24,
+        "maxHQ": 31
+      },
+      {
+        "stat": "PER",
+        "relative": true,
+        "value": 2,
+        "valueHQ": 3,
+        "max": 6,
+        "maxHQ": 8
+      }
+    ]
+  },
+  {
+    "id": 4688,
+    "name": "Landtrap Salad",
+    "level": 1,
+    "itemLevel": 55,
+    "categories": [
+      "gathering"
+    ],
+    "bonuses": [
+      {
+        "stat": "PER",
+        "relative": true,
+        "value": 6,
+        "valueHQ": 7,
+        "max": 15,
+        "maxHQ": 19
+      },
+      {
+        "stat": "GP",
+        "relative": true,
+        "value": 2,
+        "valueHQ": 3,
+        "max": 10,
+        "maxHQ": 12
+      }
+    ]
+  },
+  {
+    "id": 4672,
+    "name": "Pan-fried Mahi-mahi",
+    "level": 1,
+    "itemLevel": 55,
+    "categories": [
+      "crafting"
+    ],
+    "bonuses": [
+      {
+        "stat": "CTL",
+        "relative": true,
+        "value": 8,
+        "valueHQ": 10,
+        "max": 25,
+        "maxHQ": 31
+      }
+    ]
+  },
+  {
+    "id": 4725,
+    "name": "Rolanberry Cheesecake",
+    "level": 1,
+    "itemLevel": 55,
+    "categories": [
+      "crafting"
+    ],
+    "bonuses": [
+      {
+        "stat": "CMS",
+        "relative": true,
+        "value": 12,
+        "valueHQ": 15,
+        "max": 32,
+        "maxHQ": 40
+      }
+    ]
+  },
+  {
+    "id": 4714,
+    "name": "Tomato Pie",
+    "level": 1,
+    "itemLevel": 55,
+    "categories": [
+      "gathering"
+    ],
+    "bonuses": [
+      {
+        "stat": "GAT",
+        "relative": true,
+        "value": 6,
+        "valueHQ": 7,
+        "max": 15,
+        "maxHQ": 19
+      },
+      {
+        "stat": "PER",
+        "relative": true,
+        "value": 2,
+        "valueHQ": 3,
+        "max": 6,
+        "maxHQ": 8
+      }
+    ]
+  },
+  {
+    "id": 7574,
+    "name": "Chilled Popoto Soup",
+    "level": 1,
+    "itemLevel": 70,
+    "categories": [
+      "crafting"
+    ],
+    "bonuses": [
+      {
+        "stat": "CMS",
+        "relative": true,
+        "value": 10,
+        "valueHQ": 12,
+        "max": 38,
+        "maxHQ": 47
+      },
+      {
+        "stat": "CP",
+        "relative": true,
+        "value": 4,
+        "valueHQ": 5,
+        "max": 14,
+        "maxHQ": 17
+      }
+    ]
+  },
+  {
+    "id": 7575,
+    "name": "Spinach Quiche",
+    "level": 1,
+    "itemLevel": 70,
+    "categories": [
+      "gathering"
+    ],
+    "bonuses": [
+      {
+        "stat": "GAT",
+        "relative": true,
+        "value": 6,
+        "valueHQ": 7,
+        "max": 19,
+        "maxHQ": 24
+      },
+      {
+        "stat": "PER",
+        "relative": true,
+        "value": 2,
+        "valueHQ": 3,
+        "max": 8,
+        "maxHQ": 10
+      }
+    ]
+  },
+  {
+    "id": 9334,
+    "name": "Haddock Dip",
+    "level": 1,
+    "itemLevel": 90,
+    "categories": [
+      "gathering"
+    ],
+    "bonuses": [
+      {
+        "stat": "PER",
+        "relative": true,
+        "value": 6,
+        "valueHQ": 7,
+        "max": 22,
+        "maxHQ": 28
+      },
+      {
+        "stat": "GP",
+        "relative": true,
+        "value": 2,
+        "valueHQ": 3,
+        "max": 10,
+        "maxHQ": 12
+      }
+    ]
+  },
+  {
+    "id": 9333,
+    "name": "Shark Fin Soup",
+    "level": 1,
+    "itemLevel": 90,
+    "categories": [
+      "crafting"
+    ],
+    "bonuses": [
+      {
+        "stat": "CMS",
+        "relative": true,
+        "value": 10,
+        "valueHQ": 12,
+        "max": 49,
+        "maxHQ": 61
+      },
+      {
+        "stat": "CP",
+        "relative": true,
+        "value": 4,
+        "valueHQ": 5,
+        "max": 14,
+        "maxHQ": 18
+      }
+    ]
+  },
+  {
+    "id": 10146,
+    "name": "Better Crowned Pie",
+    "level": 1,
+    "itemLevel": 110,
+    "categories": [
+      "crafting",
+      "gathering"
+    ],
+    "bonuses": [
+      {
+        "stat": "GAT",
+        "relative": true,
+        "value": 6,
+        "valueHQ": 7,
+        "max": 24,
+        "maxHQ": 30
+      },
+      {
+        "stat": "CTL",
+        "relative": true,
+        "value": 8,
+        "valueHQ": 10,
+        "max": 38,
+        "maxHQ": 48
+      }
+    ]
+  },
+  {
+    "id": 12861,
+    "name": "Baked Onion Soup",
+    "level": 1,
+    "itemLevel": 125,
+    "categories": [
+      "crafting"
+    ],
+    "bonuses": [
+      {
+        "stat": "CP",
+        "relative": true,
+        "value": 10,
+        "valueHQ": 13,
+        "max": 38,
+        "maxHQ": 48
+      },
+      {
+        "stat": "CMS",
+        "relative": true,
+        "value": 4,
+        "valueHQ": 5,
+        "max": 22,
+        "maxHQ": 28
+      }
+    ]
+  },
+  {
+    "id": 12866,
+    "name": "Stuffed Cabbage Rolls",
+    "level": 1,
+    "itemLevel": 125,
+    "categories": [
+      "gathering"
+    ],
+    "bonuses": [
+      {
+        "stat": "PER",
+        "relative": true,
+        "value": 6,
+        "valueHQ": 7,
+        "max": 26,
+        "maxHQ": 32
+      },
+      {
+        "stat": "GP",
+        "relative": true,
+        "value": 3,
+        "valueHQ": 4,
+        "max": 13,
+        "maxHQ": 16
+      }
+    ]
+  },
+  {
+    "id": 12862,
+    "name": "Beet Soup",
+    "level": 1,
+    "itemLevel": 133,
+    "categories": [
+      "crafting"
+    ],
+    "bonuses": [
+      {
+        "stat": "CTL",
+        "relative": true,
+        "value": 10,
+        "valueHQ": 12,
+        "max": 54,
+        "maxHQ": 68
+      },
+      {
+        "stat": "CMS",
+        "relative": true,
+        "value": 4,
+        "valueHQ": 5,
+        "max": 23,
+        "maxHQ": 29
+      }
+    ]
+  },
+  {
+    "id": 12867,
+    "name": "Dhalmel Gratin",
+    "level": 1,
+    "itemLevel": 133,
+    "categories": [
+      "gathering"
+    ],
+    "bonuses": [
+      {
+        "stat": "GAT",
+        "relative": true,
+        "value": 6,
+        "valueHQ": 7,
+        "max": 26,
+        "maxHQ": 32
+      },
+      {
+        "stat": "PER",
+        "relative": true,
+        "value": 2,
+        "valueHQ": 3,
+        "max": 10,
+        "maxHQ": 13
+      }
+    ]
+  },
+  {
+    "id": 12869,
+    "name": "Dhalmel Fricassee",
+    "level": 1,
+    "itemLevel": 139,
+    "categories": [
+      "gathering"
+    ],
+    "bonuses": [
+      {
+        "stat": "PER",
+        "relative": true,
+        "value": 6,
+        "valueHQ": 7,
+        "max": 29,
+        "maxHQ": 36
+      },
+      {
+        "stat": "GAT",
+        "relative": true,
+        "value": 2,
+        "valueHQ": 3,
+        "max": 10,
+        "maxHQ": 13
+      }
+    ]
+  },
+  {
+    "id": 12863,
+    "name": "Emerald Soup",
+    "level": 1,
+    "itemLevel": 139,
+    "categories": [
+      "crafting"
+    ],
+    "bonuses": [
+      {
+        "stat": "CMS",
+        "relative": true,
+        "value": 10,
+        "valueHQ": 12,
+        "max": 60,
+        "maxHQ": 75
+      },
+      {
+        "stat": "CP",
+        "relative": true,
+        "value": 4,
+        "valueHQ": 5,
+        "max": 15,
+        "maxHQ": 19
+      }
+    ]
+  },
+  {
+    "id": 12864,
+    "name": "Clam Chowder",
+    "level": 1,
+    "itemLevel": 150,
+    "categories": [
+      "crafting"
+    ],
+    "bonuses": [
+      {
+        "stat": "CTL",
+        "relative": true,
+        "value": 10,
+        "valueHQ": 12,
+        "max": 58,
+        "maxHQ": 73
+      },
+      {
+        "stat": "CP",
+        "relative": true,
+        "value": 4,
+        "valueHQ": 5,
+        "max": 15,
+        "maxHQ": 19
+      }
+    ]
+  },
+  {
+    "id": 12868,
+    "name": "Stuffed Chysahl",
+    "level": 1,
+    "itemLevel": 150,
+    "categories": [
+      "gathering"
+    ],
+    "bonuses": [
+      {
+        "stat": "GP",
+        "relative": true,
+        "value": 6,
+        "valueHQ": 7,
+        "max": 30,
+        "maxHQ": 38
+      },
+      {
+        "stat": "PER",
+        "relative": true,
+        "value": 2,
+        "valueHQ": 3,
+        "max": 11,
+        "maxHQ": 14
+      }
+    ]
+  },
+  {
+    "id": 12865,
+    "name": "Seafood Stew",
+    "level": 1,
+    "itemLevel": 160,
+    "categories": [
+      "crafting"
+    ],
+    "bonuses": [
+      {
+        "stat": "CP",
+        "relative": true,
+        "value": 12,
+        "valueHQ": 15,
+        "max": 40,
+        "maxHQ": 50
+      },
+      {
+        "stat": "CTL",
+        "relative": true,
+        "value": 4,
+        "valueHQ": 5,
+        "max": 25,
+        "maxHQ": 31
+      }
+    ]
+  },
+  {
+    "id": 12870,
+    "name": "Snurbleberry Tart",
+    "level": 1,
+    "itemLevel": 160,
+    "categories": [
+      "gathering"
+    ],
+    "bonuses": [
+      {
+        "stat": "GAT",
+        "relative": true,
+        "value": 6,
+        "valueHQ": 7,
+        "max": 30,
+        "maxHQ": 37
+      },
+      {
+        "stat": "GP",
+        "relative": true,
+        "value": 3,
+        "valueHQ": 4,
+        "max": 15,
+        "maxHQ": 19
+      }
+    ]
+  },
+  {
+    "id": 14139,
+    "name": "Oyster Confit",
+    "level": 1,
+    "itemLevel": 180,
+    "categories": [
+      "crafting"
+    ],
+    "bonuses": [
+      {
+        "stat": "CTL",
+        "relative": true,
+        "value": 10,
+        "valueHQ": 12,
+        "max": 70,
+        "maxHQ": 88
+      },
+      {
+        "stat": "CMS",
+        "relative": true,
+        "value": 4,
+        "valueHQ": 5,
+        "max": 30,
+        "maxHQ": 37
+      }
+    ]
+  },
+  {
+    "id": 14140,
+    "name": "Angler Stew",
+    "level": 1,
+    "itemLevel": 210,
+    "categories": [
+      "gathering"
+    ],
+    "bonuses": [
+      {
+        "stat": "PER",
+        "relative": true,
+        "value": 6,
+        "valueHQ": 7,
+        "max": 34,
+        "maxHQ": 43
+      },
+      {
+        "stat": "GAT",
+        "relative": true,
+        "value": 2,
+        "valueHQ": 3,
+        "max": 14,
+        "maxHQ": 17
+      }
+    ]
+  },
+  {
+    "id": 15650,
+    "name": "Heavensegg Soup",
+    "level": 1,
+    "itemLevel": 220,
+    "categories": [
+      "crafting"
+    ],
+    "bonuses": [
+      {
+        "stat": "CTL",
+        "relative": true,
+        "value": 7,
+        "valueHQ": 9,
+        "max": 62,
+        "maxHQ": 77
+      },
+      {
+        "stat": "CMS",
+        "relative": true,
+        "value": 5,
+        "valueHQ": 6,
+        "max": 42,
+        "maxHQ": 53
+      },
+      {
+        "stat": "CP",
+        "relative": true,
+        "value": 3,
+        "valueHQ": 4,
+        "max": 8,
+        "maxHQ": 10
+      }
+    ]
+  },
+  {
+    "id": 15651,
+    "name": "Pasta Ortolano",
+    "level": 1,
+    "itemLevel": 220,
+    "categories": [
+      "gathering"
+    ],
+    "bonuses": [
+      {
+        "stat": "GAT",
+        "relative": true,
+        "value": 5,
+        "valueHQ": 6,
+        "max": 27,
+        "maxHQ": 34
+      },
+      {
+        "stat": "PER",
+        "relative": true,
+        "value": 5,
+        "valueHQ": 6,
+        "max": 27,
+        "maxHQ": 34
+      },
+      {
+        "stat": "GP",
+        "relative": true,
+        "value": 2,
+        "valueHQ": 2,
+        "max": 10,
+        "maxHQ": 13
+      }
+    ]
+  },
+  {
+    "id": 19838,
+    "name": "Kasha",
+    "level": 1,
+    "itemLevel": 265,
+    "categories": [
+      "gathering"
+    ],
+    "bonuses": [
+      {
+        "stat": "PER",
+        "relative": true,
+        "value": 6,
+        "valueHQ": 7,
+        "max": 45,
+        "maxHQ": 56
+      },
+      {
+        "stat": "GP",
+        "relative": true,
+        "value": 3,
+        "valueHQ": 4,
+        "max": 17,
+        "maxHQ": 21
+      }
+    ]
+  },
+  {
+    "id": 19834,
+    "name": "Miso Soup with Tofu",
+    "level": 1,
+    "itemLevel": 273,
+    "categories": [
+      "crafting"
+    ],
+    "bonuses": [
+      {
+        "stat": "CMS",
+        "relative": true,
+        "value": 10,
+        "valueHQ": 12,
+        "max": 104,
+        "maxHQ": 130
+      },
+      {
+        "stat": "CTL",
+        "relative": true,
+        "value": 4,
+        "valueHQ": 5,
+        "max": 39,
+        "maxHQ": 49
+      }
+    ]
+  },
+  {
+    "id": 19831,
+    "name": "Gameni",
+    "level": 1,
+    "itemLevel": 276,
+    "categories": [
+      "gathering"
+    ],
+    "bonuses": [
+      {
+        "stat": "GP",
+        "relative": true,
+        "value": 6,
+        "valueHQ": 7,
+        "max": 34,
+        "maxHQ": 42
+      },
+      {
+        "stat": "GAT",
+        "relative": true,
+        "value": 2,
+        "valueHQ": 3,
+        "max": 18,
+        "maxHQ": 23
+      }
+    ]
+  },
+  {
+    "id": 19839,
+    "name": "Nomad Meat Pie",
+    "level": 1,
+    "itemLevel": 279,
+    "categories": [
+      "gathering"
+    ],
+    "bonuses": [
+      {
+        "stat": "GAT",
+        "relative": true,
+        "value": 6,
+        "valueHQ": 7,
+        "max": 46,
+        "maxHQ": 57
+      },
+      {
+        "stat": "PER",
+        "relative": true,
+        "value": 2,
+        "valueHQ": 3,
+        "max": 18,
+        "maxHQ": 23
+      }
+    ]
+  },
+  {
+    "id": 19826,
+    "name": "Tempura Platter",
+    "level": 1,
+    "itemLevel": 279,
+    "categories": [
+      "crafting"
+    ],
+    "bonuses": [
+      {
+        "stat": "CP",
+        "relative": true,
+        "value": 12,
+        "valueHQ": 15,
+        "max": 43,
+        "maxHQ": 54
+      },
+      {
+        "stat": "CMS",
+        "relative": true,
+        "value": 4,
+        "valueHQ": 5,
+        "max": 42,
+        "maxHQ": 53
+      }
+    ]
+  },
+  {
+    "id": 19837,
+    "name": "Warrior's Stew",
+    "level": 1,
+    "itemLevel": 279,
+    "categories": [
+      "crafting"
+    ],
+    "bonuses": [
+      {
+        "stat": "CTL",
+        "relative": true,
+        "value": 10,
+        "valueHQ": 12,
+        "max": 99,
+        "maxHQ": 124
+      },
+      {
+        "stat": "CMS",
+        "relative": true,
+        "value": 4,
+        "valueHQ": 5,
+        "max": 42,
+        "maxHQ": 53
+      }
+    ]
+  },
+  {
+    "id": 19830,
+    "name": "Jhammel Moussaka",
+    "level": 1,
+    "itemLevel": 290,
+    "categories": [
+      "gathering"
+    ],
+    "bonuses": [
+      {
+        "stat": "PER",
+        "relative": true,
+        "value": 6,
+        "valueHQ": 7,
+        "max": 46,
+        "maxHQ": 58
+      },
+      {
+        "stat": "GAT",
+        "relative": true,
+        "value": 2,
+        "valueHQ": 3,
+        "max": 18,
+        "maxHQ": 23
+      }
+    ]
+  },
+  {
+    "id": 19824,
+    "name": "Steamed Grouper",
+    "level": 1,
+    "itemLevel": 290,
+    "categories": [
+      "crafting"
+    ],
+    "bonuses": [
+      {
+        "stat": "CMS",
+        "relative": true,
+        "value": 10,
+        "valueHQ": 12,
+        "max": 109,
+        "maxHQ": 136
+      },
+      {
+        "stat": "CP",
+        "relative": true,
+        "value": 4,
+        "valueHQ": 5,
+        "max": 16,
+        "maxHQ": 20
+      }
+    ]
+  },
+  {
+    "id": 23185,
+    "name": "Konpeito",
+    "level": 1,
+    "itemLevel": 320,
+    "categories": [
+      "gathering"
+    ],
+    "bonuses": [
+      {
+        "stat": "PER",
+        "relative": true,
+        "value": 6,
+        "valueHQ": 7,
+        "max": 54,
+        "maxHQ": 68
+      },
+      {
+        "stat": "GP",
+        "relative": true,
+        "value": 3,
+        "valueHQ": 4,
+        "max": 17,
+        "maxHQ": 21
+      }
+    ]
+  },
+  {
+    "id": 23187,
+    "name": "Matcha",
+    "level": 1,
+    "itemLevel": 320,
+    "categories": [
+      "crafting"
+    ],
+    "bonuses": [
+      {
+        "stat": "CP",
+        "relative": true,
+        "value": 12,
+        "valueHQ": 15,
+        "max": 45,
+        "maxHQ": 56
+      },
+      {
+        "stat": "CTL",
+        "relative": true,
+        "value": 4,
+        "valueHQ": 5,
+        "max": 49,
+        "maxHQ": 61
+      }
+    ]
+  },
+  {
+    "id": 27864,
+    "name": "Blood Tomato Salad",
+    "level": 1,
+    "itemLevel": 406,
+    "categories": [
+      "crafting"
+    ],
+    "bonuses": [
+      {
+        "stat": "CMS",
+        "relative": true,
+        "value": 7,
+        "valueHQ": 9,
+        "max": 122,
+        "maxHQ": 153
+      },
+      {
+        "stat": "CP",
+        "relative": true,
+        "value": 8,
+        "valueHQ": 10,
+        "max": 22,
+        "maxHQ": 27
+      }
+    ]
+  },
+  {
+    "id": 27865,
+    "name": "Mushroom Saute",
+    "level": 1,
+    "itemLevel": 406,
+    "categories": [
+      "gathering"
+    ],
+    "bonuses": [
+      {
+        "stat": "GAT",
+        "relative": true,
+        "value": 6,
+        "valueHQ": 7,
+        "max": 61,
+        "maxHQ": 76
+      },
+      {
+        "stat": "PER",
+        "relative": true,
+        "value": 2,
+        "valueHQ": 3,
+        "max": 30,
+        "maxHQ": 38
+      }
+    ]
+  },
+  {
+    "id": 27870,
+    "name": "Peppered Popotoes",
+    "level": 1,
+    "itemLevel": 412,
+    "categories": [
+      "gathering"
+    ],
+    "bonuses": [
+      {
+        "stat": "GP",
+        "relative": true,
+        "value": 23,
+        "valueHQ": 29,
+        "max": 40,
+        "maxHQ": 50
+      },
+      {
+        "stat": "GAT",
+        "relative": true,
+        "value": 2,
+        "valueHQ": 3,
+        "max": 30,
+        "maxHQ": 38
+      }
+    ]
+  },
+  {
+    "id": 27871,
+    "name": "Popotoes au Gratin",
+    "level": 1,
+    "itemLevel": 412,
+    "categories": [
+      "crafting"
+    ],
+    "bonuses": [
+      {
+        "stat": "CTL",
+        "relative": true,
+        "value": 7,
+        "valueHQ": 9,
+        "max": 118,
+        "maxHQ": 147
+      },
+      {
+        "stat": "CMS",
+        "relative": true,
+        "value": 4,
+        "valueHQ": 5,
+        "max": 53,
+        "maxHQ": 66
+      }
+    ]
+  },
+  {
+    "id": 27876,
+    "name": "Blood Bouillabaisse",
+    "level": 1,
+    "itemLevel": 418,
+    "categories": [
+      "crafting"
+    ],
+    "bonuses": [
+      {
+        "stat": "CP",
+        "relative": true,
+        "value": 21,
+        "valueHQ": 26,
+        "max": 53,
+        "maxHQ": 66
+      },
+      {
+        "stat": "CTL",
+        "relative": true,
+        "value": 4,
+        "valueHQ": 5,
+        "max": 51,
+        "maxHQ": 64
+      }
+    ]
+  },
+  {
+    "id": 27878,
+    "name": "Coffee Biscuit",
+    "level": 1,
+    "itemLevel": 418,
+    "categories": [
+      "gathering"
+    ],
+    "bonuses": [
+      {
+        "stat": "PER",
+        "relative": true,
+        "value": 6,
+        "valueHQ": 7,
+        "max": 62,
+        "maxHQ": 77
+      },
+      {
+        "stat": "GP",
+        "relative": true,
+        "value": 6,
+        "valueHQ": 8,
+        "max": 22,
+        "maxHQ": 28
+      }
+    ]
+  },
+  {
+    "id": 28721,
+    "name": "Arros Negre",
+    "level": 1,
+    "itemLevel": 460,
+    "categories": [
+      "gathering"
+    ],
+    "bonuses": [
+      {
+        "stat": "PER",
+        "relative": true,
+        "value": 6,
+        "valueHQ": 7,
+        "max": 74,
+        "maxHQ": 93
+      },
+      {
+        "stat": "GAT",
+        "relative": true,
+        "value": 2,
+        "valueHQ": 3,
+        "max": 34,
+        "maxHQ": 42
+      }
+    ]
+  },
+  {
+    "id": 28720,
+    "name": "Mejillones al Ajillo",
+    "level": 1,
+    "itemLevel": 460,
+    "categories": [
+      "crafting"
+    ],
+    "bonuses": [
+      {
+        "stat": "CP",
+        "relative": true,
+        "value": 21,
+        "valueHQ": 26,
+        "max": 56,
+        "maxHQ": 70
+      },
+      {
+        "stat": "CMS",
+        "relative": true,
+        "value": 5,
+        "valueHQ": 6,
+        "max": 84,
+        "maxHQ": 105
+      }
+    ]
+  },
+  {
+    "id": 30482,
+    "name": "Chili Crab",
+    "level": 1,
+    "itemLevel": 490,
+    "categories": [
+      "crafting"
+    ],
+    "bonuses": [
+      {
+        "stat": "CP",
+        "relative": true,
+        "value": 21,
+        "valueHQ": 26,
+        "max": 57,
+        "maxHQ": 72
+      },
+      {
+        "stat": "CTL",
+        "relative": true,
+        "value": 5,
+        "valueHQ": 6,
+        "max": 56,
+        "maxHQ": 70
+      }
+    ]
+  },
+  {
+    "id": 30481,
+    "name": "Crab Cakes",
+    "level": 1,
+    "itemLevel": 490,
+    "categories": [
+      "gathering"
+    ],
+    "bonuses": [
+      {
+        "stat": "GP",
+        "relative": true,
+        "value": 23,
+        "valueHQ": 29,
+        "max": 44,
+        "maxHQ": 55
+      },
+      {
+        "stat": "PER",
+        "relative": true,
+        "value": 2,
+        "valueHQ": 3,
+        "max": 38,
+        "maxHQ": 47
+      }
+    ]
+  },
+  {
+    "id": 36047,
+    "name": "Carrot Nibbles",
+    "level": 1,
+    "itemLevel": 527,
+    "categories": [
+      "gathering"
+    ],
+    "bonuses": [
+      {
+        "stat": "GAT",
+        "relative": true,
+        "value": 6,
+        "valueHQ": 7,
+        "max": 76,
+        "maxHQ": 95
+      },
+      {
+        "stat": "PER",
+        "relative": true,
+        "value": 2,
+        "valueHQ": 3,
+        "max": 39,
+        "maxHQ": 49
+      }
+    ]
+  },
+  {
+    "id": 36046,
+    "name": "Happiness Juice",
+    "level": 1,
+    "itemLevel": 527,
+    "categories": [
+      "crafting"
+    ],
+    "bonuses": [
+      {
+        "stat": "CMS",
+        "relative": true,
+        "value": 7,
+        "valueHQ": 9,
+        "max": 146,
+        "maxHQ": 183
+      },
+      {
+        "stat": "CP",
+        "relative": true,
+        "value": 8,
+        "valueHQ": 10,
+        "max": 26,
+        "maxHQ": 32
+      }
+    ]
+  },
+  {
+    "id": 36053,
+    "name": "Giant Haddock Dip",
+    "level": 1,
+    "itemLevel": 540,
+    "categories": [
+      "crafting"
+    ],
+    "bonuses": [
+      {
+        "stat": "CTL",
+        "relative": true,
+        "value": 7,
+        "valueHQ": 9,
+        "max": 132,
+        "maxHQ": 165
+      },
+      {
+        "stat": "CMS",
+        "relative": true,
+        "value": 4,
+        "valueHQ": 5,
+        "max": 62,
+        "maxHQ": 77
+      }
+    ]
+  },
+  {
+    "id": 36054,
+    "name": "Yakow Moussaka",
+    "level": 1,
+    "itemLevel": 540,
+    "categories": [
+      "gathering"
+    ],
+    "bonuses": [
+      {
+        "stat": "GP",
+        "relative": true,
+        "value": 23,
+        "valueHQ": 29,
+        "max": 44,
+        "maxHQ": 55
+      },
+      {
+        "stat": "GAT",
+        "relative": true,
+        "value": 2,
+        "valueHQ": 3,
+        "max": 48,
+        "maxHQ": 60
+      }
+    ]
+  },
+  {
+    "id": 36061,
+    "name": "Sideritis Cookie",
+    "level": 1,
+    "itemLevel": 554,
+    "categories": [
+      "gathering"
+    ],
+    "bonuses": [
+      {
+        "stat": "PER",
+        "relative": true,
+        "value": 6,
+        "valueHQ": 7,
+        "max": 81,
+        "maxHQ": 101
+      },
+      {
+        "stat": "GP",
+        "relative": true,
+        "value": 8,
+        "valueHQ": 10,
+        "max": 24,
+        "maxHQ": 30
+      }
+    ]
+  },
+  {
+    "id": 36060,
+    "name": "Tsai tou Vounou",
+    "level": 1,
+    "itemLevel": 554,
+    "categories": [
+      "crafting"
+    ],
+    "bonuses": [
+      {
+        "stat": "CP",
+        "relative": true,
+        "value": 21,
+        "valueHQ": 26,
+        "max": 62,
+        "maxHQ": 78
+      },
+      {
+        "stat": "CTL",
+        "relative": true,
+        "value": 4,
+        "valueHQ": 5,
+        "max": 61,
+        "maxHQ": 76
+      }
+    ]
+  },
+  {
+    "id": 37282,
+    "name": "Calamari Ripieni",
+    "level": 1,
+    "itemLevel": 590,
+    "categories": [
+      "crafting"
+    ],
+    "bonuses": [
+      {
+        "stat": "CP",
+        "relative": true,
+        "value": 21,
+        "valueHQ": 26,
+        "max": 66,
+        "maxHQ": 82
+      },
+      {
+        "stat": "CMS",
+        "relative": true,
+        "value": 4,
+        "valueHQ": 5,
+        "max": 96,
+        "maxHQ": 120
+      }
+    ]
+  },
+  {
+    "id": 37283,
+    "name": "Kalamarakia Tiganita",
+    "level": 1,
+    "itemLevel": 590,
+    "categories": [
+      "gathering"
+    ],
+    "bonuses": [
+      {
+        "stat": "PER",
+        "relative": true,
+        "value": 6,
+        "valueHQ": 7,
+        "max": 99,
+        "maxHQ": 124
+      },
+      {
+        "stat": "GAT",
+        "relative": true,
+        "value": 2,
+        "valueHQ": 3,
+        "max": 51,
+        "maxHQ": 64
+      }
+    ]
+  },
+  {
+    "id": 38929,
+    "name": "Jhinga Biryani",
+    "level": 1,
+    "itemLevel": 620,
+    "categories": [
+      "crafting"
+    ],
+    "bonuses": [
+      {
+        "stat": "CP",
+        "relative": true,
+        "value": 21,
+        "valueHQ": 26,
+        "max": 69,
+        "maxHQ": 86
+      },
+      {
+        "stat": "CTL",
+        "relative": true,
+        "value": 4,
+        "valueHQ": 5,
+        "max": 72,
+        "maxHQ": 90
+      }
+    ]
+  },
+  {
+    "id": 38930,
+    "name": "Jhinga Curry",
+    "level": 1,
+    "itemLevel": 620,
+    "categories": [
+      "gathering"
+    ],
+    "bonuses": [
+      {
+        "stat": "GAT",
+        "relative": true,
+        "value": 6,
+        "valueHQ": 7,
+        "max": 109,
+        "maxHQ": 136
+      },
+      {
+        "stat": "GP",
+        "relative": true,
+        "value": 4,
+        "valueHQ": 5,
+        "max": 25,
+        "maxHQ": 31
+      }
+    ]
+  },
+  {
+    "id": 44088,
+    "name": "Gateau au Chocolat",
+    "level": 1,
+    "itemLevel": 657,
+    "categories": [
+      "crafting"
+    ],
+    "bonuses": [
+      {
+        "stat": "CMS",
+        "relative": true,
+        "value": 7,
+        "valueHQ": 9,
+        "max": 192,
+        "maxHQ": 240
+      },
+      {
+        "stat": "CP",
+        "relative": true,
+        "value": 8,
+        "valueHQ": 10,
+        "max": 30,
+        "maxHQ": 38
+      }
+    ]
+  },
+  {
+    "id": 44099,
+    "name": "Turali Pineapple Ponzecake",
+    "level": 1,
+    "itemLevel": 657,
+    "categories": [
+      "gathering"
+    ],
+    "bonuses": [
+      {
+        "stat": "GAT",
+        "relative": true,
+        "value": 6,
+        "valueHQ": 7,
+        "max": 120,
+        "maxHQ": 151
+      },
+      {
+        "stat": "PER",
+        "relative": true,
+        "value": 2,
+        "valueHQ": 3,
+        "max": 62,
+        "maxHQ": 78
+      }
+    ]
+  },
+  {
+    "id": 44078,
+    "name": "Nasi Goreng",
+    "level": 1,
+    "itemLevel": 670,
+    "categories": [
+      "gathering"
+    ],
+    "bonuses": [
+      {
+        "stat": "GP",
+        "relative": true,
+        "value": 23,
+        "valueHQ": 29,
+        "max": 46,
+        "maxHQ": 58
+      },
+      {
+        "stat": "GAT",
+        "relative": true,
+        "value": 2,
+        "valueHQ": 3,
+        "max": 64,
+        "maxHQ": 80
+      }
+    ]
+  },
+  {
+    "id": 44077,
+    "name": "Salmon Jerky",
+    "level": 1,
+    "itemLevel": 670,
+    "categories": [
+      "crafting"
+    ],
+    "bonuses": [
+      {
+        "stat": "CTL",
+        "relative": true,
+        "value": 7,
+        "valueHQ": 9,
+        "max": 172,
+        "maxHQ": 215
+      },
+      {
+        "stat": "CMS",
+        "relative": true,
+        "value": 4,
+        "valueHQ": 5,
+        "max": 78,
+        "maxHQ": 98
+      }
+    ]
+  },
+  {
+    "id": 44091,
+    "name": "Rroneek Steak",
+    "level": 1,
+    "itemLevel": 684,
+    "categories": [
+      "crafting"
+    ],
+    "bonuses": [
+      {
+        "stat": "CP",
+        "relative": true,
+        "value": 21,
+        "valueHQ": 26,
+        "max": 73,
+        "maxHQ": 92
+      },
+      {
+        "stat": "CTL",
+        "relative": true,
+        "value": 4,
+        "valueHQ": 5,
+        "max": 77,
+        "maxHQ": 97
+      }
+    ]
+  },
+  {
+    "id": 44103,
+    "name": "Stuffed Peppers",
+    "level": 1,
+    "itemLevel": 684,
+    "categories": [
+      "gathering"
+    ],
+    "bonuses": [
+      {
+        "stat": "PER",
+        "relative": true,
+        "value": 6,
+        "valueHQ": 7,
+        "max": 125,
+        "maxHQ": 157
+      },
+      {
+        "stat": "GP",
+        "relative": true,
+        "value": 8,
+        "valueHQ": 10,
+        "max": 25,
+        "maxHQ": 32
+      }
+    ]
+  },
+  {
+    "id": 44842,
+    "name": "Ceviche",
+    "level": 1,
+    "itemLevel": 720,
+    "categories": [
+      "crafting"
+    ],
+    "bonuses": [
+      {
+        "stat": "CP",
+        "relative": true,
+        "value": 21,
+        "valueHQ": 26,
+        "max": 76,
+        "maxHQ": 96
+      },
+      {
+        "stat": "CMS",
+        "relative": true,
+        "value": 4,
+        "valueHQ": 5,
+        "max": 120,
+        "maxHQ": 150
+      }
+    ]
+  },
+  {
+    "id": 44843,
+    "name": "Cloudsail Meuniere",
+    "level": 1,
+    "itemLevel": 720,
+    "categories": [
+      "gathering"
+    ],
+    "bonuses": [
+      {
+        "stat": "PER",
+        "relative": true,
+        "value": 6,
+        "valueHQ": 7,
+        "max": 140,
+        "maxHQ": 176
+      },
+      {
+        "stat": "GAT",
+        "relative": true,
+        "value": 2,
+        "valueHQ": 3,
+        "max": 72,
+        "maxHQ": 91
+      }
+    ]
+  },
+  {
+    "id": 46253,
+    "name": "All i Pebre",
+    "level": 1,
+    "itemLevel": 750,
+    "categories": [
+      "crafting"
+    ],
+    "bonuses": [
+      {
+        "stat": "CP",
+        "relative": true,
+        "value": 21,
+        "valueHQ": 26,
+        "max": 80,
+        "maxHQ": 100
+      },
+      {
+        "stat": "CTL",
+        "relative": true,
+        "value": 4,
+        "valueHQ": 5,
+        "max": 92,
+        "maxHQ": 115
+      }
+    ]
+  },
+  {
+    "id": 46254,
+    "name": "Goldentail Pie",
+    "level": 1,
+    "itemLevel": 750,
+    "categories": [
+      "gathering"
+    ],
+    "bonuses": [
+      {
+        "stat": "GAT",
+        "relative": true,
+        "value": 6,
+        "valueHQ": 7,
+        "max": 150,
+        "maxHQ": 188
+      },
+      {
+        "stat": "PER",
+        "relative": true,
+        "value": 2,
+        "valueHQ": 3,
+        "max": 77,
+        "maxHQ": 97
+      }
+    ]
+  }
+]
