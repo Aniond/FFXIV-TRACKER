@@ -6,6 +6,7 @@ const require = createRequire(import.meta.url)
 const {
   buildGatheringLevelRecommendation,
   extractRequestedLevel,
+  foodTierLevel,
   recommendFood,
   spotLevel,
 } = require('../backend/ai/gatheringRecommendations.js')
@@ -13,21 +14,28 @@ const {
 const FOODS = [
   {
     name: 'Lowland Soup',
-    level: 91,
-    itemLevel: 650,
+    level: 1,
+    itemLevel: 590,
     categories: ['gathering'],
     bonuses: [{ stat: 'GP', valueHQ: 7, maxHQ: 20 }],
   },
   {
     name: 'Highland Supper',
-    level: 95,
-    itemLevel: 690,
+    level: 1,
+    itemLevel: 684,
     categories: ['gathering'],
     bonuses: [{ stat: 'GAT', valueHQ: 10, maxHQ: 80 }, { stat: 'PER', valueHQ: 10, maxHQ: 80 }],
   },
   {
+    name: 'Sky Supper',
+    level: 1,
+    itemLevel: 750,
+    categories: ['gathering'],
+    bonuses: [{ stat: 'GAT', valueHQ: 10, maxHQ: 188 }, { stat: 'PER', valueHQ: 3, maxHQ: 97 }],
+  },
+  {
     name: 'Crafter Stew',
-    level: 95,
+    level: 1,
     itemLevel: 690,
     categories: ['crafting'],
     bonuses: [{ stat: 'CP', valueHQ: 10, maxHQ: 90 }],
@@ -88,8 +96,16 @@ test('uses zone hints when fishing spots do not carry explicit levels', () => {
   assert.equal(spotLevel({ zone: 'Unknown' }), null)
 })
 
-test('selects the best food for the requested gathering level', () => {
+test('maps level-1 food items to practical item-level tiers', () => {
+  assert.equal(foodTierLevel({ level: 1, itemLevel: 590 }), 90)
+  assert.equal(foodTierLevel({ level: 1, itemLevel: 684 }), 95)
+  assert.equal(foodTierLevel({ level: 1, itemLevel: 750 }), 100)
+})
+
+test('selects food by practical tier instead of always choosing the same food', () => {
+  assert.equal(recommendFood(FOODS, 'gathering', 90).name, 'Lowland Soup')
   assert.equal(recommendFood(FOODS, 'gathering', 95).name, 'Highland Supper')
+  assert.equal(recommendFood(FOODS, 'gathering', 100).name, 'Sky Supper')
   assert.equal(recommendFood(FOODS, 'crafting', 95).name, 'Crafter Stew')
 })
 

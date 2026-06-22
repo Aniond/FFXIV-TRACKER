@@ -77,17 +77,36 @@ function foodStats(food) {
     .join(', ');
 }
 
+function foodTierLevel(food) {
+  const listed = Number(food?.level) || 0;
+  if (listed > 1) return listed;
+  const ilvl = Number(food?.itemLevel) || 0;
+  if (ilvl >= 720) return 100;
+  if (ilvl >= 650) return 95;
+  if (ilvl >= 590) return 90;
+  if (ilvl >= 520) return 85;
+  if (ilvl >= 460) return 80;
+  if (ilvl >= 400) return 75;
+  if (ilvl >= 320) return 70;
+  if (ilvl >= 265) return 65;
+  if (ilvl >= 210) return 60;
+  if (ilvl >= 130) return 55;
+  if (ilvl >= 90) return 50;
+  return 1;
+}
+
 function recommendFood(foods, category, requestedLevel) {
   const statSet = category === 'crafting' ? CRAFT_STATS : GATHER_STATS;
   const candidates = (foods || [])
     .filter((food) => food.categories?.includes(category))
     .filter((food) => (food.bonuses || []).some((b) => statSet.has(b.stat)))
     .map((food) => {
-      const level = Number(food.level) || 1;
-      const above = level > requestedLevel;
-      const distance = Math.abs(level - requestedLevel);
+      const tierLevel = foodTierLevel(food);
+      const above = tierLevel > requestedLevel;
+      const distance = Math.abs(tierLevel - requestedLevel);
       const statScore = (food.bonuses || []).reduce((sum, b) => sum + (statSet.has(b.stat) ? 1 : 0), 0);
-      return { food, score: (above ? 1000 : 0) + distance - (statScore * 0.1) - ((food.itemLevel || 0) / 10000) };
+      const ilvl = Number(food.itemLevel) || 0;
+      return { food, score: (above ? 1000 : 0) + (distance * 10) - (statScore * 0.25) - (ilvl / 10000) };
     })
     .sort((a, b) => a.score - b.score);
   return candidates[0]?.food || null;
@@ -252,6 +271,7 @@ function buildGatheringLevelRecommendation(query, gameData, foods = []) {
 module.exports = {
   buildGatheringLevelRecommendation,
   extractRequestedLevel,
+  foodTierLevel,
   recommendFood,
   spotLevel,
 };
