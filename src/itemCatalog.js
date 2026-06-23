@@ -2,6 +2,8 @@ import { MINING_NODES } from './miningData.js'
 import { BOTANY_NODES } from './botanyData.js'
 import { FISHING_SPOTS } from './fishingData.js'
 import { BAIT_TACKLE } from './baitTackleData.js'
+import { CRAFTING_GEAR } from './craftingGearData.js'
+import { RECIPE_ITEM_IDS } from './recipeItemIds.js'
 import { EXTRA_BOTANY_NODES, EXTRA_MINING_NODES, EXTRA_FISHING_SPOTS } from './crosslinkNodes.js'
 
 export const normItemName = (s) => String(s || '').trim().toLowerCase()
@@ -89,6 +91,15 @@ function recipeIsDish(recipe) {
   return !recipe.is_subcraft && Array.isArray(recipe.food_buff) && recipe.food_buff.length > 0
 }
 
+function recipeItemId(recipe) {
+  return recipe.item_id
+    || recipe.itemId
+    || recipe.result_id
+    || recipe.resultId
+    || RECIPE_ITEM_IDS[recipe.name]
+    || (normItemName(recipe.name) === 'blue zircon earrings of fending' ? 34585 : null)
+}
+
 function collectRecipeItems(recipe, byName, out, depth = 0) {
   for (const ing of recipe.ingredients || []) {
     const key = normItemName(ing.name)
@@ -106,16 +117,24 @@ function addRecipeData(map, recipes) {
     byName.set(normItemName(recipe.name), recipe)
     const item = ensureItem(map, recipe.name)
     if (!item) continue
-    item.itemId = item.itemId || recipe.id || null
+    const itemId = recipeItemId(recipe)
+    item.itemId = item.itemId || itemId || recipe.id || null
     item.craftedRecipe = recipe
     addSource(item, {
       source: 'CRAFTED',
-      itemId: recipe.id,
+      itemId: itemId || recipe.id,
       recipeName: recipe.name,
       job: recipe.job || 'CUL',
       itemLevel: recipe.item_level,
       stars: recipe.stars || 0,
     })
+    if (itemId) {
+      addSource(item, {
+        source: 'MARKET_BOARD',
+        itemId,
+        notes: 'Check listings if you want to buy instead of craft.',
+      })
+    }
   }
 
   for (const recipe of recipes || []) {
@@ -134,6 +153,15 @@ function addRecipeData(map, recipes) {
         currency: ing.currency,
         notes: ing.notes,
       })
+      if (ing.id) {
+        addSource(item, {
+          source: 'MARKET_BOARD',
+          itemId: ing.id,
+          notes: ing.source === 'MARKET_BOARD'
+            ? 'Primary source for this ingredient.'
+            : 'Check listings if you want to buy instead.',
+        })
+      }
     }
   }
 
@@ -225,6 +253,42 @@ function addBaitTackle(map, baitTackle) {
   }
 }
 
+function addCraftingGear(map, gearRows) {
+  for (const gear of gearRows || []) {
+    const item = ensureItem(map, gear.name)
+    if (!item) continue
+    item.itemId = item.itemId || gear.id || null
+    if (gear.vendor) {
+      addSource(item, {
+        source: 'VENDOR',
+        itemId: gear.id,
+        zone: gear.vendor.zone,
+        coords: gear.vendor.coords,
+        nodeName: gear.vendor.npc,
+        price: gear.vendor.price,
+        notes: `${gear.slot} - Lv ${gear.level}`,
+      })
+    }
+    if (gear.scrip) {
+      addSource(item, {
+        source: 'SCRIP_EXCHANGE',
+        itemId: gear.id,
+        zone: gear.scrip.zone,
+        coords: gear.scrip.coords,
+        nodeName: gear.scrip.npc,
+        price: gear.scrip.price,
+        currency: gear.scrip.currency,
+        notes: `${gear.slot} - Lv ${gear.level}`,
+      })
+    }
+    addSource(item, {
+      source: 'MARKET_BOARD',
+      itemId: gear.id,
+      notes: gear.vendor || gear.scrip ? 'Compare against the listed vendor or scrip cost.' : 'Check listings for crafted or tradeable copies.',
+    })
+  }
+}
+
 export function buildItemCatalog(recipes = []) {
   const map = new Map()
   addRecipeData(map, recipes)
@@ -232,6 +296,7 @@ export function buildItemCatalog(recipes = []) {
   addGatherNodes(map, [...BOTANY_NODES, ...EXTRA_BOTANY_NODES], 'BOTANY')
   addFishingSpots(map, [...FISHING_SPOTS, ...EXTRA_FISHING_SPOTS])
   addBaitTackle(map, BAIT_TACKLE)
+  addCraftingGear(map, CRAFTING_GEAR)
 
   const items = [...map.values()].map((item) => ({
     ...item,

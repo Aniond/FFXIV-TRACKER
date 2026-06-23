@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useState } from 'react'
 import ActivityNav from './ActivityNav'
 import { CRAFTING_GEAR } from './craftingGearData'
+import { itemPath } from './itemCatalog'
+import { navigate } from './router'
 import './CraftingGear.css'
 
 const JOBS = ['All', 'CRP', 'BSM', 'ARM', 'GSM', 'LTW', 'WVR', 'ALC', 'CUL']
@@ -101,6 +103,9 @@ export default function CraftingGear() {
                 <strong>{sourceLabel(row)}</strong>
                 {sourceWhere(row) && <span>{sourceWhere(row)}</span>}
               </div>
+              <button type="button" className="gear-market" onClick={() => navigate(itemPath(row.name))}>
+                Market Board
+              </button>
             </div>
           </article>
         ))}

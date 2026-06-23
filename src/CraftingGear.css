@@ -210,6 +210,29 @@ body.crafting-gear-page {
   line-height: 1.3;
 }
 
+.gear-source > div {
+  flex: 1;
+  min-width: 0;
+}
+
+.gear-market {
+  flex: 0 0 auto;
+  min-height: 32px;
+  color: #e7ecf1;
+  background: rgba(255,255,255,.055);
+  border: 1px solid rgba(255,255,255,.12);
+  border-radius: 6px;
+  padding: 6px 9px;
+  font: 800 10px Manrope, system-ui, sans-serif;
+  letter-spacing: .04em;
+  cursor: pointer;
+}
+
+.gear-market:hover {
+  border-color: rgba(129, 199, 194, .42);
+  color: #81c7c2;
+}
+
 @media (max-width: 860px) {
   .gear-controls,
   .gear-card {

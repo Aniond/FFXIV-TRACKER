@@ -48,6 +48,12 @@ test('every recipe ingredient has an actionable source link or purchase detail',
         failures.push(`${label} missing currency/price`)
       }
       if (source === 'VENDOR' && ing.price == null) failures.push(`${label} missing vendor price`)
+      if (source === 'VENDOR' && (!ing.node_name || !ing.zone || !ing.coords)) {
+        failures.push(`${label} missing vendor npc/zone/coords`)
+      }
+      if ((source === 'SCRIP_EXCHANGE' || source === 'GEMSTONE') && (!ing.node_name || !ing.zone || !ing.coords)) {
+        failures.push(`${label} missing exchange npc/zone/coords`)
+      }
     }
   }
 
