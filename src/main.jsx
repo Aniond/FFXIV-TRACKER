@@ -9,6 +9,8 @@ import Mining from './Mining'
 import Botany from './Botany'
 import AISearch from './AISearch'
 import ItemPage from './ItemPage'
+import CraftingGear from './CraftingGear'
+import SpecialDeliveries from './SpecialDeliveries'
 
 import SavedRecipes from './SavedRecipes'
 import Timers from './Timers'
@@ -23,6 +25,8 @@ function pageFor(path) {
   const itemMatch = path.match(/^\/item\/([^/]+)/)
   if (path === '/admin') return <AdminDashboard />
   if (itemMatch) return <ItemPage slug={itemMatch[1]} />
+  if (path === '/crafting/gear') return <CraftingGear />
+  if (path === '/crafting/special-deliveries') return <SpecialDeliveries />
   if (path === '/ai' || path.startsWith('/crafting')) return <AISearch />
   if (path === '/hunts') return <App />
   if (path === '/saved-recipes') return <SavedRecipes />

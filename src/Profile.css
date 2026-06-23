@@ -111,6 +111,49 @@ body.profile-page .jobs-btn--cancel { background: transparent; border: 1px solid
 body.profile-page .jobs-btn--sync   { background: rgba(255,255,255,body.profile-page .05); border: 1px solid var(--bill-edge); color: var(--ink-dim); min-width: 62px; }
 body.profile-page .jobs-btn--sync:hover:not(:disabled) { color: var(--gold); border-color: var(--gold-dim); }
 
+/* Gathering stat inputs used by AI food recommendations */
+body.profile-page .gather-stats {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+}
+body.profile-page .gather-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  min-width: 0;
+  background: rgba(255,255,255,.035);
+  border: 1px solid var(--bill-edge);
+  border-radius: 10px;
+  padding: 10px;
+}
+body.profile-page .gather-stat span {
+  font: 800 9px var(--fb);
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+}
+body.profile-page .gather-stat b {
+  font: 800 20px var(--fd);
+  color: var(--parchment);
+  font-variant-numeric: tabular-nums;
+}
+body.profile-page .gather-stat input {
+  width: 100%;
+  min-width: 0;
+  font: 800 18px var(--fd);
+  color: var(--parchment);
+  background: rgba(0,0,0,.22);
+  border: 1px solid var(--bill-edge);
+  border-radius: 8px;
+  padding: 8px 9px;
+  outline: none;
+}
+body.profile-page .gather-stat input:focus {
+  border-color: var(--gold-dim);
+  box-shadow: 0 0 0 3px var(--gold-faint);
+}
+
 /* ---------- Hero ---------- */
 body.profile-page .hero {
   display: grid; grid-template-columns: auto 1fr; gap: 20px;
@@ -396,6 +439,7 @@ body.profile-page .toast svg { width: 15px; height: 15px; color: var(--gold-brig
 @media (max-width: 760px) {
   body.profile-page .grid { grid-template-columns: 1fr; }
   body.profile-page .statband { grid-template-columns: repeat(2, 1fr); }
+  body.profile-page .gather-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 @media (max-width: 560px) {
   body.profile-page .wrap { padding: 0 12px 48px; }
@@ -409,4 +453,5 @@ body.profile-page .toast svg { width: 15px; height: 15px; color: var(--gold-brig
 @media (max-width: 380px) {
   body.profile-page .jobs { grid-template-columns: repeat(3, 1fr); }
   body.profile-page .zones { grid-template-columns: 1fr; }
+  body.profile-page .gather-stats { grid-template-columns: 1fr; }
 }

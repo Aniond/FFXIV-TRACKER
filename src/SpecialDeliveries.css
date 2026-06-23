@@ -1,0 +1,239 @@
+body.special-deliveries-page {
+  margin: 0;
+  min-height: 100vh;
+  color: #e9edf2;
+  background:
+    radial-gradient(80% 52% at 50% -12%, rgba(126, 166, 137, .24), transparent 58%),
+    linear-gradient(180deg, #090e0d 0%, #121a1c 100%);
+  font-family: Manrope, system-ui, sans-serif;
+}
+
+.sd-shell {
+  width: min(1060px, calc(100% - 28px));
+  margin: 0 auto;
+  padding: 16px 0 44px;
+}
+
+.sd-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: end;
+  gap: 16px;
+  margin: 22px 0 14px;
+}
+
+.sd-kicker {
+  margin: 0 0 5px;
+  color: #9fd18b;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+}
+
+.sd-head h1 {
+  margin: 0;
+  color: #fff;
+  font-family: Cinzel, Georgia, serif;
+  font-size: clamp(28px, 4vw, 46px);
+  letter-spacing: 0;
+}
+
+.sd-timer {
+  min-width: 190px;
+  display: grid;
+  grid-template-columns: auto 1fr;
+  column-gap: 10px;
+  align-items: center;
+  padding: 12px 14px;
+  background: rgba(255, 255, 255, .055);
+  border: 1px solid rgba(255, 255, 255, .1);
+  border-radius: 8px;
+}
+
+.sd-timer svg {
+  grid-row: span 2;
+  width: 23px;
+  height: 23px;
+  color: #9fd18b;
+}
+
+.sd-timer span {
+  color: #9aa7a8;
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.sd-timer strong {
+  color: #fff;
+  font-size: 18px;
+}
+
+.sd-summary {
+  display: grid;
+  grid-template-columns: 1fr 160px auto;
+  gap: 10px;
+  align-items: center;
+  margin-bottom: 14px;
+  padding: 12px;
+  background: rgba(16, 24, 26, .9);
+  border: 1px solid rgba(255, 255, 255, .08);
+  border-radius: 8px;
+}
+
+.sd-summary div {
+  min-height: 54px;
+  display: grid;
+  align-content: center;
+  gap: 3px;
+}
+
+.sd-summary span {
+  color: #8e9fa0;
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.sd-summary strong {
+  color: #fff;
+  font-size: 21px;
+}
+
+.sd-summary button,
+.sd-done,
+.sd-stepper button {
+  border: 0;
+  cursor: pointer;
+}
+
+.sd-summary button {
+  height: 42px;
+  padding: 0 14px;
+  color: #0c130f;
+  background: #9fd18b;
+  border-radius: 6px;
+  font-weight: 900;
+}
+
+.sd-list {
+  display: grid;
+  gap: 8px;
+}
+
+.sd-card {
+  display: grid;
+  grid-template-columns: minmax(260px, 1fr) 170px 132px;
+  align-items: center;
+  gap: 12px;
+  min-height: 88px;
+  padding: 14px;
+  background: rgba(16, 24, 26, .9);
+  border: 1px solid rgba(255, 255, 255, .08);
+  border-radius: 8px;
+}
+
+.sd-card.is-complete {
+  border-color: rgba(159, 209, 139, .34);
+  background: rgba(25, 42, 31, .88);
+}
+
+.sd-card__meta {
+  display: flex;
+  gap: 8px;
+  color: #9fd18b;
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.sd-card h2 {
+  margin: 3px 0;
+  color: #fff;
+  font-size: 18px;
+  letter-spacing: 0;
+}
+
+.sd-card p {
+  margin: 0;
+  color: #93a0a0;
+  font-size: 13px;
+}
+
+.sd-stepper {
+  display: grid;
+  grid-template-columns: 38px 1fr auto 38px;
+  align-items: center;
+  gap: 6px;
+  padding: 6px;
+  background: rgba(255, 255, 255, .045);
+  border: 1px solid rgba(255, 255, 255, .07);
+  border-radius: 7px;
+}
+
+.sd-stepper button {
+  width: 34px;
+  height: 34px;
+  display: grid;
+  place-items: center;
+  color: #dfe8e3;
+  background: rgba(255, 255, 255, .08);
+  border-radius: 6px;
+}
+
+.sd-stepper svg {
+  width: 16px;
+  height: 16px;
+}
+
+.sd-stepper strong {
+  justify-self: end;
+  color: #fff;
+  font-size: 24px;
+}
+
+.sd-stepper span {
+  color: #9aa7a8;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.sd-done {
+  height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  color: #dce6df;
+  background: rgba(255, 255, 255, .07);
+  border-radius: 6px;
+  font-weight: 900;
+}
+
+.sd-done.is-active {
+  color: #0c130f;
+  background: #9fd18b;
+}
+
+.sd-done svg {
+  width: 16px;
+  height: 16px;
+}
+
+@media (max-width: 780px) {
+  .sd-head,
+  .sd-summary,
+  .sd-card {
+    grid-template-columns: 1fr;
+  }
+
+  .sd-head {
+    align-items: start;
+    flex-direction: column;
+  }
+
+  .sd-timer {
+    width: 100%;
+    box-sizing: border-box;
+  }
+}

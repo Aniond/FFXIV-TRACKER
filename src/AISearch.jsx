@@ -12,6 +12,7 @@ import {
   saveAiResult, deleteSavedAiResult, fetchRecipes, fetchJobs, aiCraftGuide,
 } from './api'
 import { STAT_TYPES, STAT_KEY } from './cookingData'
+import { SPECIAL_DELIVERIES_KEY, normalizeSpecialDeliveriesState } from './specialDeliveriesData'
 import { isFav, addFav } from './favNodes'
 import ShoppingListWidget from './ShoppingListWidget'
 import { itemPath } from './itemCatalog'
@@ -495,7 +496,8 @@ export function RecipeCard({ recipe, recipeByName, onCopy, onNav }) {
     setGuideLoading(true)
     setGuideError(null)
     try {
-      const res = await aiCraftGuide(recipe, stats.level, stats.craft, stats.control, stats.cp)
+      const specialDeliveries = normalizeSpecialDeliveriesState(readState(SPECIAL_DELIVERIES_KEY, null))
+      const res = await aiCraftGuide(recipe, stats.level, stats.craft, stats.control, stats.cp, specialDeliveries)
       setGuideResult(res.advisor || res.guide)
     } catch (err) {
       setGuideError(err.message)
@@ -1023,7 +1025,10 @@ export default function AISearch() {
     try {
       // Pass the current shopping list recipe names to the AI
       const currentListNames = Array.from(listIds).map(id => recipeData?.byId[id]?.name).filter(Boolean);
-      const data = await aiSearch(text, chatHistory, currentListNames)
+      const gatheringStats = readState('ffxiv-gathering-stats', null)
+      const craftingStats = readState('ffxiv-crafter-stats', null)
+      const specialDeliveries = normalizeSpecialDeliveriesState(readState(SPECIAL_DELIVERIES_KEY, null))
+      const data = await aiSearch(text, chatHistory, currentListNames, gatheringStats, craftingStats, specialDeliveries)
       
       setResult(data)
       setResultQuery(text)

@@ -89,7 +89,7 @@ const ACTIVITIES = [
   {
     id: 'crafting',
     label: 'Crafting',
-    href: '/crafting',
+    href: null,
     soon: false,
     icon: (p) => (
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" {...p}>
@@ -97,6 +97,44 @@ const ACTIVITIES = [
         <path d="m16 2 6 6-2 2-6-6 2-2ZM4 20l1-4 3 3-4 1Z"/>
       </svg>
     ),
+    children: [
+      {
+        id: 'crafting-guide',
+        label: 'Guide',
+        href: '/crafting',
+        soon: false,
+        icon: (p) => (
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" {...p}>
+            <path d="M4 19.5V5a2 2 0 0 1 2-2h13v18H6a2 2 0 0 1-2-1.5Z"/>
+            <path d="M8 7h7M8 11h8M8 15h5"/>
+          </svg>
+        ),
+      },
+      {
+        id: 'crafting-gear',
+        label: 'Gear',
+        href: '/crafting/gear',
+        soon: false,
+        icon: (p) => (
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" {...p}>
+            <path d="M6 3h12l2 5-8 13L4 8l2-5Z"/>
+            <path d="M4 8h16M9 3l3 18 3-18"/>
+          </svg>
+        ),
+      },
+      {
+        id: 'special-deliveries',
+        label: 'Deliveries',
+        href: '/crafting/special-deliveries',
+        soon: false,
+        icon: (p) => (
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" {...p}>
+            <path d="M6 3h12v18l-3-2-3 2-3-2-3 2V3Z"/>
+            <path d="M9 8h6M9 12h6M9 16h3"/>
+          </svg>
+        ),
+      },
+    ],
   },
 ]
 
@@ -138,7 +176,9 @@ const ChevronDown = (p) => (
 function findCurrent(path, activities) {
   for (const a of activities) {
     if (a.children) {
-      const child = a.children.find((c) => c.href && path.startsWith(c.href))
+      const child = [...a.children]
+        .sort((left, right) => (right.href || '').length - (left.href || '').length)
+        .find((c) => c.href && path.startsWith(c.href))
       if (child) return { top: a, leaf: child }
     } else if (a.href) {
       if (a.href === '/' ? (path === '/' || path === '') : path.startsWith(a.href)) {

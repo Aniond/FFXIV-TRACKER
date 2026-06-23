@@ -128,6 +128,8 @@ const STATE_KEYS = new Set([
   'ffxiv-search-history',    // recent AI searches
   'ffxiv-profile-collapsed', // collapsed profile panels
   'ffxiv-crafter-stats',     // crafting-guide stat defaults
+  'ffxiv-gathering-stats',   // gathering food recommendation stat defaults
+  'ffxiv-special-deliveries', // weekly custom delivery allowances
 ]);
 const STATE_VALUE_MAX = 64 * 1024; // bytes of JSON per key — plenty for checklists
 

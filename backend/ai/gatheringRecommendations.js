@@ -29,6 +29,14 @@ const GATHER_STATS = new Set(['GAT', 'PER', 'GP']);
 const CRAFT_STATS = new Set(['CMS', 'CTL', 'CP']);
 const DEFAULT_BAIT = 'Versatile Lure';
 const normKey = (s) => String(s || '').trim().toLowerCase();
+const STAT_ALIASES = {
+  GAT: ['gathering', 'gat'],
+  PER: ['perception', 'per'],
+  GP: ['gp'],
+  CMS: ['craftsmanship', 'craft', 'cms'],
+  CTL: ['control', 'ctl'],
+  CP: ['cp'],
+};
 
 function extractRequestedLevel(query) {
   const text = String(query || '');
@@ -102,6 +110,32 @@ function foodStats(food) {
     .join(', ');
 }
 
+function statValue(stats, stat) {
+  const aliases = STAT_ALIASES[stat] || [String(stat || '').toLowerCase()];
+  for (const key of aliases) {
+    const value = Number(stats?.[key]);
+    if (Number.isFinite(value) && value > 0) return value;
+  }
+  return 0;
+}
+
+function foodBonusGain(bonus, stats) {
+  if (!bonus) return 0;
+  const value = Number(bonus.valueHQ ?? bonus.value) || 0;
+  if (!bonus.relative) return value;
+  const base = statValue(stats, bonus.stat);
+  if (!base) return 0;
+  const percentGain = Math.floor((base * value) / 100);
+  const cap = Number(bonus.maxHQ ?? bonus.max);
+  return Number.isFinite(cap) && cap > 0 ? Math.min(percentGain, cap) : percentGain;
+}
+
+function foodGain(food, stats, statSet) {
+  return (food?.bonuses || []).reduce((sum, bonus) => (
+    sum + (statSet.has(bonus.stat) ? foodBonusGain(bonus, stats) : 0)
+  ), 0);
+}
+
 function foodTierLevel(food) {
   const listed = Number(food?.level) || 0;
   if (listed > 1) return listed;
@@ -120,8 +154,9 @@ function foodTierLevel(food) {
   return 1;
 }
 
-function recommendFood(foods, category, requestedLevel) {
+function recommendFood(foods, category, requestedLevel, playerStats = null) {
   const statSet = category === 'crafting' ? CRAFT_STATS : GATHER_STATS;
+  const hasStats = statSet.size && [...statSet].some((stat) => statValue(playerStats, stat) > 0);
   const candidates = (foods || [])
     .filter((food) => food.categories?.includes(category))
     .filter((food) => (food.bonuses || []).some((b) => statSet.has(b.stat)))
@@ -131,7 +166,11 @@ function recommendFood(foods, category, requestedLevel) {
       const distance = Math.abs(tierLevel - requestedLevel);
       const statScore = (food.bonuses || []).reduce((sum, b) => sum + (statSet.has(b.stat) ? 1 : 0), 0);
       const ilvl = Number(food.itemLevel) || 0;
-      return { food, score: (above ? 1000 : 0) + (distance * 10) - (statScore * 0.25) - (ilvl / 10000) };
+      const gain = hasStats ? foodGain(food, playerStats, statSet) : 0;
+      const score = hasStats
+        ? -gain + (above ? 20 : 0) + (distance * 0.1) - (statScore * 0.01) - (ilvl / 100000)
+        : (above ? 1000 : 0) + (distance * 10) - (statScore * 0.25) - (ilvl / 10000);
+      return { food, score, gain };
     })
     .sort((a, b) => a.score - b.score);
   return candidates[0]?.food || null;
@@ -154,15 +193,16 @@ function targetItem(node) {
   return itemList(node).find((item) => !/crystal|shard|cluster|aetherial/i.test(item)) || itemList(node)[0] || node.name;
 }
 
-function spotDetail(spot, level, food, baitInfo) {
+function spotDetail(spot, level, food, baitInfo, playerStats = null) {
   const baits = baitInfo?.baits?.length ? baitInfo.baits : baitsForSpot(spot);
   const otherBaits = baits.filter((b) => b !== baitInfo?.name).slice(0, 3);
+  const gain = food ? foodGain(food, playerStats, GATHER_STATS) : 0;
   const parts = [
     `Spot: ${spot.name}`,
     level ? `Recommended around level ${level}` : null,
     baitInfo?.name ? `Recommended bait: ${baitInfo.name}` : null,
     otherBaits.length ? `Other bait options: ${otherBaits.join(', ')}` : null,
-    food ? `Food: ${food.name} (${foodStats(food)})` : null,
+    food ? `Food: ${food.name} (${foodStats(food)}${gain ? `, +${gain} total at your stats` : ''})` : null,
     spot.weather && spot.weather !== 'Any' ? `Weather: ${spot.weather}` : null,
     spot.time && spot.time !== 'Any' ? `Time: ${spot.time}` : null,
     `Fish: ${fishList(spot).slice(0, 5).join(', ')}`,
@@ -170,12 +210,13 @@ function spotDetail(spot, level, food, baitInfo) {
   return parts.filter(Boolean).join(' - ');
 }
 
-function nodeDetail(node, level, food) {
+function nodeDetail(node, level, food, playerStats = null) {
+  const gain = food ? foodGain(food, playerStats, GATHER_STATS) : 0;
   const parts = [
     `Node: ${node.name || node.zone}`,
     level ? `Recommended around level ${level}` : null,
     node.gatherType || node.type ? [node.gatherType, node.type].filter(Boolean).join(' ') : null,
-    food ? `Food: ${food.name} (${foodStats(food)})` : null,
+    food ? `Food: ${food.name} (${foodStats(food)}${gain ? `, +${gain} total at your stats` : ''})` : null,
     node.time && node.time !== 'Any' ? `Time: ${node.time}` : null,
     `Items: ${itemList(node).slice(0, 5).join(', ')}`,
   ];
@@ -200,8 +241,8 @@ function missingLevelAnswer(kind) {
   };
 }
 
-function buildFishingAnswer(requestedLevel, gameData, foods, baitCatalog) {
-  const food = recommendFood(foods, 'gathering', requestedLevel);
+function buildFishingAnswer(requestedLevel, gameData, foods, baitCatalog, playerStats = null) {
+  const food = recommendFood(foods, 'gathering', requestedLevel, playerStats);
   const spots = (gameData?.fishing || [])
     .filter((spot) => spot?.zone && spot?.name && fishList(spot).length)
     .map((spot) => ({ spot, level: spotLevel(spot) }))
@@ -221,7 +262,8 @@ function buildFishingAnswer(requestedLevel, gameData, foods, baitCatalog) {
   const best = picks[0];
   const fish = targetFish(best.spot);
   const bait = recommendedBait(best.spot, baitCatalog);
-  const foodText = food ? ` Eat ${food.name} for ${foodStats(food)}.` : '';
+  const gain = food ? foodGain(food, playerStats, GATHER_STATS) : 0;
+  const foodText = food ? ` Eat ${food.name} for ${foodStats(food)}${gain ? `; at your stats that is +${gain} total.` : '.'}` : '';
   const seenFish = new Set();
   return {
     type: 'fishing',
@@ -236,7 +278,7 @@ function buildFishingAnswer(requestedLevel, gameData, foods, baitCatalog) {
         coords: spot.coords || '',
         timed: false,
         window: '',
-        detail: spotDetail(spot, level, food, baitInfo),
+        detail: spotDetail(spot, level, food, baitInfo, playerStats),
       };
     }),
     tips: [
@@ -246,8 +288,8 @@ function buildFishingAnswer(requestedLevel, gameData, foods, baitCatalog) {
   };
 }
 
-function buildNodeAnswer(kind, requestedLevel, gameData, foods) {
-  const food = recommendFood(foods, 'gathering', requestedLevel);
+function buildNodeAnswer(kind, requestedLevel, gameData, foods, playerStats = null) {
+  const food = recommendFood(foods, 'gathering', requestedLevel, playerStats);
   const nodes = (gameData?.[kind] || [])
     .filter((node) => node?.zone && itemList(node).length)
     .map((node) => ({ node, level: spotLevel(node) }))
@@ -266,7 +308,8 @@ function buildNodeAnswer(kind, requestedLevel, gameData, foods) {
 
   const best = picks[0];
   const item = targetItem(best.node);
-  const foodText = food ? ` Eat ${food.name} for ${foodStats(food)}.` : '';
+  const gain = food ? foodGain(food, playerStats, GATHER_STATS) : 0;
+  const foodText = food ? ` Eat ${food.name} for ${foodStats(food)}${gain ? `; at your stats that is +${gain} total.` : '.'}` : '';
   return {
     type: kind,
     summary: `At level ${requestedLevel}, gather in ${best.node.zone}. Focus on ${item}.${foodText}`,
@@ -277,7 +320,7 @@ function buildNodeAnswer(kind, requestedLevel, gameData, foods) {
       coords: node.coords || '',
       timed: !!node.window,
       window: node.time && node.time !== 'Any' ? node.time : '',
-      detail: nodeDetail(node, level, food),
+      detail: nodeDetail(node, level, food, playerStats),
     })),
     tips: [
       'Prioritize the target item first, then fill inventory space with the other listed node items.',
@@ -286,21 +329,22 @@ function buildNodeAnswer(kind, requestedLevel, gameData, foods) {
   };
 }
 
-function buildGatheringLevelRecommendation(query, gameData, foods = [], baitCatalog = null) {
+function buildGatheringLevelRecommendation(query, gameData, foods = [], baitCatalog = null, playerStats = null) {
   if (!LEVEL_RECOMMENDATION_INTENT.test(query)) return null;
   const kind = recommendationKind(query);
   if (!kind) return null;
   const requestedLevel = extractRequestedLevel(query);
   if (!requestedLevel) return missingLevelAnswer(kind);
-  if (kind === 'fishing') return buildFishingAnswer(requestedLevel, gameData, foods, baitCatalog);
-  if (kind === 'mining' || kind === 'botany') return buildNodeAnswer(kind, requestedLevel, gameData, foods);
-  return buildNodeAnswer('botany', requestedLevel, gameData, foods);
+  if (kind === 'fishing') return buildFishingAnswer(requestedLevel, gameData, foods, baitCatalog, playerStats);
+  if (kind === 'mining' || kind === 'botany') return buildNodeAnswer(kind, requestedLevel, gameData, foods, playerStats);
+  return buildNodeAnswer('botany', requestedLevel, gameData, foods, playerStats);
 }
 
 module.exports = {
   buildGatheringLevelRecommendation,
   extractRequestedLevel,
   foodTierLevel,
+  foodGain,
   recommendFood,
   recommendedBait,
   spotLevel,

@@ -7,6 +7,7 @@ const {
   buildGatheringLevelRecommendation,
   extractRequestedLevel,
   foodTierLevel,
+  foodGain,
   recommendFood,
   recommendedBait,
   spotLevel,
@@ -118,6 +119,29 @@ test('selects food by practical tier instead of always choosing the same food', 
   assert.equal(recommendFood(FOODS, 'gathering', 95).name, 'Highland Supper')
   assert.equal(recommendFood(FOODS, 'gathering', 100).name, 'Sky Supper')
   assert.equal(recommendFood(FOODS, 'crafting', 95).name, 'Crafter Stew')
+})
+
+test('selects gathering food by realized capped stat gain when player stats are provided', () => {
+  const foods = [
+    {
+      name: 'Capped Gathering Meal',
+      level: 1,
+      itemLevel: 690,
+      categories: ['gathering'],
+      bonuses: [{ stat: 'GAT', relative: true, valueHQ: 10, maxHQ: 80 }],
+    },
+    {
+      name: 'Efficient GP Meal',
+      level: 1,
+      itemLevel: 650,
+      categories: ['gathering'],
+      bonuses: [{ stat: 'GP', relative: true, valueHQ: 8, maxHQ: 120 }],
+    },
+  ]
+  const stats = { gathering: 5000, gp: 900 }
+  assert.equal(foodGain(foods[0], stats, new Set(['GAT', 'PER', 'GP'])), 80)
+  assert.equal(foodGain(foods[1], stats, new Set(['GAT', 'PER', 'GP'])), 72)
+  assert.equal(recommendFood(foods, 'gathering', 100, stats).name, 'Capped Gathering Meal')
 })
 
 test('prefers spot-specific bait catalog over the default lure', () => {

@@ -44,6 +44,30 @@ const RVARS = {
 const RARITY_WORD = { common: 'Common', rare: 'Rare', legendary: 'Legendary' }
 
 const fishKey = (spotId, fishName) => `${spotId}::${fishName}`
+const BAIT_SOURCE_BY_NAME = new Map(BAIT_TACKLE.map((bait) => [bait.name, bait]))
+
+function baitSource(name) {
+  const row = BAIT_SOURCE_BY_NAME.get(name) || {}
+  const legacy = BAIT_VENDORS[name]
+  return {
+    vendor: row.vendor || (legacy ? { npc: legacy.vendor, zone: legacy.zone, coords: legacy.coords, price: legacy.price } : null),
+    scrip: row.scrip || null,
+  }
+}
+
+function baitCost(source) {
+  if (!source) return null
+  if (source.currency) return `${source.price} ${source.currency}`
+  if (source.price != null) return `${source.price}g`
+  return null
+}
+
+function baitTitle(name, sources) {
+  const bits = []
+  if (sources.vendor) bits.push(`buy from ${sources.vendor.npc} (${sources.vendor.zone}) - ${baitCost(sources.vendor)}`)
+  if (sources.scrip) bits.push(`exchange at ${sources.scrip.npc} (${sources.scrip.zone}) - ${baitCost(sources.scrip)}`)
+  return bits.length ? `${name} - ${bits.join(' / ')}` : name
+}
 
 /* Live zone weather: current condition + the next different one with a real
    countdown. Self-ticking (15s) so only the chip re-renders, not the page. */
@@ -189,15 +213,23 @@ function SpotCard({ spot, caught, onToggleFish, onToggleAll, onCopy, highlighted
       <div className="field-lbl">Bait</div>
       <div className="baits">
         {spot.baits.map(([name, color]) => {
-          const v = BAIT_VENDORS[name]
+          const sources = baitSource(name)
+          const v = sources.vendor
+          const s = sources.scrip
           return (
             <span className="bait" key={name}
-              title={v ? `${name} — buy from ${v.vendor} (${v.zone}) · ${v.price} gil` : name}>
+              title={baitTitle(name, sources)}>
               <span className="bait__dot" style={{ '--bc': color }} />{name}
               {v && (
                 <button className="bait__buy" title={`Copy ${v.coords}`}
                   onClick={() => onCopy(v.coords)}>
                   <I.coin />{v.price}g
+                </button>
+              )}
+              {s && (
+                <button className="bait__buy bait__buy--scrip" title={`Copy ${s.coords}`}
+                  onClick={() => onCopy(s.coords)}>
+                  <I.coin />{s.price} scrip
                 </button>
               )}
             </span>
@@ -287,7 +319,8 @@ export default function Fishing({ spots = FISHING_SPOTS }) {
     const query = q.trim().toLowerCase()
     if (!query) return BAIT_TACKLE
     return BAIT_TACKLE.filter((b) =>
-      (b.name + ' ' + (b.vendor ? `${b.vendor.npc} ${b.vendor.zone || ''}` : '')).toLowerCase().includes(query))
+      (b.name + ' ' + (b.vendor ? `${b.vendor.npc} ${b.vendor.zone || ''}` : '') + ' ' +
+        (b.scrip ? `${b.scrip.npc} ${b.scrip.zone || ''} ${b.scrip.currency || ''}` : '')).toLowerCase().includes(query))
   }, [q])
 
   const showOcean = zone === 'All zones' && (() => {
@@ -364,15 +397,30 @@ export default function Fishing({ spots = FISHING_SPOTS }) {
           {baitFiltered.map((b) => (
             <div className="bt-row" key={b.name}>
               <span className="bt-name"><I.hook />{b.name}</span>
-              {b.vendor ? (
+              {b.vendor || b.scrip ? (
                 <span className="bt-where">
-                  <span className="bt-npc">{b.vendor.npc}{b.vendor.zone ? ` · ${b.vendor.zone}` : ''}</span>
-                  {b.vendor.coords && (
-                    <button className="bt-coords" title="Tap to copy" onClick={() => copyCoords(b.vendor.coords)}>
-                      <I.copy />{b.vendor.coords}
-                    </button>
+                  {b.vendor && (
+                    <>
+                      <span className="bt-npc">{b.vendor.npc}{b.vendor.zone ? ` · ${b.vendor.zone}` : ''}</span>
+                      {b.vendor.coords && (
+                        <button className="bt-coords" title="Tap to copy" onClick={() => copyCoords(b.vendor.coords)}>
+                          <I.copy />{b.vendor.coords}
+                        </button>
+                      )}
+                      <span className="bt-price"><I.coin />{b.vendor.price}g</span>
+                    </>
                   )}
-                  <span className="bt-price"><I.coin />{b.vendor.price}g</span>
+                  {b.scrip && (
+                    <>
+                      <span className="bt-npc bt-npc--scrip">{b.scrip.npc}{b.scrip.zone ? ` · ${b.scrip.zone}` : ''}</span>
+                      {b.scrip.coords && (
+                        <button className="bt-coords bt-coords--scrip" title="Tap to copy" onClick={() => copyCoords(b.scrip.coords)}>
+                          <I.copy />{b.scrip.coords}
+                        </button>
+                      )}
+                      <span className="bt-price bt-price--scrip"><I.coin />{b.scrip.price} {b.scrip.currency}</span>
+                    </>
+                  )}
                 </span>
               ) : (
                 <span className="bt-other">Gathered / other</span>

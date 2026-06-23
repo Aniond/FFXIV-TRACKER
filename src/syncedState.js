@@ -33,6 +33,8 @@ export const SYNCED_KEYS = [
   'ffxiv-search-history',
   'ffxiv-profile-collapsed', // collapsed profile panels
   'ffxiv-crafter-stats',     // crafting-guide stat defaults
+  'ffxiv-gathering-stats',   // gathering food recommendation stat defaults
+  'ffxiv-special-deliveries', // weekly custom delivery allowances
 ]
 
 export const HYDRATED_EVENT = 'ffxiv-state-hydrated'

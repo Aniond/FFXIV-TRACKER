@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react'
 import { saveJobs, saveCharacterLink, refreshJobsFromLodestone, fetchJobs, API } from './api'
-import { readState, writeState, hydrateFromServer, HYDRATED_EVENT } from './syncedState'
+import { readState, writeState, hydrateFromServer, HYDRATED_EVENT, useSyncedState } from './syncedState'
 import { ZONE_EXPANSION } from './profileData'
 import './Profile.css'
 
@@ -71,6 +71,22 @@ function Ring({ pct, size = 40, stroke = 4, color = 'var(--gold)' }) {
 }
 
 const COLLAPSE_KEY = 'ffxiv-profile-collapsed'
+const GATHERING_STATS_KEY = 'ffxiv-gathering-stats'
+const DEFAULT_GATHERING_STATS = { level: 100, gathering: 0, perception: 0, gp: 0 }
+const GATHERING_STAT_FIELDS = [
+  { key: 'level', label: 'Level', min: 1, max: 100 },
+  { key: 'gathering', label: 'Gathering', min: 0, max: 9999 },
+  { key: 'perception', label: 'Perception', min: 0, max: 9999 },
+  { key: 'gp', label: 'GP', min: 0, max: 9999 },
+]
+const CRAFTING_STATS_KEY = 'ffxiv-crafter-stats'
+const DEFAULT_CRAFTING_STATS = { level: 100, craft: 4000, control: 4000, cp: 600 }
+const CRAFTING_STAT_FIELDS = [
+  { key: 'level', label: 'Level', min: 1, max: 100 },
+  { key: 'craft', label: 'Craftsmanship', min: 0, max: 9999 },
+  { key: 'control', label: 'Control', min: 0, max: 9999 },
+  { key: 'cp', label: 'CP', min: 0, max: 9999 },
+]
 
 function Panel({ title, icon: Ico, count, badge, action, children, className = '', collapseId }) {
   const collapsible = !!collapseId
@@ -111,6 +127,126 @@ function Panel({ title, icon: Ico, count, badge, action, children, className = '
       </h3>
       {open && children}
     </section>
+  )
+}
+
+function GatheringStatsPanel({ isOwner }) {
+  const [stats, setStats] = useSyncedState(GATHERING_STATS_KEY, DEFAULT_GATHERING_STATS)
+  const [draft, setDraft] = useState(stats)
+  const [editing, setEditing] = useState(false)
+  useEffect(() => {
+    if (!editing) setDraft({ ...DEFAULT_GATHERING_STATS, ...(stats || {}) })
+  }, [stats, editing])
+
+  const cleanStats = (value) => {
+    const next = {}
+    for (const field of GATHERING_STAT_FIELDS) {
+      const raw = Number.parseInt(value?.[field.key], 10)
+      const num = Number.isFinite(raw) ? raw : DEFAULT_GATHERING_STATS[field.key]
+      next[field.key] = Math.max(field.min, Math.min(field.max, num))
+    }
+    return next
+  }
+
+  const current = cleanStats(stats)
+  const save = () => {
+    setStats(cleanStats(draft))
+    setEditing(false)
+  }
+  const action = isOwner && (
+    editing ? (
+      <>
+        <button className="jobs-btn jobs-btn--save" onClick={save}>Save</button>
+        <button className="jobs-btn jobs-btn--cancel" onClick={() => { setDraft(current); setEditing(false) }}>Cancel</button>
+      </>
+    ) : (
+      <button className="jobs-btn jobs-btn--edit" onClick={() => { setDraft(current); setEditing(true) }}>
+        <I.pencil style={{ width: 11, height: 11 }} /> Edit
+      </button>
+    )
+  )
+
+  return (
+    <Panel title="Gathering Stats" icon={I.spark} className="col-span" collapseId="gathering-stats" action={action}>
+      <div className="gather-stats">
+        {GATHERING_STAT_FIELDS.map((field) => (
+          <label className="gather-stat" key={field.key}>
+            <span>{field.label}</span>
+            {editing ? (
+              <input
+                type="number"
+                min={field.min}
+                max={field.max}
+                value={draft[field.key] ?? ''}
+                onChange={(e) => setDraft((d) => ({ ...d, [field.key]: e.target.value }))}
+              />
+            ) : (
+              <b>{fmt(current[field.key])}</b>
+            )}
+          </label>
+        ))}
+      </div>
+    </Panel>
+  )
+}
+
+function CraftingStatsPanel({ isOwner }) {
+  const [stats, setStats] = useSyncedState(CRAFTING_STATS_KEY, DEFAULT_CRAFTING_STATS)
+  const [draft, setDraft] = useState(stats)
+  const [editing, setEditing] = useState(false)
+  useEffect(() => {
+    if (!editing) setDraft({ ...DEFAULT_CRAFTING_STATS, ...(stats || {}) })
+  }, [stats, editing])
+
+  const cleanStats = (value) => {
+    const next = {}
+    for (const field of CRAFTING_STAT_FIELDS) {
+      const raw = Number.parseInt(value?.[field.key], 10)
+      const num = Number.isFinite(raw) ? raw : DEFAULT_CRAFTING_STATS[field.key]
+      next[field.key] = Math.max(field.min, Math.min(field.max, num))
+    }
+    return next
+  }
+
+  const current = cleanStats(stats)
+  const save = () => {
+    setStats(cleanStats(draft))
+    setEditing(false)
+  }
+  const action = isOwner && (
+    editing ? (
+      <>
+        <button className="jobs-btn jobs-btn--save" onClick={save}>Save</button>
+        <button className="jobs-btn jobs-btn--cancel" onClick={() => { setDraft(current); setEditing(false) }}>Cancel</button>
+      </>
+    ) : (
+      <button className="jobs-btn jobs-btn--edit" onClick={() => { setDraft(current); setEditing(true) }}>
+        <I.pencil style={{ width: 11, height: 11 }} /> Edit
+      </button>
+    )
+  )
+
+  return (
+    <Panel title="Crafting Stats" icon={I.swords} className="col-span" collapseId="crafting-stats" action={action}>
+      <div className="gather-stats">
+        {CRAFTING_STAT_FIELDS.map((field) => (
+          <label className="gather-stat" key={field.key}>
+            <span>{field.label}</span>
+            {editing ? (
+              <input
+                type="number"
+                min={field.min}
+                max={field.max}
+                value={draft[field.key] ?? ''}
+                onChange={(e) => setDraft((d) => ({ ...d, [field.key]: e.target.value }))}
+              />
+            ) : (
+              <b>{fmt(current[field.key])}</b>
+            )}
+          </label>
+        ))}
+      </div>
+    </Panel>
   )
 }
 
@@ -398,6 +534,9 @@ export default function Profile({ profile = SAMPLE_PROFILE, isOwner = false }) {
       </div>
 
       <div className="grid">
+        <GatheringStatsPanel isOwner={isOwner} />
+        <CraftingStatsPanel isOwner={isOwner} />
+
         {/* Bounty by rank */}
         <Panel title="Bounty by Rank" icon={I.trophy}>
           {['S', 'A', 'B'].map((rk) => {

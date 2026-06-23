@@ -211,6 +211,11 @@ body.fishing-page .bait__buy {
 }
 body.fishing-page .bait__buy svg { width: 11px; height: 11px; }
 body.fishing-page .bait__buy:hover { filter: brightness(1.15); }
+body.fishing-page .bait__buy--scrip {
+  color: var(--au);
+  background: rgba(201,163,91,.12);
+  border-color: var(--au-dim);
+}
 
 /* fish list */
 body.fishing-page .fish-list { display: flex; flex-direction: column; gap: 6px; margin-top: 7px; }
@@ -393,6 +398,13 @@ body.fishing-page .bt-coords {
 body.fishing-page .bt-coords svg { width: 11px; height: 11px; }
 body.fishing-page .bt-price { display: inline-flex; align-items: center; gap: 4px; font: 700 11.5px var(--fb); color: var(--teal-bright); }
 body.fishing-page .bt-price svg { width: 12px; height: 12px; }
+body.fishing-page .bt-npc--scrip { color: var(--au); }
+body.fishing-page .bt-coords--scrip {
+  color: var(--au);
+  background: rgba(201,163,91,.12);
+  border-color: var(--au-dim);
+}
+body.fishing-page .bt-price--scrip { color: var(--au); }
 body.fishing-page .bt-other { font: 500 11.5px var(--fb); color: var(--ink-faint); }
 body.fishing-page .fish-tabs { width: 100%; }
 

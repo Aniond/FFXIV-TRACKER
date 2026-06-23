@@ -153,13 +153,13 @@ async function fetchFlags() {
 
 // POST a natural-language query to the Centurio assistant. Throws with a
 // .status on non-2xx so callers can distinguish 401/403/429/422.
-async function aiSearch(query, history = [], shoppingList = []) {
+async function aiSearch(query, history = [], shoppingList = [], gatheringStats = null, craftingStats = null, specialDeliveries = null) {
   const et = eorzeaMinuteOfDay()
   const etTime = `${Math.floor(et / 60)}:${String(et % 60).padStart(2, '0')}`
 
   const r = await apiFetch('/api/ai/search', {
     method: 'POST',
-    body: JSON.stringify({ query, history, etTime, shoppingList }),
+    body: JSON.stringify({ query, history, etTime, shoppingList, gatheringStats, craftingStats, specialDeliveries }),
   })
   const body = await r.json().catch(() => ({}))
   if (!r.ok) throw Object.assign(new Error(body.error || `Search failed (${r.status})`), { status: r.status })
@@ -167,10 +167,10 @@ async function aiSearch(query, history = [], shoppingList = []) {
 }
 
 // POST to the AI crafting guide generator.
-async function aiCraftGuide(recipe, level, craft, control, cp) {
+async function aiCraftGuide(recipe, level, craft, control, cp, specialDeliveries = null) {
   const r = await apiFetch('/api/ai/search/craft_guide', {
     method: 'POST',
-    body: JSON.stringify({ recipe, job: recipe.job || 'CUL', level, craft, control, cp }),
+    body: JSON.stringify({ recipe, job: recipe.job || 'CUL', level, craft, control, cp, specialDeliveries }),
   })
   const body = await r.json().catch(() => ({}))
   if (!r.ok) throw Object.assign(new Error(body.error || `Failed to generate guide (${r.status})`), { status: r.status })
