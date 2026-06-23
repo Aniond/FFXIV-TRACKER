@@ -15,7 +15,7 @@ import { STAT_TYPES, STAT_KEY } from './cookingData'
 import { SPECIAL_DELIVERIES_KEY, normalizeSpecialDeliveriesState } from './specialDeliveriesData'
 import { isFav, addFav } from './favNodes'
 import ShoppingListWidget from './ShoppingListWidget'
-import { itemPath } from './itemCatalog'
+import { buildItemCatalog, itemPath } from './itemCatalog'
 import './AISearch.css'
 
 /* ============================================================
@@ -151,7 +151,7 @@ function buildIndexes(recipes) {
       if (!r.is_subcraft && r.expansion === 'Dawntrail') e.usedIn.push(r.name)
     }
   }
-  return { recipeByName, ingredientIndex, byName, byId }
+  return { recipeByName, ingredientIndex, byName, byId, itemCatalog: buildItemCatalog(recipes || []) }
 }
 
 /* ── Actionable ingredient chip (used inside recipe cards) ────────────────── */
@@ -668,26 +668,39 @@ function LinkedText({ text, links }) {
 
 function buildTextLinks(result, recipeData) {
   const links = new Map()
+  const haystack = [
+    result?.summary,
+    ...(result?.tips || []),
+    ...(result?.results || []).flatMap((r) => [r?.name, r?.zone, r?.detail]),
+  ].filter(Boolean).join(' ').toLowerCase()
   for (const r of result?.results || []) {
     const href = hrefForResult(r, recipeData?.ingredientIndex)
     if (href && r.name) links.set(norm(r.name), { name: r.name, href })
   }
   for (const recipe of recipeData?.recipeByName?.values?.() || []) {
+    if (!haystack.includes(norm(recipe.name))) continue
     if (links.has(norm(recipe.name))) continue
     links.set(norm(recipe.name), { name: recipe.name, href: `/crafting/cooking?recipe=${encodeURIComponent(recipe.name)}` })
   }
   for (const [key, ing] of recipeData?.ingredientIndex?.entries?.() || []) {
+    if (!haystack.includes(key)) continue
     if (links.has(key)) continue
     links.set(key, {
       name: ing.name,
       href: itemPath(ing.name),
     })
   }
+  for (const item of recipeData?.itemCatalog?.items || []) {
+    const key = norm(item.name)
+    if (!haystack.includes(key)) continue
+    if (links.has(key)) continue
+    links.set(key, { name: item.name, href: itemPath(item.name) })
+  }
   return [...links.values()].filter((link) => link.name.length > 2).sort((a, b) => b.name.length - a.name.length)
 }
 
 /* ── Ingredient / scrip card (Flint Corn etc.) — collapsible ─────────────── */
-function IngredientCard({ r, meta, onCopy, onNav }) {
+function IngredientCard({ r, meta, onCopy, onNav, textLinks }) {
   const [open, setOpen] = useState(false)
   const source = ingSource(meta || { source: r.category === 'scrip' ? 'SCRIP_EXCHANGE' : 'MARKET_BOARD' })
   const m = metaForSource(source)
@@ -716,7 +729,7 @@ function IngredientCard({ r, meta, onCopy, onNav }) {
           <span className="aicard__cat" style={{ color: m.color, borderColor: m.color }}>{m.badge}</span>
           {cost
             ? <div className="airing__cost"><span className="airing__cost-ico"><Ico /></span>{cost}</div>
-            : (detail && <p className="aicard__detail">{detail}</p>)}
+            : (detail && <p className="aicard__detail"><LinkedText text={detail} links={textLinks} /></p>)}
           {note && <div className="airing__note">{note}</div>}
           <div className="aicard__foot">
             {source === 'MARKET_BOARD' && ingItemId(meta || {}) && (
@@ -799,18 +812,18 @@ const hasGatherPageTarget = (source, name) => !!GATHER_PAGE_ITEMS[source]?.has(n
 
 // Dispatcher: rich Recipe / Ingredient cards when we have the data, else the
 // standard gather/hunt card.
-function ResultCard({ r, recipeByName, ingredientIndex, onCopy, onNav }) {
+function ResultCard({ r, recipeByName, ingredientIndex, onCopy, onNav, textLinks }) {
   if (r.category === 'recipe' && recipeByName) {
     const recipe = recipeByName.get(norm(r.name))
     if (recipe) return <RecipeCard recipe={recipe} recipeByName={recipeByName} onCopy={onCopy} onNav={onNav} />
   }
   if (r.category === 'scrip' || r.category === 'item') {
-    return <IngredientCard r={r} meta={ingredientIndex?.get(norm(r.name))} onCopy={onCopy} onNav={onNav} />
+    return <IngredientCard r={r} meta={ingredientIndex?.get(norm(r.name))} onCopy={onCopy} onNav={onNav} textLinks={textLinks} />
   }
-  return <GatherCard r={r} onCopy={onCopy} />
+  return <GatherCard r={r} onCopy={onCopy} textLinks={textLinks} />
 }
 
-function GatherCard({ r, onCopy }) {
+function GatherCard({ r, onCopy, textLinks }) {
   const link = PAGE_LINK[r.category]
   const node = (r.category === 'mining' || r.category === 'botany') ? TIMED_BY_COORDS.get(normCoords(r.coords)) : null
   const win = node ? windowState(node.window) : null
@@ -838,7 +851,7 @@ function GatherCard({ r, onCopy }) {
       {zone
         ? <div className="aicard__zone"><I.pin />{zone}</div>
         : (isGather && !r.coords && <div className="aicard__zone aicard__zone--unknown"><I.pin />Location not yet mapped</div>)}
-      {detail && <p className="aicard__detail">{detail}</p>}
+      {detail && <p className="aicard__detail"><LinkedText text={detail} links={textLinks} /></p>}
 
       <div className="aicard__foot">
         {r.coords && (
@@ -1252,7 +1265,7 @@ export default function AISearch() {
                   {result.results.map((r, i) => (
                     <ResultCard key={`${r.name}-${i}`} r={r}
                       recipeByName={recipeData?.recipeByName} ingredientIndex={recipeData?.ingredientIndex}
-                      onCopy={copyCoords} onNav={navTo} />
+                      onCopy={copyCoords} onNav={navTo} textLinks={textLinks} />
                   ))}
                 </div>
               )}

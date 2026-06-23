@@ -73,6 +73,15 @@ try {
   console.error('[ai/search] baitTackleData.js missing - run scripts/scrape-bait.js:', err.message);
 }
 
+let CRAFTING_GEAR = [];
+try {
+  const gearSource = fs.readFileSync(path.join(__dirname, '..', '..', 'src', 'craftingGearData.js'), 'utf8');
+  const match = gearSource.match(/export const CRAFTING_GEAR = (\[.*\])\s*$/s);
+  CRAFTING_GEAR = match ? JSON.parse(match[1]) : [];
+} catch (err) {
+  console.error('[ai/search] craftingGearData.js missing - run scripts/scrape-crafting-gear.js:', err.message);
+}
+
 const compactRecipes = (rows) => rows.map((r) => ({
   job: r.job,
   name: r.name,
@@ -82,11 +91,18 @@ const compactRecipes = (rows) => rows.map((r) => ({
   ingredients: (r.ingredients || []).map((i) => ({ id: i.id, name: i.name, amount: i.amount, source: i.source, subcraft: i.subcraft })),
 }));
 
+function loadRecipeSeeds() {
+  const recipeDir = path.join(__dirname, '..');
+  return fs.readdirSync(recipeDir)
+    .filter((file) => file.endsWith('-recipes.json'))
+    .flatMap((file) => JSON.parse(fs.readFileSync(path.join(recipeDir, file), 'utf8')));
+}
+
 let RECIPES = [];
 try {
-  RECIPES = compactRecipes(JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'cooking-recipes.json'), 'utf8')));
+  RECIPES = compactRecipes(loadRecipeSeeds());
 } catch (err) {
-  console.error('[ai/search] cooking-recipes.json missing — run scrape-cooking.js:', err.message);
+  console.error('[ai/search] recipe seeds missing - run recipe scrapers:', err.message);
 }
 
 // Stable bytes between refreshes so prompt caching stays valid: the prompt is
@@ -274,6 +290,225 @@ function buildBaitAnswer(query) {
     }],
     tips: ['Use the item page to compare vendor, scrip, and Market Board options before buying.'],
   };
+}
+
+function extractRequestedLevel(query) {
+  const match = String(query || '').match(/\b(?:level|lvl|lv)\s*(\d{1,3})\b/i);
+  return match ? Number(match[1]) : null;
+}
+
+function recipeItemLevelRange(level) {
+  if (!Number.isFinite(level)) return null;
+  if (level >= 91 && level <= 100) {
+    const floor = 650 + ((level - 91) * 5);
+    return [floor, Math.min(690, floor + 15)];
+  }
+  if (level >= 81 && level <= 90) {
+    const floor = 515 + ((level - 81) * 5);
+    return [floor, Math.min(560, floor + 15)];
+  }
+  return [Math.max(1, level - 2), level + 5];
+}
+
+const ITEM_QUERY_TERMS = [
+  { label: 'fishing rod', pattern: /\b(?:fishing\s+)?ro(?:d|de)s?\b/i, recipe: /fishing rod|rod/i, gear: /rod/i, prefer: /fishing rod/i },
+  { label: 'saw', pattern: /\bsaws?\b/i, recipe: /saw/i, gear: /saw/i },
+  { label: 'hammer', pattern: /\bhammers?\b/i, recipe: /hammer/i, gear: /hammer/i },
+  { label: 'knife', pattern: /\bknives?\b|\bknife\b/i, recipe: /knife/i, gear: /knife/i },
+  { label: 'needle', pattern: /\bneedles?\b/i, recipe: /needle/i, gear: /needle/i },
+  { label: 'alembic', pattern: /\balembics?\b/i, recipe: /alembic/i, gear: /alembic/i },
+  { label: 'frypan', pattern: /\bfry\s*pans?\b|\bfrypans?\b|\bskillets?\b/i, recipe: /frypan|skillet/i, gear: /frypan|skillet/i },
+  { label: 'mallet', pattern: /\bmallets?\b/i, recipe: /mallet/i, gear: /mallet/i },
+  { label: 'crafting gear', pattern: /\b(?:crafting\s+)?(?:gear|tool|tools|main hand|off hand|armor|accessor(?:y|ies))\b/i, recipe: /./i, gear: /./i },
+];
+
+function requestedItemTerm(query) {
+  return ITEM_QUERY_TERMS.find((term) => term.pattern.test(query)) || null;
+}
+
+function recipeDetail(recipe) {
+  const ingredients = (recipe.ingredients || [])
+    .slice(0, 6)
+    .map((ing) => `${ing.name} x${ing.amount || 1}`)
+    .join(', ');
+  return [
+    recipe.job ? `Crafted by ${recipe.job}` : 'Crafted',
+    recipe.itemLevel ? `iLvl ${recipe.itemLevel}` : null,
+    ingredients ? `Ingredients: ${ingredients}` : null,
+    'Market Board: check listings if you want to buy it instead.',
+  ].filter(Boolean).join(' - ');
+}
+
+function recipeResult(recipe) {
+  return {
+    name: recipe.name,
+    category: 'recipe',
+    zone: '',
+    coords: '',
+    timed: false,
+    window: '',
+    detail: recipeDetail(recipe),
+    source_url: `/crafting/cooking?recipe=${encodeURIComponent(recipe.name)}`,
+  };
+}
+
+function gearDetail(gear) {
+  const parts = [
+    `${gear.slot || 'Gear'} - Lv ${gear.level}`,
+    gear.jobs?.length ? `Jobs: ${gear.jobs.join(', ')}` : null,
+  ];
+  if (gear.stats) {
+    const stats = Object.entries(gear.stats)
+      .filter(([, value]) => Number(value) > 0)
+      .map(([key, value]) => `${key} +${value}`)
+      .join(', ');
+    if (stats) parts.push(`Stats: ${stats}`);
+  }
+  if (gear.vendor) parts.push(`Vendor: ${gear.vendor.npc} in ${gear.vendor.zone} (${gear.vendor.coords}) - ${gear.vendor.price} gil`);
+  if (gear.scrip) parts.push(`Scrip Exchange: ${gear.scrip.npc} in ${gear.scrip.zone} (${gear.scrip.coords}) - ${gear.scrip.price} ${gear.scrip.currency}`);
+  parts.push('Market Board: check current listings if tradeable.');
+  return parts.filter(Boolean).join(' - ');
+}
+
+function gearResult(gear) {
+  return {
+    name: gear.name,
+    category: gear.scrip ? 'scrip' : 'item',
+    zone: gear.vendor?.zone || gear.scrip?.zone || '',
+    coords: gear.vendor?.coords || gear.scrip?.coords || '',
+    timed: false,
+    window: '',
+    detail: gearDetail(gear),
+    source_url: `/item/${slugifyItem(gear.name)}`,
+  };
+}
+
+function gatherResult(item, node, category) {
+  return {
+    name: item.name,
+    category,
+    zone: node.zone || '',
+    coords: node.coords || '',
+    timed: !!node.window,
+    window: node.time || '',
+    detail: [
+      node.name ? `Node: ${node.name}` : null,
+      node.level ? `Lv ${node.level}` : null,
+      item.tag,
+      item.note,
+    ].filter(Boolean).join(' - '),
+    source_url: `/gathering/${category}?highlight=${encodeURIComponent(item.name).replace(/%20/g, '+')}`,
+  };
+}
+
+function exactGatheringMatch(queryNorm) {
+  const nodeGroups = [
+    ['mining', GAME_DATA.mining || []],
+    ['botany', GAME_DATA.botany || []],
+    ['fishing', GAME_DATA.fishing || []],
+  ];
+  const matches = [];
+  for (const [category, nodes] of nodeGroups) {
+    for (const node of nodes) {
+      const items = category === 'fishing' ? (node.fish || []) : (node.items || []);
+      for (const item of items) {
+        const name = normalize(item.name || '');
+        if (name.length > 3 && queryNorm.includes(name)) matches.push(gatherResult(item, node, category));
+      }
+    }
+  }
+  return matches.sort((a, b) => b.name.length - a.name.length)[0] || null;
+}
+
+function exactRecipeMatch(queryNorm) {
+  return RECIPES
+    .filter((recipe) => {
+      const name = normalize(recipe.name || '');
+      return name.length > 3 && queryNorm.includes(name);
+    })
+    .sort((a, b) => b.name.length - a.name.length)[0] || null;
+}
+
+function exactGearMatch(queryNorm) {
+  return CRAFTING_GEAR
+    .filter((gear) => {
+      const name = normalize(gear.name || '');
+      return name.length > 3 && queryNorm.includes(name);
+    })
+    .sort((a, b) => b.name.length - a.name.length)[0] || null;
+}
+
+function buildExactItemAnswer(query) {
+  const queryNorm = normalize(query).replace(/\brode\b/g, 'rod');
+  const gear = exactGearMatch(queryNorm);
+  if (gear) {
+    return {
+      type: 'mixed',
+      summary: `${gear.name} is ${gear.slot || 'gear'} for level ${gear.level}. Open the item page for source and Market Board details.`,
+      results: [gearResult(gear)],
+      tips: ['Compare vendor or scrip cost against the Market Board before buying.'],
+    };
+  }
+  const gathered = exactGatheringMatch(queryNorm);
+  if (gathered) {
+    return {
+      type: gathered.category,
+      summary: `${gathered.name} is available from ${gathered.zone || 'a mapped gathering source'}.`,
+      results: [gathered],
+      tips: [],
+    };
+  }
+  const recipe = exactRecipeMatch(queryNorm);
+  if (recipe) {
+    return {
+      type: 'recipe',
+      summary: `${recipe.name} is crafted by ${recipe.job || 'a crafter'}. Open the recipe or item links for ingredients and buying options.`,
+      results: [recipeResult(recipe)],
+      tips: ['If you do not want to craft it, check the item page for Market Board details.'],
+    };
+  }
+  return null;
+}
+
+function buildLevelToolAnswer(query) {
+  const level = extractRequestedLevel(query);
+  const term = requestedItemTerm(query);
+  if (!level || !term) return null;
+  const range = recipeItemLevelRange(level);
+  const q = normalize(query);
+  const wantsFishing = /\bfish(?:er|ing)?\b|\bfsh\b/.test(q) || /\brode\b/.test(q);
+  const recipeCandidates = RECIPES
+    .filter((recipe) => {
+      const itemLevel = Number(recipe.itemLevel);
+      if (!Number.isFinite(itemLevel) || itemLevel < range[0] || itemLevel > range[1]) return false;
+      if (!term.recipe.test(recipe.name || '')) return false;
+      if (term.label === 'crafting gear' && !/(saw|hammer|knife|needle|alembic|frypan|skillet|mallet)/i.test(recipe.name || '')) return false;
+      return true;
+    })
+    .sort((a, b) => {
+      const aPrefer = wantsFishing && term.prefer?.test(a.name || '') ? -1000 : 0;
+      const bPrefer = wantsFishing && term.prefer?.test(b.name || '') ? -1000 : 0;
+      return (Math.abs(a.itemLevel - range[0]) + aPrefer) - (Math.abs(b.itemLevel - range[0]) + bPrefer);
+    })
+    .slice(0, 5);
+
+  const gearCandidates = CRAFTING_GEAR
+    .filter((gear) => Math.abs(Number(gear.level) - level) <= 1 && term.gear.test(gear.name || gear.slot || ''))
+    .sort((a, b) => Math.abs(a.level - level) - Math.abs(b.level - level))
+    .slice(0, Math.max(0, 5 - recipeCandidates.length));
+
+  const results = [...recipeCandidates.map(recipeResult), ...gearCandidates.map(gearResult)];
+  if (!results.length) return null;
+  return {
+    type: 'mixed',
+    summary: `For level ${level} ${term.label}, start with ${results.slice(0, 2).map((r) => r.name).join(' or ')}. Crafted items show recipe links; purchasable gear shows vendor, scrip, and Market Board options.`,
+    results,
+    tips: ['Open any item page for a full source breakdown and Market Board link.'],
+  };
+}
+
+function buildItemLookupAnswer(query) {
+  return buildExactItemAnswer(query) || buildLevelToolAnswer(query);
 }
 
 function cleanGatheringStats(value) {
@@ -616,6 +851,18 @@ router.post('/', authenticate, async (req, res) => {
         ),
       ]);
       return res.json({ ...baitAnswer, cached: false });
+    }
+
+    const itemLookupAnswer = buildItemLookupAnswer(query);
+    if (itemLookupAnswer) {
+      await Promise.all([
+        logAiUsage({ userId: req.user.id, queryText: query }),
+        pool.query(
+          'INSERT INTO user_searches (user_id, query_norm, response) VALUES ($1, $2, $3)',
+          [req.user.id, queryNorm, JSON.stringify(itemLookupAnswer)]
+        ),
+      ]);
+      return res.json({ ...itemLookupAnswer, cached: false });
     }
 
     const gatheringRecommendation = buildGatheringLevelRecommendation(query, GAME_DATA, FOOD_BUFFS, FISHING_BAITS, gatheringStats);
