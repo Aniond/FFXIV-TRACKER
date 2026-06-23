@@ -64,6 +64,15 @@ try {
   console.error('[ai/search] fishingBaits.json missing - run scripts/scrape-fishing-baits.js:', err.message);
 }
 
+let BAIT_TACKLE = [];
+try {
+  const baitSource = fs.readFileSync(path.join(__dirname, '..', '..', 'src', 'baitTackleData.js'), 'utf8');
+  const match = baitSource.match(/export const BAIT_TACKLE = (\[.*\])\s*$/s);
+  BAIT_TACKLE = match ? JSON.parse(match[1]) : [];
+} catch (err) {
+  console.error('[ai/search] baitTackleData.js missing - run scripts/scrape-bait.js:', err.message);
+}
+
 const compactRecipes = (rows) => rows.map((r) => ({
   job: r.job,
   name: r.name,
@@ -219,6 +228,53 @@ const RESPONSE_SCHEMA = {
 
 // ── Auth: JWT required, then flag/admin gate ────────────────────────────────
 const normalize = (q) => q.trim().replace(/\s+/g, ' ').toLowerCase();
+const slugifyItem = (name) => normalize(name)
+  .replace(/[''`]/g, '')
+  .replace(/[^a-z0-9]+/g, '-')
+  .replace(/^-+|-+$/g, '');
+
+function baitMatch(query) {
+  const q = normalize(query);
+  if (!q) return null;
+  return BAIT_TACKLE.find((bait) => q.includes(normalize(bait.name))) || null;
+}
+
+function baitSourceDetail(row) {
+  const parts = [];
+  if (row.vendor) {
+    parts.push(`Vendor: ${row.vendor.npc} in ${row.vendor.zone} (${row.vendor.coords}) - ${row.vendor.price} gil`);
+  }
+  if (row.scrip) {
+    parts.push(`Scrip Exchange: ${row.scrip.npc} in ${row.scrip.zone} (${row.scrip.coords}) - ${row.scrip.price} ${row.scrip.currency}`);
+  }
+  parts.push('Market Board: check current listings if you want to buy from other players.');
+  return parts.join(' - ');
+}
+
+function buildBaitAnswer(query) {
+  const row = baitMatch(query);
+  if (!row) return null;
+  const primary = row.vendor
+    ? `buy it from ${row.vendor.npc} in ${row.vendor.zone} at ${row.vendor.coords} for ${row.vendor.price} gil`
+    : row.scrip
+      ? `get it from ${row.scrip.npc} in ${row.scrip.zone} at ${row.scrip.coords} for ${row.scrip.price} ${row.scrip.currency}`
+      : 'check the Market Board';
+  return {
+    type: 'fishing',
+    summary: `${row.name} is bait/tackle. You can ${primary}. Open the item page for Market Board details.`,
+    results: [{
+      name: row.name,
+      category: row.scrip ? 'scrip' : 'item',
+      zone: row.vendor?.zone || row.scrip?.zone || '',
+      coords: row.vendor?.coords || row.scrip?.coords || '',
+      timed: false,
+      window: '',
+      detail: baitSourceDetail(row),
+      source_url: `/item/${slugifyItem(row.name)}`,
+    }],
+    tips: ['Use the item page to compare vendor, scrip, and Market Board options before buying.'],
+  };
+}
 
 function cleanGatheringStats(value) {
   if (!value || typeof value !== 'object') return null;
@@ -549,6 +605,18 @@ router.post('/', authenticate, async (req, res) => {
     // Authoritative ingredient overrides — fetched up front so both the cached
     // and fresh paths can enforce them deterministically (BUG 1).
     const overrides = await getOverrides();
+
+    const baitAnswer = buildBaitAnswer(query);
+    if (baitAnswer) {
+      await Promise.all([
+        logAiUsage({ userId: req.user.id, queryText: query }),
+        pool.query(
+          'INSERT INTO user_searches (user_id, query_norm, response) VALUES ($1, $2, $3)',
+          [req.user.id, queryNorm, JSON.stringify(baitAnswer)]
+        ),
+      ]);
+      return res.json({ ...baitAnswer, cached: false });
+    }
 
     const gatheringRecommendation = buildGatheringLevelRecommendation(query, GAME_DATA, FOOD_BUFFS, FISHING_BAITS, gatheringStats);
     if (gatheringRecommendation) {

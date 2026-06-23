@@ -14,6 +14,7 @@
 import { MINING_NODES } from './miningData.js'
 import { BOTANY_NODES } from './botanyData.js'
 import { FISHING_SPOTS } from './fishingData.js'
+import { BAIT_TACKLE } from './baitTackleData.js'
 import { API, fetchRecipes } from './api.js'
 import { itemPath } from './itemCatalog.js'
 
@@ -108,6 +109,11 @@ function staticEntries() {
   for (const s of FISHING_SPOTS) {
     add(s.name, `Fishing spot · ${s.zone}`, 'fishing', `/gathering/fishing?highlight=${encodeURIComponent(s.name)}`)
     for (const f of s.fish) add(f.name, `Fish · ${s.name}, ${s.zone}`, 'fishing', itemPath(f.name))
+  }
+  for (const bait of BAIT_TACKLE) {
+    const vendor = bait.vendor ? `${bait.vendor.npc}, ${bait.vendor.zone}` : null
+    const scrip = bait.scrip ? `${bait.scrip.npc}, ${bait.scrip.zone}` : null
+    add(bait.name, `Bait & tackle - ${vendor || scrip || 'Market Board'}`, 'fishing', itemPath(bait.name))
   }
   return out
 }
