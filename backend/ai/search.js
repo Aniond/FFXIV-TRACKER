@@ -135,7 +135,7 @@ const buildSystemPrompt = (recipes) =>
   `- auto_pin: boolean. Set to true ONLY if the player explicitly asks to "remind me", "pin", "save", or "star" a specific gathering node. Otherwise omit or set to false.\n` +
   `- NATURAL LANGUAGE & TYPOS: The player may ask questions using complete sentences or misspell item names. Extract the core intent and use your best judgment to fuzzy-match their query to the closest actual item in the provided database.\n` +
   `- Never invent spots, nodes, coordinates, items, or recipes not present in the data. ` +
-  `If an item or ingredient is missing from the database, do NOT immediately fail with type "none". Instead, use the "needs_search_for" array to look it up! Only use type "none" if the external search fails or the query is completely unrecognizable.\n` +
+  `If an item or ingredient is missing from the database, use type "none" and explain that it is not in the local catalog yet. Do not request outside lookup.\n` +
   `- When a gatherable item's exact location is not in the data, leave zone and coords as ` +
   `empty strings and set "detail" to genuinely useful facts only (level, amount, buff) or omit ` +
   `it. Do NOT explain the gap, speculate, point at any external tool/site/database, or otherwise ` +
@@ -148,7 +148,7 @@ const buildSystemPrompt = (recipes) =>
   `- If the player asks for a suggestion based on "cost" or "easiest to make", analyze the ingredients for each candidate recipe.\n` +
   `- "Cost" includes currency (Scrips/Bicolor Gemstones), time/effort (timed nodes), and Gil (Market Board prices).\n` +
   `- If you do not know the Market Board prices for the ingredients you are considering, output their numeric IDs in the "needs_prices_for" array (CRITICAL: Limit to 15 IDs maximum! Only check prices for the top 1 or 2 recipes) and leave everything else blank. I will immediately fetch the live NA average prices and reply to you with them so you can complete your analysis.\n` +
-  `- If the player asks about an item you do not recognize (it's missing from your database), output its name in the "needs_search_for" array (e.g. ["Malm Kelp"]) and leave everything else blank. I will fetch the item's live market board price and details, then pass them back to you.\n` +
+  `- If the player asks about an item you do not recognize, answer from the provided database only. Do not request external lookup.\n` +
   `- Pick 1 or 2 of the cheapest/easiest choices. In your summary, break down *why* it's cheap by explaining where to find the harvestable items and listing any currency/gil costs.\n\n` +
   `CROSS-REFERENCING RECIPES & INGREDIENTS:\n` +
   `Each recipe lists its ingredients with an obtain "source":\n` +
@@ -224,11 +224,6 @@ const RESPONSE_SCHEMA = {
       description: "If you need Market Board prices to make a recommendation, list up to 15 numeric item IDs here. NEVER exceed 15 IDs. Omit or leave empty if you don't need prices.",
       items: { type: SchemaType.NUMBER }
     },
-    needs_search_for: {
-      type: SchemaType.ARRAY,
-      description: "If the player asks about an item you don't recognize, list up to 5 item names here to look up.",
-      items: { type: SchemaType.STRING }
-    },
     actions: {
       type: SchemaType.OBJECT,
       description: "Perform actions for the user based on their intent.",
@@ -267,6 +262,19 @@ function baitSourceDetail(row) {
   return parts.join(' - ');
 }
 
+function baitResult(row) {
+  return {
+    name: row.name,
+    category: row.scrip ? 'scrip' : 'item',
+    zone: row.vendor?.zone || row.scrip?.zone || '',
+    coords: row.vendor?.coords || row.scrip?.coords || '',
+    timed: false,
+    window: '',
+    detail: baitSourceDetail(row),
+    source_url: `/item/${slugifyItem(row.name)}`,
+  };
+}
+
 function buildBaitAnswer(query) {
   const row = baitMatch(query);
   if (!row) return null;
@@ -278,16 +286,7 @@ function buildBaitAnswer(query) {
   return {
     type: 'fishing',
     summary: `${row.name} is bait/tackle. You can ${primary}. Open the item page for Market Board details.`,
-    results: [{
-      name: row.name,
-      category: row.scrip ? 'scrip' : 'item',
-      zone: row.vendor?.zone || row.scrip?.zone || '',
-      coords: row.vendor?.coords || row.scrip?.coords || '',
-      timed: false,
-      window: '',
-      detail: baitSourceDetail(row),
-      source_url: `/item/${slugifyItem(row.name)}`,
-    }],
+    results: [baitResult(row)],
     tips: ['Use the item page to compare vendor, scrip, and Market Board options before buying.'],
   };
 }
@@ -507,8 +506,91 @@ function buildLevelToolAnswer(query) {
   };
 }
 
+function itemSearchNeedle(query) {
+  return normalize(query)
+    .replace(/\brode\b/g, 'rod')
+    .replace(/\b(?:level|lvl|lv)\s*\d{1,3}\b/g, ' ')
+    .replace(/\b(?:where|what|which|how|can|could|would|should|do|does|i|me|my|you|the|a|an|is|are|to|for|from|with|of|at|in|on|it|item|page|source|sources|location|find|get|buy|purchase|craft|make|market|board|need|know)\b/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+function editDistance(a, b, max = 3) {
+  if (Math.abs(a.length - b.length) > max) return max + 1;
+  const prev = Array.from({ length: b.length + 1 }, (_, i) => i);
+  for (let i = 1; i <= a.length; i += 1) {
+    let last = prev[0];
+    prev[0] = i;
+    let best = prev[0];
+    for (let j = 1; j <= b.length; j += 1) {
+      const old = prev[j];
+      prev[j] = a[i - 1] === b[j - 1]
+        ? last
+        : Math.min(last + 1, prev[j] + 1, prev[j - 1] + 1);
+      last = old;
+      if (prev[j] < best) best = prev[j];
+    }
+    if (best > max) return max + 1;
+  }
+  return prev[b.length];
+}
+
+function itemMatchScore(needle, name) {
+  const target = normalize(name);
+  if (!needle || !target) return 0;
+  if (target === needle) return 1000;
+  if (target.includes(needle)) return 900 - Math.max(0, target.length - needle.length);
+  if (needle.includes(target)) return 850 - Math.max(0, needle.length - target.length);
+  const tokens = needle.split(/\s+/).filter((t) => t.length > 1);
+  if (tokens.length && tokens.every((token) => target.includes(token))) return 760 - target.length;
+  const dist = editDistance(needle, target, needle.length > 18 ? 4 : 3);
+  if (dist <= 4) return 700 - (dist * 60) - Math.abs(target.length - needle.length);
+  return 0;
+}
+
+function allLocalItemCandidates() {
+  const candidates = [];
+  for (const bait of BAIT_TACKLE) candidates.push({ name: bait.name, result: () => baitResult(bait), type: 'fishing' });
+  for (const gear of CRAFTING_GEAR) candidates.push({ name: gear.name, result: () => gearResult(gear), type: 'mixed' });
+  for (const recipe of RECIPES) candidates.push({ name: recipe.name, result: () => recipeResult(recipe), type: 'recipe' });
+  for (const [category, nodes] of [['mining', GAME_DATA.mining || []], ['botany', GAME_DATA.botany || []], ['fishing', GAME_DATA.fishing || []]]) {
+    for (const node of nodes) {
+      const items = category === 'fishing' ? (node.fish || []) : (node.items || []);
+      for (const item of items) candidates.push({ name: item.name, result: () => gatherResult(item, node, category), type: category });
+    }
+  }
+  return candidates;
+}
+
+function buildFuzzyItemAnswer(query) {
+  const needle = itemSearchNeedle(query);
+  if (needle.length < 3) return null;
+  const matches = allLocalItemCandidates()
+    .map((candidate) => ({ ...candidate, score: itemMatchScore(needle, candidate.name) }))
+    .filter((candidate) => candidate.score >= 520)
+    .sort((a, b) => b.score - a.score || a.name.localeCompare(b.name));
+  if (!matches.length) return null;
+
+  const seen = new Set();
+  const results = [];
+  for (const match of matches) {
+    const key = normalize(match.name);
+    if (seen.has(key)) continue;
+    seen.add(key);
+    results.push(match.result());
+    if (results.length >= 5) break;
+  }
+  const exactish = results[0]?.name || needle;
+  return {
+    type: results.length > 1 ? 'mixed' : (matches[0]?.type || 'mixed'),
+    summary: `I found ${exactish} in the local catalog. Open the linked item/result for source, recipe, vendor, scrip, and Market Board details.`,
+    results,
+    tips: ['This result came from the local site catalog, so it did not need an external item lookup.'],
+  };
+}
+
 function buildItemLookupAnswer(query) {
-  return buildExactItemAnswer(query) || buildLevelToolAnswer(query);
+  return buildExactItemAnswer(query) || buildLevelToolAnswer(query) || buildFuzzyItemAnswer(query);
 }
 
 function cleanGatheringStats(value) {
@@ -963,40 +1045,13 @@ router.post('/', authenticate, async (req, res) => {
       // Hand-rolled Tool Calling for Market Board prices
       if (response.text()) {
         const tempAnswer = JSON.parse(response.text().replace(/^```json\s*/i, '').replace(/\s*```$/i, '').trim());
-        if ((tempAnswer.needs_prices_for && tempAnswer.needs_prices_for.length > 0) || (tempAnswer.needs_search_for && tempAnswer.needs_search_for.length > 0)) {
+        if (tempAnswer.needs_prices_for && tempAnswer.needs_prices_for.length > 0) {
           // Look up the user's Data Center (fallback to DEFAULT_DC if not set)
           const userRes = await pool.query('SELECT dc FROM users WHERE id = $1', [req.user.id]);
           const userDc = userRes.rows[0]?.dc || DEFAULT_DC;
 
           let idsToFetch = tempAnswer.needs_prices_for || [];
           let searchContext = '';
-
-          // 1. Resolve names via Garland Tools
-          if (tempAnswer.needs_search_for && tempAnswer.needs_search_for.length > 0) {
-            console.log("[ai/search] Resolving item names via Garland Tools:", tempAnswer.needs_search_for);
-            const resolvedItems = [];
-            for (const name of tempAnswer.needs_search_for.slice(0, 5)) {
-              try {
-                const gtRes = await fetch(`https://garlandtools.org/api/search.php?text=${encodeURIComponent(name)}&lang=en`);
-                const gtData = await gtRes.json();
-                const itemList = Array.isArray(gtData) ? gtData : [];
-                const item = itemList.find(v => v.type === 'item');
-                if (item && item.id) {
-                  const numId = Number(item.id);
-                  if (!idsToFetch.includes(numId)) idsToFetch.push(numId);
-                  resolvedItems.push(`Item ID ${item.id} is exactly "${item.obj.n}"`);
-                } else {
-                  resolvedItems.push(`Could not find an exact match for "${name}"`);
-                }
-              } catch (e) {
-                console.error("[ai/search] GarlandTools fetch error:", e.message);
-                resolvedItems.push(`Search failed for "${name}"`);
-              }
-            }
-            if (resolvedItems.length) {
-               searchContext = `Search Results:\n${resolvedItems.join('\n')}\n\n`;
-            }
-          }
 
           if (idsToFetch.length > 0) {
             console.log("[ai/search] Fetching prices for:", idsToFetch, "DC:", userDc);
@@ -1007,7 +1062,7 @@ router.post('/', authenticate, async (req, res) => {
             searchContext += `Here are the LIVE MARKET BOARD PRICES (${userDc} Data Center):\n${priceStrings.join('\n')}\n\n`;
           }
 
-          const promptText = searchContext + `Using this information, generate the FINAL JSON response. Remember to pick only the 1 or 2 cheapest options and limit the results array to avoid hitting token limits. Do NOT output needs_prices_for or needs_search_for again.`;
+          const promptText = searchContext + `Using this information, generate the FINAL JSON response. Remember to pick only the 1 or 2 cheapest options and limit the results array to avoid hitting token limits. Do NOT output needs_prices_for again.`;
           const result2 = await chat.sendMessage([{ text: promptText }]);
           response = await result2.response;
         }
