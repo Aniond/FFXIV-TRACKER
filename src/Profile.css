@@ -1,5 +1,5 @@
 /* ============================================================
-   Profile.css — Centurio Ledger public hunter profile
+   Profile.css — Centurio Ledger player profile
    Pairs with Profile.jsx. Self-contained (defines its own tokens),
    so it renders on /profile/:name regardless of the app accent.
    ============================================================ */
@@ -176,13 +176,6 @@ body.profile-page .portrait-img--empty::after {
   content: ""; position: absolute; inset: 5px; border-radius: 50%;
   border: 1px dashed var(--au-dim); opacity: .5;
 }
-body.profile-page .hero__rankpin {
-  position: absolute; bottom: 2px; left: 50%; transform: translateX(-50%);
-  font:800 8.5px var(--fb); letter-spacing:.14em; text-transform:uppercase;
-  color: var(--board); background: linear-gradient(180deg, var(--au-bright), var(--au));
-  border-radius: 20px; padding: 3px 10px; white-space: nowrap;
-  box-shadow: 0 2px 8px rgba(0,0,0,.5); border: 1px solid var(--au-bright);
-}
 body.profile-page .hero__body { min-width: 0; }
 body.profile-page .hero__name { font:900 34px var(--fd); color: var(--parchment); margin: 0; line-height: 1; letter-spacing:.01em; }
 body.profile-page .hero__title { font:600 14px var(--fb); color: var(--gold); margin-top: 7px; font-style: italic; letter-spacing:.02em; }
@@ -197,59 +190,9 @@ body.profile-page .metachip b { color: var(--parchment); font-weight: 700; }
 body.profile-page .metachip svg { width: 13px; height: 13px; color: var(--ink-dim); }
 body.profile-page .metachip .gc-crest { width: 14px; height: 14px; }
 
-/* Hunter rank ladder */
-body.profile-page .hunter {
-  margin-top: 14px;
-  background: radial-gradient(120% 130% at 0 0, var(--gold-faint), transparent 60%), rgba(0,0,0,.2);
-  border: 1px solid var(--gold-dim); border-radius: 13px; padding: 14px 16px;
-}
-body.profile-page .hunter__head { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; }
-body.profile-page .hunter__now { font:800 16px var(--fd); color: var(--gold-bright); letter-spacing:.02em; }
-body.profile-page .hunter__next { font:600 11.5px var(--fb); color: var(--ink-dim); }
-body.profile-page .hunter__next b { color: var(--parchment); }
-body.profile-page .hunter__bar { height: 7px; border-radius: 20px; background: rgba(255,255,255,body.profile-page .07); overflow: hidden; margin: 10px 0 12px; }
-body.profile-page .hunter__bar > span { display: block; height: 100%; border-radius: 20px;
-  background: linear-gradient(90deg, var(--gold-dim), var(--gold-bright)); box-shadow: 0 0 10px var(--gold-faint); }
-body.profile-page .ladder { display: flex; align-items: center; justify-content: space-between; gap: 4px; }
-body.profile-page .ladder__node { display: flex; flex-direction: column; align-items: center; gap: 5px; flex: 1; min-width: 0; position: relative; }
-body.profile-page .ladder__dot { width: 11px; height: 11px; border-radius: 50%; background: var(--bill); border: 2px solid var(--ink-faint); z-index: 1; }
-body.profile-page .ladder__node.done .ladder__dot { background: var(--gold); border-color: var(--gold-bright); box-shadow: 0 0 8px var(--gold-faint); }
-body.profile-page .ladder__node.now .ladder__dot { background: var(--gold-bright); border-color: #fff; box-shadow: 0 0 12px var(--gold); width: 14px; height: 14px; }
-body.profile-page .ladder__lbl { font:700 8px var(--fb); letter-spacing:.04em; text-transform:uppercase; color: var(--ink-faint); text-align: center; line-height: 1.15; }
-body.profile-page .ladder__node.now .ladder__lbl { color: var(--gold-bright); }
-body.profile-page .ladder__node.done .ladder__lbl { color: var(--ink-dim); }
-body.profile-page .ladder::before {
-  content:""; position: absolute; left: 9%; right: 9%; top: 19px; height: 2px;
-  background: var(--bill-edge); z-index: 0;
-}
-
-/* ---------- Stat band ---------- */
-body.profile-page .statband { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin: 14px 0; }
-body.profile-page .stat {
-  background: linear-gradient(180deg, var(--bill-raised), var(--bill));
-  border: 1px solid var(--bill-edge); border-radius: 14px;
-  padding: 16px 14px; display: flex; flex-direction: column; align-items: center; gap: 4px; text-align: center;
-}
-body.profile-page .stat__ico { color: var(--gold); margin-bottom: 3px; }
-body.profile-page .stat__ico svg { width: 22px; height: 22px; }
-body.profile-page .stat__val { font:800 23px var(--fd); color: var(--parchment); line-height: 1; font-variant-numeric: tabular-nums; }
-body.profile-page .stat__val small { font-size: 13px; color: var(--ink-faint); font-weight: 700; }
-body.profile-page .stat__lbl { font:700 9.5px var(--fb); letter-spacing:.1em; text-transform:uppercase; color: var(--ink-dim); margin-top: 3px; }
-body.profile-page .stat--ring { justify-content: center; }
-
 /* ---------- Two-column grid ---------- */
 body.profile-page .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; align-items: start; }
 
-/* Territory */
-body.profile-page .zones { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-/* expansion sub-groups inside the (now full-width) Territory panel */
-body.profile-page .zones-group { margin-bottom: 14px; }
-body.profile-page .zones-group:last-child { margin-bottom: 0; }
-body.profile-page .zones-group__hd {
-  display: flex; align-items: center; gap: 10px; margin: 2px 0 9px;
-  font: 700 9.5px var(--fb); letter-spacing: .2em; text-transform: uppercase; color: var(--gold-dim);
-}
-body.profile-page .zones-group__line { flex: 1; height: 1px; background: linear-gradient(90deg, var(--bill-edge), transparent); }
 /* collapsible panel affordance */
 body.profile-page .panel__title.is-collapsible { cursor: pointer; user-select: none; }
 body.profile-page .panel__title.is-collapsible:hover .panel__chev { color: var(--gold-bright); }
@@ -257,19 +200,6 @@ body.profile-page .panel__chev { display: inline-flex; margin-left: 8px; color: 
 body.profile-page .panel__chev svg { width: 15px; height: 15px; }
 body.profile-page .panel__chev.is-open { transform: rotate(180deg); }
 body.profile-page .panel.is-closed .panel__title { margin-bottom: 0; }
-body.profile-page .zone {
-  position: relative; display: flex; align-items: center; gap: 12px;
-  background: rgba(0,0,0,.18); border: 1px solid var(--bill-edge); border-radius: 12px; padding: 11px 12px;
-  overflow: hidden;
-}
-body.profile-page .zone__fill { position: absolute; left:0; top:0; bottom:0; background: var(--gold-faint); z-index: 0; }
-body.profile-page .zone__ring { position: relative; z-index: 1; flex: 0 0 40px; }
-body.profile-page .zone__body { position: relative; z-index: 1; min-width: 0; display: flex; flex-direction: column; }
-body.profile-page .zone__name { font:700 13px var(--fd); color: var(--parchment); line-height: 1.05; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-body.profile-page .zone__count { font:600 10.5px var(--fb); color: var(--ink-dim); margin-top: 2px; }
-body.profile-page .ring { display: block; }
-body.profile-page .ring__txt { font:800 11px var(--fd); fill: var(--parchment); }
-
 /* Jobs */
 body.profile-page .rolegroup + .rolegroup { margin-top: 16px; }
 body.profile-page .rolegroup__head {
@@ -303,20 +233,6 @@ body.profile-page .job__input {
 body.profile-page .job__input:focus { outline: none; border-color: var(--gold-bright); box-shadow: 0 0 6px var(--gold-faint); }
 body.profile-page .job__input::-webkit-outer-spin-button,
 body.profile-page .job__input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
-
-/* Recent clears */
-body.profile-page .clear { display: flex; align-items: center; gap: 11px; padding: 9px 0; }
-body.profile-page .clear + .clear { border-top: 1px solid rgba(46,39,25,body.profile-page .6); }
-body.profile-page .clear__seal {
-  flex: 0 0 30px; width: 30px; height: 30px; border-radius: 50%; display: grid; place-items: center;
-  font:900 13px var(--fd); color: var(--parchment);
-  background: radial-gradient(circle at 50% 35%, color-mix(in srgb, var(--rc) 42%, #1a1610), #110e09);
-  border: 1.5px solid var(--rc); box-shadow: 0 0 9px var(--rg);
-}
-body.profile-page .clear__body { flex: 1; min-width: 0; display: flex; flex-direction: column; }
-body.profile-page .clear__name { font:700 14px var(--fd); color: var(--parchment); line-height: 1.1; }
-body.profile-page .clear__zone { font:600 11px var(--fb); color: var(--ink-dim); margin-top: 1px; }
-body.profile-page .clear__time { font:600 11px var(--fb); color: var(--ink-faint); white-space: nowrap; font-variant-numeric: tabular-nums; }
 
 /* ---------- Link character button (in hero body) ---------- */
 body.profile-page .link-char-btn {
@@ -416,12 +332,8 @@ body.profile-page .toast svg { width: 15px; height: 15px; color: var(--gold-brig
    Responsive — mobile first means this IS the phone layout;
    below collapses multi-columns.
    ============================================================ */
-@media (min-width: 761px) {
-  body.profile-page .col-span .zones { grid-template-columns: repeat(4, 1fr); }
-}
 @media (max-width: 760px) {
   body.profile-page .grid { grid-template-columns: 1fr; }
-  body.profile-page .statband { grid-template-columns: repeat(2, 1fr); }
   body.profile-page .gather-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 @media (max-width: 560px) {
@@ -430,11 +342,9 @@ body.profile-page .toast svg { width: 15px; height: 15px; color: var(--gold-brig
   body.profile-page .hero__meta { justify-content: center; }
   body.profile-page .hero__name { font-size: 30px; }
   body.profile-page .jobs { grid-template-columns: repeat(4, 1fr); }
-  body.profile-page .ladder__lbl { font-size: 7px; }
   body.profile-page .brandmini__sub { display: none; }
 }
 @media (max-width: 380px) {
   body.profile-page .jobs { grid-template-columns: repeat(3, 1fr); }
-  body.profile-page .zones { grid-template-columns: 1fr; }
   body.profile-page .gather-stats { grid-template-columns: 1fr; }
 }

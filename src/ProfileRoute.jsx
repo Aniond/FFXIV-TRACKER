@@ -42,6 +42,6 @@ export default function ProfileRoute({ slug }) {
   }, [slug])
 
   if (state === 'loading') return <div className="wrap" style={{ padding: '40px 16px', color: '#8f846a' }}>Loading…</div>
-  if (state === 'notfound') return <div className="wrap" style={{ padding: '40px 16px', color: '#8f846a' }}>No such hunter.</div>
+  if (state === 'notfound') return <div className="wrap" style={{ padding: '40px 16px', color: '#8f846a' }}>No such profile.</div>
   return <Profile profile={profile} isOwner={isOwner} />
 }
