@@ -987,7 +987,7 @@ export default function AISearch() {
       const saved = await saveAiResult(resultQuery, result)
       setSavedResults((prev) => [saved, ...prev.filter((item) => item.id !== saved.id)])
       setSavedResultId(saved.id)
-      showToast('Saved to outbox')
+      showToast('Added to favorites')
     } catch (err) {
       showToast(err.message || 'Could not save result')
     } finally {
@@ -1001,7 +1001,7 @@ export default function AISearch() {
       await deleteSavedAiResult(id)
       setSavedResults((prev) => prev.filter((item) => item.id !== id))
       if (savedResultId === id) setSavedResultId(null)
-      showToast('Deleted from outbox')
+      showToast('Removed from favorites')
     } catch (err) {
       showToast(err.message || 'Could not delete result')
     }
@@ -1152,28 +1152,28 @@ export default function AISearch() {
                     className="ai-outbox__btn"
                     onClick={saveCurrentResult}
                     disabled={savingResult || !!savedResultId}
-                    title={savedResultId ? 'Saved to outbox' : 'Save this result'}
+                    title={savedResultId ? 'Added to favorites' : 'Add this result to favorites'}
                   >
                     {savedResultId ? <I.check /> : <I.save />}
-                    {savedResultId ? 'Saved' : (savingResult ? 'Saving' : 'Save')}
+                    {savedResultId ? 'Favorited' : (savingResult ? 'Adding' : 'Favorite')}
                   </button>
                   {savedResultId && (
                     <button
                       type="button"
                       className="ai-outbox__btn ai-outbox__btn--danger"
                       onClick={() => deleteSavedResult(savedResultId)}
-                      title="Delete this saved result"
+                      title="Remove this favorite"
                     >
-                      <I.trash />Delete
+                      <I.trash />Remove
                     </button>
                   )}
                   <button
                     type="button"
                     className="ai-outbox__btn"
                     onClick={() => setSavedOpen((open) => !open)}
-                    title="Open saved AI results"
+                    title="Open favorite AI results"
                   >
-                    <I.archive />Outbox
+                    <I.archive />Favorites
                     {savedResults.length > 0 && <b>{savedResults.length}</b>}
                   </button>
                 </div>
@@ -1182,11 +1182,11 @@ export default function AISearch() {
               {savedOpen && (
                 <div className="ai-outbox__archive">
                   <div className="ai-outbox__archive-hd">
-                    <span>Saved results</span>
+                    <span>Favorites</span>
                     {savedLoading && <em>Loading...</em>}
                   </div>
                   {!savedLoading && savedResults.length === 0 ? (
-                    <p>No saved AI results yet.</p>
+                    <p>No favorite AI results yet.</p>
                   ) : (
                     <div className="ai-outbox__saved-list">
                       {savedResults.map((saved) => (
@@ -1199,8 +1199,8 @@ export default function AISearch() {
                             type="button"
                             className="ai-outbox__delete"
                             onClick={() => deleteSavedResult(saved.id)}
-                            aria-label={`Delete saved result for ${saved.query_text}`}
-                            title="Delete saved result"
+                            aria-label={`Remove favorite for ${saved.query_text}`}
+                            title="Remove favorite"
                           >
                             <I.trash />
                           </button>

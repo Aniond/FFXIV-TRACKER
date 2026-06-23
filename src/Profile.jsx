@@ -537,27 +537,7 @@ export default function Profile({ profile = SAMPLE_PROFILE, isOwner = false }) {
         <GatheringStatsPanel isOwner={isOwner} />
         <CraftingStatsPanel isOwner={isOwner} />
 
-        {/* Bounty by rank */}
-        <Panel title="Bounty by Rank" icon={I.trophy}>
-          {['S', 'A', 'B'].map((rk) => {
-            const d = p.byRank[rk], pct = d.total ? Math.round((d.done / d.total) * 100) : 0
-            return (
-              <div className="rankrow" key={rk} style={RANK_VARS[rk]}>
-                <div className="rankrow__seal">{rk}</div>
-                <div>
-                  <div className="rankrow__head">
-                    <span><span className="rankrow__word">{d.word}</span> <span className="rankrow__sub">· {d.sub}</span></span>
-                    <span className="rankrow__count">{d.done}/{d.total}</span>
-                  </div>
-                  <div className="bar"><span style={{ width: pct + '%' }} /></div>
-                </div>
-                <div className="rankrow__pct">{pct}%</div>
-              </div>
-            )
-          })}
-        </Panel>
-
-        {/* Recent Clears — paired with Bounty to balance the first row */}
+        {/* Recent Clears */}
         <Panel title="Recent Clears" icon={I.check}>
           {p.recent.map((c, i) => (
             <div className="clear" key={i} style={RANK_VARS[c.rank] || RANK_VARS.B}>

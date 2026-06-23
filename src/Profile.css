@@ -240,23 +240,6 @@ body.profile-page .stat--ring { justify-content: center; }
 /* ---------- Two-column grid ---------- */
 body.profile-page .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; align-items: start; }
 
-/* Bounty by rank */
-body.profile-page .rankrow { display: grid; grid-template-columns: 40px 1fr auto; align-items: center; gap: 13px; padding: 9px 0; }
-body.profile-page .rankrow + .rankrow { border-top: 1px solid rgba(46,39,25,body.profile-page .6); }
-body.profile-page .rankrow__seal {
-  width: 40px; height: 40px; border-radius: 50%; display: grid; place-items: center;
-  font:900 17px var(--fd); color: var(--parchment);
-  background: radial-gradient(circle at 50% 35%, color-mix(in srgb, var(--rc) 42%, #1a1610), #110e09);
-  border: 2px solid var(--rc); box-shadow: 0 0 12px var(--rg);
-}
-body.profile-page .rankrow__head { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 6px; }
-body.profile-page .rankrow__word { font:700 13px var(--fd); color: var(--parchment); }
-body.profile-page .rankrow__sub { font:600 10px var(--fb); letter-spacing:.1em; text-transform:uppercase; color: var(--ink-faint); }
-body.profile-page .rankrow__count { font:600 12px var(--fb); color: var(--ink-dim); font-variant-numeric: tabular-nums; }
-body.profile-page .rankrow__pct { font:800 15px var(--fd); color: var(--rc); text-align: right; font-variant-numeric: tabular-nums; min-width: 44px; }
-body.profile-page .bar { height: 6px; border-radius: 20px; background: rgba(255,255,255,body.profile-page .06); overflow: hidden; }
-body.profile-page .bar > span { display: block; height: 100%; border-radius: 20px; background: var(--rc); transition: width .5s ease; }
-
 /* Territory */
 body.profile-page .zones { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 /* expansion sub-groups inside the (now full-width) Territory panel */
