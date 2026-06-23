@@ -506,7 +506,8 @@ export function RecipeCard({ recipe, recipeByName, mbPrices = {}, onCopy, onNav 
     setGuideError(null)
     try {
       const specialDeliveries = normalizeSpecialDeliveriesState(readState(SPECIAL_DELIVERIES_KEY, null))
-      const res = await aiCraftGuide(recipe, stats.level, stats.craft, stats.control, stats.cp, specialDeliveries)
+      const marketServer = readState('ffxiv-market-server', null)
+      const res = await aiCraftGuide(recipe, stats.level, stats.craft, stats.control, stats.cp, specialDeliveries, marketServer)
       setGuideResult(res.advisor || res.guide)
     } catch (err) {
       setGuideError(err.message)
@@ -1038,7 +1039,8 @@ export default function AISearch() {
       const craftingStats = readState('ffxiv-crafter-stats', null)
       const specialDeliveries = normalizeSpecialDeliveriesState(readState(SPECIAL_DELIVERIES_KEY, null))
       const preferredRoles = readState('ffxiv-preferred-roles', null)
-      const data = await aiSearch(text, chatHistory, currentListNames, gatheringStats, craftingStats, specialDeliveries, preferredRoles)
+      const marketServer = readState('ffxiv-market-server', null)
+      const data = await aiSearch(text, chatHistory, currentListNames, gatheringStats, craftingStats, specialDeliveries, preferredRoles, marketServer)
       
       setResult(data)
       setResultQuery(text)

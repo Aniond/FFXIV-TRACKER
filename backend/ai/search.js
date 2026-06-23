@@ -258,6 +258,11 @@ function cleanPreferredRoles(value) {
   return out.length ? out.slice(0, 8) : null;
 }
 
+function cleanMarketServer(value) {
+  const out = String(value || '').trim();
+  return /^[A-Za-z-]{2,32}$/.test(out) ? out : null;
+}
+
 const CUSTOM_DELIVERY_CLIENTS = {
   zhloe: 'Zhloe Aliapoh',
   mnaago: "M'naago",
@@ -532,6 +537,7 @@ router.post('/', authenticate, async (req, res) => {
   const craftingStats = cleanCraftingStats(req.body.craftingStats);
   const specialDeliveries = cleanSpecialDeliveries(req.body.specialDeliveries);
   const preferredRoles = cleanPreferredRoles(req.body.preferredRoles);
+  const marketServer = cleanMarketServer(req.body.marketServer);
   if (!query) return res.status(400).json({ error: 'query is required' });
   if (query.length > 500) return res.status(400).json({ error: 'query too long (max 500 chars)' });
 
@@ -602,6 +608,7 @@ router.post('/', authenticate, async (req, res) => {
       `PLAYER GATHERING STATS for food recommendations: ${gatheringStats ? JSON.stringify(gatheringStats) : 'Unknown'}\n\n` +
       `PLAYER CRAFTING STATS for crafting recommendations: ${craftingStats ? JSON.stringify(craftingStats) : 'Unknown'}\n\n` +
       `PLAYER PREFERRED ROLES for recommendations: ${preferredRoles ? JSON.stringify(preferredRoles) : 'Unknown'}\n\n` +
+      `PLAYER MARKET SERVER for price lookups: ${marketServer || 'Use character world/data center when known'}\n\n` +
       `CUSTOM DELIVERIES weekly tracker: ${specialDeliveries ? JSON.stringify(specialDeliveries) : 'Unknown'}\n` +
       `If recommending Custom Deliveries, do not use completed clients again this week and respect remainingAllowances.\n\n` +
       `USER'S CURRENT SHOPPING LIST (Recipes they are tracking right now): ${shoppingList.length ? shoppingList.join(', ') : 'None'}\n\n` +
@@ -756,6 +763,7 @@ router.post('/craft_guide', authenticate, async (req, res) => {
 
   const { recipe, job, level, craft, control, cp } = req.body;
   const specialDeliveries = cleanSpecialDeliveries(req.body.specialDeliveries);
+  const requestedMarketServer = cleanMarketServer(req.body.marketServer);
   if (!recipe || !level || !craft || !control || !cp) {
     return res.status(400).json({ error: 'Missing required crafting parameters.' });
   }
@@ -790,8 +798,8 @@ router.post('/craft_guide', authenticate, async (req, res) => {
       cp: Math.max(0, Number(cp) || 0),
     };
 
-    const userRes = await pool.query('SELECT dc FROM users WHERE id = $1', [req.user.id]);
-    const userDc = userRes.rows[0]?.dc || DEFAULT_DC;
+    const userRes = await pool.query('SELECT world, dc FROM users WHERE id = $1', [req.user.id]);
+    const userDc = requestedMarketServer || userRes.rows[0]?.world || userRes.rows[0]?.dc || DEFAULT_DC;
     const marketIds = cleanRecipe.ingredients
       .filter((i) => i.id && ['MARKET_BOARD', 'UNKNOWN', 'VENDOR'].includes(i.source))
       .map((i) => i.id);

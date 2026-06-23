@@ -141,6 +141,7 @@ const STATE_KEYS = new Set([
   'ffxiv-crafter-stats',     // crafting-guide stat defaults
   'ffxiv-gathering-stats',   // gathering food recommendation stat defaults
   'ffxiv-preferred-roles',   // player role preferences for AI recommendations
+  'ffxiv-market-server',     // preferred Universalis world/data center for market prices
   'ffxiv-special-deliveries', // weekly custom delivery allowances
 ]);
 const STATE_VALUE_MAX = 64 * 1024; // bytes of JSON per key — plenty for checklists

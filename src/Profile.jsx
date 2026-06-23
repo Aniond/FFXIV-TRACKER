@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react'
-import { saveJobs, saveCharacterLink, refreshJobsFromLodestone, fetchJobs, API } from './api'
+import { saveJobs, saveCharacterLink, refreshJobsFromLodestone, fetchJobs, fetchMarketWorlds, API } from './api'
 import { readState, writeState, hydrateFromServer, HYDRATED_EVENT, useSyncedState } from './syncedState'
 import './Profile.css'
 
@@ -46,6 +46,7 @@ const CRAFTING_STAT_FIELDS = [
   { key: 'cp', label: 'CP', min: 0, max: 9999 },
 ]
 const PREFERRED_ROLES_KEY = 'ffxiv-preferred-roles'
+const MARKET_SERVER_KEY = 'ffxiv-market-server'
 const PREFERRED_ROLE_OPTIONS = [
   { key: 'tank', label: 'Tank', color: 'var(--role-tank)' },
   { key: 'healer', label: 'Healer', color: 'var(--role-heal)' },
@@ -271,6 +272,43 @@ function PreferredRolesPanel({ isOwner, initialRoles = [] }) {
           <div className="preferred-roles__empty">No preferred roles set.</div>
         )}
       </div>
+    </Panel>
+  )
+}
+
+function MarketServerPanel({ isOwner, fallbackWorld, fallbackDc }) {
+  const fallback = fallbackWorld && fallbackWorld !== '-' ? fallbackWorld : (fallbackDc || 'Crystal')
+  const [marketServer, setMarketServer] = useSyncedState(MARKET_SERVER_KEY, fallback)
+  const [marketWorlds, setMarketWorlds] = useState({ dataCenters: [], worlds: [] })
+  const selected = marketServer || fallback
+
+  useEffect(() => {
+    if (!isOwner) return
+    let alive = true
+    fetchMarketWorlds().then((data) => { if (alive) setMarketWorlds(data) }).catch(() => {})
+    return () => { alive = false }
+  }, [isOwner])
+
+  return (
+    <Panel title="Market Server" icon={I.world} className="col-span" collapseId="market-server" badge={selected}>
+      {isOwner ? (
+        <div className="market-server">
+          <label>
+            <span>World or Data Center</span>
+            <select value={selected} onChange={(e) => setMarketServer(e.target.value)}>
+              <option value={fallback}>{fallback} (Character)</option>
+              {marketWorlds.dataCenters.map((dc) => (
+                <optgroup key={dc.name} label={`${dc.region || 'Region'} - ${dc.name}`}>
+                  <option value={dc.name}>{dc.name} data center</option>
+                  {dc.worlds.map((world) => <option key={world.id} value={world.name}>{world.name}</option>)}
+                </optgroup>
+              ))}
+            </select>
+          </label>
+        </div>
+      ) : (
+        <div className="preferred-roles__empty">Market prices use this character's public world or data center.</div>
+      )}
     </Panel>
   )
 }
@@ -526,6 +564,7 @@ export default function Profile({ profile = SAMPLE_PROFILE, isOwner = false }) {
         <GatheringStatsPanel isOwner={isOwner} />
         <CraftingStatsPanel isOwner={isOwner} />
         <PreferredRolesPanel isOwner={isOwner} initialRoles={p.preferredRoles} />
+        <MarketServerPanel isOwner={isOwner} fallbackWorld={p.world} fallbackDc={p.dc} />
 
         {/* Job levels */}
         <Panel

@@ -203,6 +203,36 @@ body.profile-page .preferred-roles__empty {
   color: var(--ink-faint);
 }
 
+body.profile-page .market-server {
+  max-width: 420px;
+}
+body.profile-page .market-server label {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+body.profile-page .market-server span {
+  font: 800 9px var(--fb);
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+}
+body.profile-page .market-server select {
+  width: 100%;
+  min-height: 40px;
+  font: 700 13px var(--fb);
+  color: var(--parchment);
+  background: rgba(0,0,0,.22);
+  border: 1px solid var(--bill-edge);
+  border-radius: 9px;
+  padding: 8px 10px;
+  outline: none;
+}
+body.profile-page .market-server select:focus {
+  border-color: var(--gold-dim);
+  box-shadow: 0 0 0 3px var(--gold-faint);
+}
+
 /* ---------- Hero ---------- */
 body.profile-page .hero {
   display: grid; grid-template-columns: auto 1fr; gap: 20px;

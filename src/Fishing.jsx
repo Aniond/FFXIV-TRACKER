@@ -10,6 +10,8 @@ import { fmtDur } from './etWindow.js'
 import { useSyncedState } from './syncedState'
 import { BAIT_VENDORS } from './baitVendors'
 import { BAIT_TACKLE } from './baitTackleData'
+import { itemPath } from './itemCatalog'
+import { navigate } from './router'
 import ActivityNav from './ActivityNav'
 import './Fishing.css'
 
@@ -50,6 +52,7 @@ function baitSource(name) {
   const row = BAIT_SOURCE_BY_NAME.get(name) || {}
   const legacy = BAIT_VENDORS[name]
   return {
+    id: row.id || null,
     vendor: row.vendor || (legacy ? { npc: legacy.vendor, zone: legacy.zone, coords: legacy.coords, price: legacy.price } : null),
     scrip: row.scrip || null,
   }
@@ -230,6 +233,12 @@ function SpotCard({ spot, caught, onToggleFish, onToggleAll, onCopy, highlighted
                 <button className="bait__buy bait__buy--scrip" title={`Copy ${s.coords}`}
                   onClick={() => onCopy(s.coords)}>
                   <I.coin />{s.price} scrip
+                </button>
+              )}
+              {sources.id && (
+                <button className="bait__buy bait__buy--market" title="Open market board and vendor details"
+                  onClick={() => navigate(itemPath(name))}>
+                  Market
                 </button>
               )}
             </span>
@@ -421,9 +430,19 @@ export default function Fishing({ spots = FISHING_SPOTS }) {
                       <span className="bt-price bt-price--scrip"><I.coin />{b.scrip.price} {b.scrip.currency}</span>
                     </>
                   )}
+                  {b.id && (
+                    <button className="bt-coords bt-coords--market" title="Open market board and vendor details" onClick={() => navigate(itemPath(b.name))}>
+                      Market Board
+                    </button>
+                  )}
                 </span>
               ) : (
-                <span className="bt-other">Gathered / other</span>
+                <span className="bt-where">
+                  <button className="bt-coords bt-coords--market" title="Open market board details" onClick={() => navigate(itemPath(b.name))}>
+                    Market Board
+                  </button>
+                  <span className="bt-other">Other source</span>
+                </span>
               )}
             </div>
           ))}

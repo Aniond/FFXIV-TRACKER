@@ -153,13 +153,13 @@ async function fetchFlags() {
 
 // POST a natural-language query to the Centurio assistant. Throws with a
 // .status on non-2xx so callers can distinguish 401/403/429/422.
-async function aiSearch(query, history = [], shoppingList = [], gatheringStats = null, craftingStats = null, specialDeliveries = null, preferredRoles = null) {
+async function aiSearch(query, history = [], shoppingList = [], gatheringStats = null, craftingStats = null, specialDeliveries = null, preferredRoles = null, marketServer = null) {
   const et = eorzeaMinuteOfDay()
   const etTime = `${Math.floor(et / 60)}:${String(et % 60).padStart(2, '0')}`
 
   const r = await apiFetch('/api/ai/search', {
     method: 'POST',
-    body: JSON.stringify({ query, history, etTime, shoppingList, gatheringStats, craftingStats, specialDeliveries, preferredRoles }),
+    body: JSON.stringify({ query, history, etTime, shoppingList, gatheringStats, craftingStats, specialDeliveries, preferredRoles, marketServer }),
   })
   const body = await r.json().catch(() => ({}))
   if (!r.ok) throw Object.assign(new Error(body.error || `Search failed (${r.status})`), { status: r.status })
@@ -167,10 +167,10 @@ async function aiSearch(query, history = [], shoppingList = [], gatheringStats =
 }
 
 // POST to the AI crafting guide generator.
-async function aiCraftGuide(recipe, level, craft, control, cp, specialDeliveries = null) {
+async function aiCraftGuide(recipe, level, craft, control, cp, specialDeliveries = null, marketServer = null) {
   const r = await apiFetch('/api/ai/search/craft_guide', {
     method: 'POST',
-    body: JSON.stringify({ recipe, job: recipe.job || 'CUL', level, craft, control, cp, specialDeliveries }),
+    body: JSON.stringify({ recipe, job: recipe.job || 'CUL', level, craft, control, cp, specialDeliveries, marketServer }),
   })
   const body = await r.json().catch(() => ({}))
   if (!r.ok) throw Object.assign(new Error(body.error || `Failed to generate guide (${r.status})`), { status: r.status })
@@ -225,6 +225,12 @@ async function fetchPrices(ids, dc = null) {
   const r = await apiFetch(`/api/prices?${qs.toString()}`)
   if (!r.ok) return { prices: {} }
   return r.json().catch(() => ({ prices: {} }))
+}
+
+async function fetchMarketWorlds() {
+  const r = await apiFetch('/api/market/worlds')
+  if (!r.ok) return { dataCenters: [], worlds: [] }
+  return r.json().catch(() => ({ dataCenters: [], worlds: [] }))
 }
 
 // ── Admin API helpers ────────────────────────────────────────────────────────
@@ -302,7 +308,7 @@ export {
   loadProgress, saveProgress, resetProgress, saveStash, savePreferences,
   fetchJobs, saveJobs, saveCharacterLink, refreshJobsFromLodestone,
   fetchFlags, aiSearch, aiCraftGuide, fetchSavedAiResults, saveAiResult, deleteSavedAiResult,
-  fetchRecipes, fetchPrices,
+  fetchRecipes, fetchPrices, fetchMarketWorlds,
   adminStats, adminUsers, adminBanUser, adminQueries,
   adminSubmissions, adminUpdateSubmission, adminFlags, adminToggleFlag, adminApiUsage,
 }

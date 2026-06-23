@@ -1,6 +1,7 @@
 import { MINING_NODES } from './miningData.js'
 import { BOTANY_NODES } from './botanyData.js'
 import { FISHING_SPOTS } from './fishingData.js'
+import { BAIT_TACKLE } from './baitTackleData.js'
 import { EXTRA_BOTANY_NODES, EXTRA_MINING_NODES, EXTRA_FISHING_SPOTS } from './crosslinkNodes.js'
 
 export const normItemName = (s) => String(s || '').trim().toLowerCase()
@@ -190,12 +191,47 @@ function addFishingSpots(map, spots) {
   }
 }
 
+function addBaitTackle(map, baitTackle) {
+  for (const bait of baitTackle || []) {
+    const item = ensureItem(map, bait.name)
+    if (!item) continue
+    item.itemId = item.itemId || bait.id || null
+    if (bait.vendor) {
+      addSource(item, {
+        source: 'VENDOR',
+        itemId: bait.id,
+        zone: bait.vendor.zone,
+        coords: bait.vendor.coords,
+        nodeName: bait.vendor.npc,
+        price: bait.vendor.price,
+      })
+    }
+    if (bait.scrip) {
+      addSource(item, {
+        source: 'SCRIP_EXCHANGE',
+        itemId: bait.id,
+        zone: bait.scrip.zone,
+        coords: bait.scrip.coords,
+        nodeName: bait.scrip.npc,
+        price: bait.scrip.price,
+        currency: bait.scrip.currency,
+      })
+    }
+    addSource(item, {
+      source: 'MARKET_BOARD',
+      itemId: bait.id,
+      notes: bait.vendor || bait.scrip ? 'Usually cheaper from listed vendors or scrip exchanges.' : 'Check current listings.',
+    })
+  }
+}
+
 export function buildItemCatalog(recipes = []) {
   const map = new Map()
   addRecipeData(map, recipes)
   addGatherNodes(map, [...MINING_NODES, ...EXTRA_MINING_NODES], 'MINING')
   addGatherNodes(map, [...BOTANY_NODES, ...EXTRA_BOTANY_NODES], 'BOTANY')
   addFishingSpots(map, [...FISHING_SPOTS, ...EXTRA_FISHING_SPOTS])
+  addBaitTackle(map, BAIT_TACKLE)
 
   const items = [...map.values()].map((item) => ({
     ...item,

@@ -3,6 +3,7 @@ import ActivityNav from './ActivityNav'
 import { fetchMe, fetchPrices, fetchRecipes, getToken } from './api'
 import { navigate } from './router'
 import { buildItemCatalog, sourceLabel, SOURCE_PATH } from './itemCatalog'
+import { readState } from './syncedState'
 import './ItemPage.css'
 
 const I = {
@@ -102,7 +103,7 @@ function ItemPage({ slug }) {
     const profilePromise = getToken() ? fetchMe().catch(() => null) : Promise.resolve(null)
     profilePromise
       .then((me) => {
-        const dc = me?.dc || null
+        const dc = readState('ffxiv-market-server', null) || me?.world || me?.dc || null
         if (alive) setMarketDc(dc)
         return fetchPrices(marketIds, dc)
       })

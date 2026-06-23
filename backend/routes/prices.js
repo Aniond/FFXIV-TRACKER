@@ -17,6 +17,8 @@ const router = express.Router();
 const DEFAULT_DC = process.env.UNIVERSALIS_DC || 'Crystal';
 const TTL_MS = 20 * 60_000;
 const MAX_IDS = 100;
+const WORLD_TTL_MS = 24 * 60 * 60_000;
+let worldCache = null;
 
 // (dc -> (itemId -> { at, nq, hq }))
 const cache = new Map();
@@ -60,6 +62,38 @@ async function fetchPricesForIds(dc, ids) {
 
 const pricesLimiter = rateLimit({ windowMs: 60_000, max: 30 });
 
+async function fetchMarketWorlds() {
+  const now = Date.now();
+  if (worldCache && now - worldCache.at < WORLD_TTL_MS) return worldCache.data;
+  const [dcRes, worldRes] = await Promise.all([
+    fetch('https://universalis.app/api/v2/data-centers', { headers: { 'User-Agent': 'ffxivlog.com/1.0' } }),
+    fetch('https://universalis.app/api/v2/worlds', { headers: { 'User-Agent': 'ffxivlog.com/1.0' } }),
+  ]);
+  if (!dcRes.ok || !worldRes.ok) throw new Error('failed to fetch market worlds');
+  const [dataCenters, worlds] = await Promise.all([dcRes.json(), worldRes.json()]);
+  const worldById = new Map((worlds || []).map((world) => [world.id, world]));
+  const data = {
+    dataCenters: (dataCenters || []).map((dc) => ({
+      name: dc.name,
+      region: dc.region,
+      worlds: (dc.worlds || []).map((id) => worldById.get(id)).filter(Boolean),
+    })),
+    worlds,
+  };
+  worldCache = { at: now, data };
+  return data;
+}
+
+router.get('/api/market/worlds', pricesLimiter, async (_req, res) => {
+  try {
+    res.set('Cache-Control', 'public, max-age=3600');
+    res.json(await fetchMarketWorlds());
+  } catch (err) {
+    console.error('[market/worlds]', err.message);
+    res.status(502).json({ error: 'failed to fetch market worlds' });
+  }
+});
+
 router.get('/api/prices', pricesLimiter, async (req, res) => {
   const dc = String(req.query.dc || DEFAULT_DC).trim();
   if (!/^[A-Za-z-]{2,32}$/.test(dc)) return res.status(400).json({ error: 'invalid dc' });
@@ -77,4 +111,4 @@ router.get('/api/prices', pricesLimiter, async (req, res) => {
   }
 });
 
-module.exports = { router, fetchPricesForIds, DEFAULT_DC };
+module.exports = { router, fetchPricesForIds, fetchMarketWorlds, DEFAULT_DC };

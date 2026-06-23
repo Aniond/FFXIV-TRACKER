@@ -35,6 +35,7 @@ export const SYNCED_KEYS = [
   'ffxiv-crafter-stats',     // crafting-guide stat defaults
   'ffxiv-gathering-stats',   // gathering food recommendation stat defaults
   'ffxiv-preferred-roles',   // player role preferences for AI recommendations
+  'ffxiv-market-server',     // preferred Universalis world/data center for market prices
   'ffxiv-special-deliveries', // weekly custom delivery allowances
 ]
 

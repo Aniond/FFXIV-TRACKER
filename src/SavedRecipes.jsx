@@ -3,7 +3,7 @@ import ActivityNav from './ActivityNav'
 import { RecipeCard } from './AISearch'
 import { fetchRecipes, fetchPrices, fetchMe, getToken } from './api'
 import { adaptRecipes } from './cookingData'
-import { useSyncedState, SET_CODEC } from './syncedState'
+import { readState, useSyncedState, SET_CODEC } from './syncedState'
 import { navigate } from './router'
 import './CraftingJob.css'
 
@@ -33,7 +33,7 @@ export default function SavedRecipes() {
     Promise.all([fetchRecipes({ job: null, expansion: null }), profilePromise])
       .then((rs) => {
         const [recipes, me] = rs
-        const dc = me?.dc || null
+        const dc = readState('ffxiv-market-server', null) || me?.world || me?.dc || null
         setMarketDc(dc)
         const adapted = adaptRecipes(recipes, false) // isFood=false for generic recipes
         setRecipeList(adapted)

@@ -405,6 +405,12 @@ body.fishing-page .bt-coords--scrip {
   border-color: var(--au-dim);
 }
 body.fishing-page .bt-price--scrip { color: var(--au); }
+body.fishing-page .bait__buy--market,
+body.fishing-page .bt-coords--market {
+  color: var(--ink);
+  background: rgba(255,255,255,.05);
+  border-color: rgba(255,255,255,.12);
+}
 body.fishing-page .bt-other { font: 500 11.5px var(--fb); color: var(--ink-faint); }
 body.fishing-page .fish-tabs { width: 100%; }
 
