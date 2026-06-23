@@ -218,9 +218,11 @@ async function fetchRecipes({ job = 'CUL', expansion = 'Dawntrail', includeSubcr
 // ── Market prices (Universalis via our cached proxy) ─────────────────────────
 
 // { dc, prices: { [itemId]: { nq, hq } } }; {} on failure.
-async function fetchPrices(ids) {
+async function fetchPrices(ids, dc = null) {
   if (!ids.length) return { prices: {} }
-  const r = await apiFetch(`/api/prices?ids=${ids.slice(0, 100).join(',')}`)
+  const qs = new URLSearchParams({ ids: ids.slice(0, 100).join(',') })
+  if (dc) qs.set('dc', dc)
+  const r = await apiFetch(`/api/prices?${qs.toString()}`)
   if (!r.ok) return { prices: {} }
   return r.json().catch(() => ({ prices: {} }))
 }

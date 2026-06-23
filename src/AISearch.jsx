@@ -116,6 +116,14 @@ function costLabel(ing) {
   return null
 }
 
+function marketPriceLabel(price) {
+  if (!price) return null
+  const parts = []
+  if (price.nq != null) parts.push(`NQ ${formatGil(price.nq)}`)
+  if (price.hq != null) parts.push(`HQ ${formatGil(price.hq)}`)
+  return parts.length ? parts.join(' / ') : null
+}
+
 function formatSavedDate(value) {
   if (!value) return ''
   const d = new Date(value)
@@ -147,7 +155,7 @@ function buildIndexes(recipes) {
 }
 
 /* ── Actionable ingredient chip (used inside recipe cards) ────────────────── */
-function IngredientRow({ ing, recipeByName, onCopy, onNav, depth = 0 }) {
+function IngredientRow({ ing, recipeByName, mbPrices, onCopy, onNav, depth = 0 }) {
   const [open, setOpen] = useState(false)
   const source = ingSource(ing)
   const m = metaForSource(source)
@@ -159,10 +167,11 @@ function IngredientRow({ ing, recipeByName, onCopy, onNav, depth = 0 }) {
   const ws = ing.window ? windowState(ing.window) : null
   const accent = craftable ? '#7c93e8' : m.color
   const isMarket = !craftable && source === 'MARKET_BOARD'
+  const marketPrice = isMarket ? marketPriceLabel(mbPrices?.[ingItemId(ing)]) : null
   const cost = (source === 'SCRIP_EXCHANGE' || source === 'GEMSTONE') && ing.currency
     ? `${ing.currency} x ${ing.price}`
     : (source === 'VENDOR' && ing.price != null) ? `${ing.price} gil`
-    : null
+    : marketPrice
 
   function act() {
     if (canExpand) { setOpen((o) => !o); return }
@@ -195,7 +204,7 @@ function IngredientRow({ ing, recipeByName, onCopy, onNav, depth = 0 }) {
       {open && canExpand && (
         <div className="airow__sub">
           {sub.ingredients.map((si, i) => (
-            <IngredientRow key={i} ing={si} recipeByName={recipeByName} onCopy={onCopy} onNav={onNav} depth={depth + 1} />
+            <IngredientRow key={i} ing={si} recipeByName={recipeByName} mbPrices={mbPrices} onCopy={onCopy} onNav={onNav} depth={depth + 1} />
           ))}
         </div>
       )}
@@ -467,7 +476,7 @@ function CraftPlan({ plan, checkedIngs, onToggleItem, onNav, onAddRecipe, onCopy
   )
 }
 
-export function RecipeCard({ recipe, recipeByName, onCopy, onNav }) {
+export function RecipeCard({ recipe, recipeByName, mbPrices = {}, onCopy, onNav }) {
   const [open, setOpen] = useState(false)
   const [guideOpen, setGuideOpen] = useState(false)
   const [guideLoading, setGuideLoading] = useState(false)
@@ -586,7 +595,7 @@ export function RecipeCard({ recipe, recipeByName, onCopy, onNav }) {
             {hasTimed && <span className="airecipe__timed">⏱ timed</span>}
           </div>
           {sorted.map((ing, i) => (
-            <IngredientRow key={i} ing={ing} recipeByName={recipeByName} onCopy={onCopy} onNav={onNav} />
+            <IngredientRow key={i} ing={ing} recipeByName={recipeByName} mbPrices={mbPrices} onCopy={onCopy} onNav={onNav} />
           ))}
           <div className="aicard__foot">
             <button type="button" className="airing__used"

@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo, useRef } from 'react'
 import ActivityNav from './ActivityNav'
 import { RecipeCard } from './AISearch'
-import { fetchRecipes, fetchPrices } from './api'
+import { fetchRecipes, fetchPrices, fetchMe, getToken } from './api'
 import { adaptRecipes } from './cookingData'
 import { useSyncedState, SET_CODEC } from './syncedState'
 import { navigate } from './router'
@@ -17,6 +17,7 @@ export default function SavedRecipes() {
   const [loading, setLoading]       = useState(true)
   const [recipeByName, setRecipeByName] = useState(null)
   const [mbPrices, setMbPrices] = useState({})
+  const [marketDc, setMarketDc] = useState(null)
   
   const [savedIds, setSavedIds] = useSyncedState('ffxiv-saved-recipes', [], SET_CODEC)
   const [q, setQ] = useState('')
@@ -28,14 +29,18 @@ export default function SavedRecipes() {
 
   useEffect(() => {
     // Fetch all recipes without a job filter
-    fetchRecipes({ job: null, expansion: null })
+    const profilePromise = getToken() ? fetchMe().catch(() => null) : Promise.resolve(null)
+    Promise.all([fetchRecipes({ job: null, expansion: null }), profilePromise])
       .then((rs) => {
-        const adapted = adaptRecipes(rs, false) // isFood=false for generic recipes
+        const [recipes, me] = rs
+        const dc = me?.dc || null
+        setMarketDc(dc)
+        const adapted = adaptRecipes(recipes, false) // isFood=false for generic recipes
         setRecipeList(adapted)
         const ids = [...new Set(adapted.flatMap(r => r.ingredients || [])
           .filter(i => i.source === 'market' && !i.subcraft && i.itemId)
           .map(i => i.itemId))]
-        fetchPrices(ids).then((p) => setMbPrices(p.prices || {})).catch(() => {})
+        fetchPrices(ids, dc).then((p) => setMbPrices(p.prices || {})).catch(() => {})
       })
       .catch(() => {})
       .finally(() => setLoading(false))
@@ -100,6 +105,7 @@ export default function SavedRecipes() {
           <span className="filtrow__count">
             <b>{filtered.length}</b> recipe{filtered.length !== 1 ? 's' : ''}
           </span>
+          {marketDc && <span className="filtrow__count" style={{ marginLeft: 'auto' }}>Market: <b>{marketDc}</b></span>}
         </div>
       </div>
 

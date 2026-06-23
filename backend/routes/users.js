@@ -8,7 +8,7 @@ const { authenticate } = require('../middleware');
 
 const router = express.Router();
 
-const USER_SELECT = 'SELECT id, discord_id, username, avatar, nuts_stash, pref_view, pref_accent, pref_density, created_at FROM users WHERE id = $1';
+const USER_SELECT = 'SELECT id, discord_id, username, avatar, world, dc, lodestone_id, portrait_url, nuts_stash, pref_view, pref_accent, pref_density, created_at FROM users WHERE id = $1';
 
 // Public profile — no auth required
 router.get('/api/profile/:slug', async (req, res) => {

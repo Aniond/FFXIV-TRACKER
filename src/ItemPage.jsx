@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import ActivityNav from './ActivityNav'
-import { fetchRecipes } from './api'
+import { fetchMe, fetchPrices, fetchRecipes, getToken } from './api'
 import { navigate } from './router'
 import { buildItemCatalog, sourceLabel, SOURCE_PATH } from './itemCatalog'
 import './ItemPage.css'
@@ -18,16 +18,30 @@ function sourceClass(source) {
   return String(source || '').toLowerCase().replace(/_/g, '-')
 }
 
-function priceLabel(source) {
+const formatGil = (value) => (
+  Number.isFinite(Number(value)) && Number(value) > 0
+    ? `${Math.round(Number(value)).toLocaleString()} gil`
+    : null
+)
+
+function marketPriceLabel(price) {
+  if (!price) return null
+  const parts = []
+  if (price.nq != null) parts.push(`NQ ${formatGil(price.nq)}`)
+  if (price.hq != null) parts.push(`HQ ${formatGil(price.hq)}`)
+  return parts.filter(Boolean).join(' / ') || null
+}
+
+function priceLabel(source, marketPrice = null) {
   if ((source.source === 'SCRIP_EXCHANGE' || source.source === 'GEMSTONE') && source.currency && source.price != null) {
     return `${source.price} ${source.currency}`
   }
   if (source.source === 'VENDOR' && source.price != null) return `${source.price} gil`
-  if (source.source === 'MARKET_BOARD') return 'Market Board'
+  if (source.source === 'MARKET_BOARD') return marketPriceLabel(marketPrice) || 'Market Board'
   return null
 }
 
-function sourceSummary(source) {
+function sourceSummary(source, marketPrice = null) {
   const parts = [
     source.zone,
     source.nodeName,
@@ -35,7 +49,7 @@ function sourceSummary(source) {
     source.coords,
     source.time && source.time !== 'Any' ? source.time : null,
     source.bait ? `Bait: ${source.bait}` : null,
-    priceLabel(source),
+    priceLabel(source, marketPrice),
     source.notes,
   ].filter(Boolean)
   return parts.join(' - ')
@@ -57,6 +71,8 @@ function openSource(source, item) {
 function ItemPage({ slug }) {
   const [recipes, setRecipes] = useState(null)
   const [toast, setToast] = useState(null)
+  const [mbPrices, setMbPrices] = useState({})
+  const [marketDc, setMarketDc] = useState(null)
 
   useEffect(() => {
     document.body.classList.add('item-page')
@@ -73,6 +89,27 @@ function ItemPage({ slug }) {
 
   const catalog = useMemo(() => recipes ? buildItemCatalog(recipes) : null, [recipes])
   const item = catalog?.bySlug.get(slug)
+
+  useEffect(() => {
+    const marketIds = [...new Set((item?.sources || [])
+      .filter((source) => source.source === 'MARKET_BOARD' && (source.itemId || item.itemId))
+      .map((source) => source.itemId || item.itemId))]
+    if (!marketIds.length) {
+      setMbPrices({})
+      return
+    }
+    let alive = true
+    const profilePromise = getToken() ? fetchMe().catch(() => null) : Promise.resolve(null)
+    profilePromise
+      .then((me) => {
+        const dc = me?.dc || null
+        if (alive) setMarketDc(dc)
+        return fetchPrices(marketIds, dc)
+      })
+      .then((p) => { if (alive) setMbPrices(p.prices || {}) })
+      .catch(() => { if (alive) setMbPrices({}) })
+    return () => { alive = false }
+  }, [item])
 
   function copyCoords(coords) {
     navigator.clipboard?.writeText(String(coords).replace(/^~/, '')).catch(() => {})
@@ -140,7 +177,7 @@ function ItemPage({ slug }) {
                       {source.amount && <span className="source-card__qty">Recipe qty x{source.amount}</span>}
                     </div>
                     <h3>{source.nodeName || source.zone || sourceLabel(source.source)}</h3>
-                    <p>{sourceSummary(source) || 'Available from this source.'}</p>
+                    <p>{sourceSummary(source, mbPrices[source.itemId || item.itemId]) || 'Available from this source.'}</p>
                     <div className="source-card__actions">
                       {source.coords && (
                         <button type="button" onClick={() => copyCoords(source.coords)}><I.copy />{source.coords}</button>
@@ -148,7 +185,7 @@ function ItemPage({ slug }) {
                       {canOpen && (
                         <button type="button" onClick={() => openSource(source, item)}>
                           {source.source === 'MARKET_BOARD' ? <I.cart /> : source.source === 'CRAFTED' ? <I.knife /> : <I.pin />}
-                          {source.source === 'MARKET_BOARD' ? 'Universalis' : source.source === 'CRAFTED' ? 'Open Recipe' : 'Open Log'}
+                          {source.source === 'MARKET_BOARD' ? (marketDc ? `Universalis ${marketDc}` : 'Universalis') : source.source === 'CRAFTED' ? 'Open Recipe' : 'Open Log'}
                         </button>
                       )}
                     </div>
