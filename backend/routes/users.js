@@ -8,7 +8,7 @@ const { authenticate } = require('../middleware');
 
 const router = express.Router();
 
-const USER_SELECT = 'SELECT id, discord_id, username, avatar, world, dc, lodestone_id, portrait_url, nuts_stash, pref_view, pref_accent, pref_density, created_at FROM users WHERE id = $1';
+const USER_SELECT = 'SELECT id, discord_id, username, slug, avatar, world, dc, lodestone_id, portrait_url, nuts_stash, pref_view, pref_accent, pref_density, created_at FROM users WHERE id = $1';
 
 // Public profile — no auth required
 router.get('/api/profile/:slug', async (req, res) => {
@@ -22,7 +22,22 @@ router.get('/api/profile/:slug', async (req, res) => {
     if (!u.rows.length) return res.status(404).json({ error: 'not found' });
     const user = u.rows[0];
     const jobsRes = await pool.query('SELECT job_abbr, level FROM user_jobs WHERE user_id = $1', [user.id]);
-    res.json({ user, xivapi: user.xivapi_cache || null, jobs: jobsRes.rows });
+    let preferredRoles = [];
+    try {
+      const stateRes = await pool.query(
+        "SELECT value FROM user_state WHERE user_id = $1 AND key = 'ffxiv-preferred-roles' LIMIT 1",
+        [user.id]
+      );
+      preferredRoles = stateRes.rows[0]?.value || [];
+    } catch (err) {
+      if (err.code !== '42P01') throw err;
+    }
+    res.json({
+      user,
+      xivapi: user.xivapi_cache || null,
+      jobs: jobsRes.rows,
+      preferredRoles,
+    });
   } catch {
     res.status(500).json({ error: 'Server error' });
   }
@@ -125,6 +140,7 @@ const STATE_KEYS = new Set([
   'ffxiv-profile-collapsed', // collapsed profile panels
   'ffxiv-crafter-stats',     // crafting-guide stat defaults
   'ffxiv-gathering-stats',   // gathering food recommendation stat defaults
+  'ffxiv-preferred-roles',   // player role preferences for AI recommendations
   'ffxiv-special-deliveries', // weekly custom delivery allowances
 ]);
 const STATE_VALUE_MAX = 64 * 1024; // bytes of JSON per key — plenty for checklists

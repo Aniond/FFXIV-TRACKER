@@ -45,6 +45,17 @@ const CRAFTING_STAT_FIELDS = [
   { key: 'control', label: 'Control', min: 0, max: 9999 },
   { key: 'cp', label: 'CP', min: 0, max: 9999 },
 ]
+const PREFERRED_ROLES_KEY = 'ffxiv-preferred-roles'
+const PREFERRED_ROLE_OPTIONS = [
+  { key: 'tank', label: 'Tank', color: 'var(--role-tank)' },
+  { key: 'healer', label: 'Healer', color: 'var(--role-heal)' },
+  { key: 'melee', label: 'Melee DPS', color: 'var(--role-melee)' },
+  { key: 'physical-ranged', label: 'Physical Ranged', color: 'var(--role-pranged)' },
+  { key: 'magical-ranged', label: 'Magical Ranged', color: 'var(--role-mranged)' },
+  { key: 'crafter', label: 'Crafter', color: 'var(--role-craft)' },
+  { key: 'gatherer', label: 'Gatherer', color: 'var(--role-gather)' },
+  { key: 'fisher', label: 'Fisher', color: '#38b8c0' },
+]
 
 function Panel({ title, icon: Ico, count, badge, action, children, className = '', collapseId }) {
   const collapsible = !!collapseId
@@ -203,6 +214,62 @@ function CraftingStatsPanel({ isOwner }) {
             )}
           </label>
         ))}
+      </div>
+    </Panel>
+  )
+}
+
+function PreferredRolesPanel({ isOwner, initialRoles = [] }) {
+  const [roles, setRoles] = useSyncedState(PREFERRED_ROLES_KEY, [])
+  const sourceRoles = isOwner ? roles : initialRoles
+  const selected = new Set(Array.isArray(sourceRoles) ? sourceRoles : [])
+  const selectedOptions = PREFERRED_ROLE_OPTIONS.filter((role) => selected.has(role.key))
+
+  const toggle = (key) => {
+    if (!isOwner) return
+    setRoles((prev) => {
+      const next = new Set(Array.isArray(prev) ? prev : [])
+      next.has(key) ? next.delete(key) : next.add(key)
+      return [...next]
+    })
+  }
+
+  return (
+    <Panel
+      title="Preferred Roles"
+      icon={I.banner}
+      className="col-span"
+      collapseId="preferred-roles"
+      count={selected.size ? `${selected.size} selected` : undefined}
+    >
+      <div className="preferred-roles">
+        {isOwner ? (
+          PREFERRED_ROLE_OPTIONS.map((role) => {
+            const active = selected.has(role.key)
+            return (
+              <button
+                type="button"
+                key={role.key}
+                className={`preferred-role${active ? ' is-active' : ''}`}
+                style={{ '--role-color': role.color }}
+                onClick={() => toggle(role.key)}
+                aria-pressed={active}
+              >
+                <span className="preferred-role__mark" />
+                <span>{role.label}</span>
+              </button>
+            )
+          })
+        ) : selectedOptions.length ? (
+          selectedOptions.map((role) => (
+            <span className="preferred-role is-active is-readonly" style={{ '--role-color': role.color }} key={role.key}>
+              <span className="preferred-role__mark" />
+              <span>{role.label}</span>
+            </span>
+          ))
+        ) : (
+          <div className="preferred-roles__empty">No preferred roles set.</div>
+        )}
       </div>
     </Panel>
   )
@@ -458,6 +525,7 @@ export default function Profile({ profile = SAMPLE_PROFILE, isOwner = false }) {
       <div className="grid">
         <GatheringStatsPanel isOwner={isOwner} />
         <CraftingStatsPanel isOwner={isOwner} />
+        <PreferredRolesPanel isOwner={isOwner} initialRoles={p.preferredRoles} />
 
         {/* Job levels */}
         <Panel
@@ -525,6 +593,7 @@ export const SAMPLE_PROFILE = {
   dc: 'Aether',
   portrait: null,
   gc: { name: 'Maelstrom', rank: 'Storm Captain' },
+  preferredRoles: ['crafter', 'gatherer', 'fisher'],
   roles: [
     { key: 'tank',    name: 'Tank',            color: 'var(--role-tank)',    jobs: [['PLD', 100], ['WAR', 90], ['DRK', 100], ['GNB', 82]] },
     { key: 'heal',    name: 'Healer',          color: 'var(--role-heal)',    jobs: [['WHM', 100], ['SCH', 100], ['AST', 74], ['SGE', 90]] },

@@ -34,6 +34,7 @@ export const SYNCED_KEYS = [
   'ffxiv-profile-collapsed', // collapsed profile panels
   'ffxiv-crafter-stats',     // crafting-guide stat defaults
   'ffxiv-gathering-stats',   // gathering food recommendation stat defaults
+  'ffxiv-preferred-roles',   // player role preferences for AI recommendations
   'ffxiv-special-deliveries', // weekly custom delivery allowances
 ]
 

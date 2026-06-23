@@ -241,6 +241,23 @@ function cleanCraftingStats(value) {
   return Object.keys(out).length ? out : null;
 }
 
+const PREFERRED_ROLE_KEYS = new Set([
+  'tank',
+  'healer',
+  'melee',
+  'physical-ranged',
+  'magical-ranged',
+  'crafter',
+  'gatherer',
+  'fisher',
+]);
+
+function cleanPreferredRoles(value) {
+  if (!Array.isArray(value)) return null;
+  const out = [...new Set(value.map((role) => String(role || '').trim()).filter((role) => PREFERRED_ROLE_KEYS.has(role)))];
+  return out.length ? out.slice(0, 8) : null;
+}
+
 const CUSTOM_DELIVERY_CLIENTS = {
   zhloe: 'Zhloe Aliapoh',
   mnaago: "M'naago",
@@ -514,6 +531,7 @@ router.post('/', authenticate, async (req, res) => {
   const gatheringStats = cleanGatheringStats(req.body.gatheringStats);
   const craftingStats = cleanCraftingStats(req.body.craftingStats);
   const specialDeliveries = cleanSpecialDeliveries(req.body.specialDeliveries);
+  const preferredRoles = cleanPreferredRoles(req.body.preferredRoles);
   if (!query) return res.status(400).json({ error: 'query is required' });
   if (query.length > 500) return res.status(400).json({ error: 'query too long (max 500 chars)' });
 
@@ -583,6 +601,7 @@ router.post('/', authenticate, async (req, res) => {
       `CURRENT EORZEA TIME: ${etTime}\n\n` +
       `PLAYER GATHERING STATS for food recommendations: ${gatheringStats ? JSON.stringify(gatheringStats) : 'Unknown'}\n\n` +
       `PLAYER CRAFTING STATS for crafting recommendations: ${craftingStats ? JSON.stringify(craftingStats) : 'Unknown'}\n\n` +
+      `PLAYER PREFERRED ROLES for recommendations: ${preferredRoles ? JSON.stringify(preferredRoles) : 'Unknown'}\n\n` +
       `CUSTOM DELIVERIES weekly tracker: ${specialDeliveries ? JSON.stringify(specialDeliveries) : 'Unknown'}\n` +
       `If recommending Custom Deliveries, do not use completed clients again this week and respect remainingAllowances.\n\n` +
       `USER'S CURRENT SHOPPING LIST (Recipes they are tracking right now): ${shoppingList.length ? shoppingList.join(', ') : 'None'}\n\n` +

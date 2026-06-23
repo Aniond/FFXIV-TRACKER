@@ -22,7 +22,7 @@ const ROLE_DEFS = [
  * @param {object}   [args.xivapi]  character payload from Lodestone/XIVAPI shape
  * @param {object[]} args.jobs      manual job rows { job_abbr, level }
  */
-export function buildProfile({ user, xivapi, jobs = [] }) {
+export function buildProfile({ user, xivapi, jobs = [], preferredRoles = [] }) {
   const manualLevels = Object.fromEntries((jobs || []).map((j) => [j.job_abbr, j.level]))
   const xivapiLevels = xivapiJobLevels(xivapi)
   const roles = ROLE_DEFS.map((rd) => ({
@@ -42,6 +42,7 @@ export function buildProfile({ user, xivapi, jobs = [] }) {
     gc: xivapi?.Character?.GrandCompany
       ? { name: xivapi.Character.GrandCompany.Company?.Name, rank: xivapi.Character.GrandCompany.Rank?.Name }
       : null,
+    preferredRoles: Array.isArray(preferredRoles) ? preferredRoles : [],
     roles,
   }
 }

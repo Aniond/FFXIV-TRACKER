@@ -154,6 +154,55 @@ body.profile-page .gather-stat input:focus {
   box-shadow: 0 0 0 3px var(--gold-faint);
 }
 
+/* Preferred role chips */
+body.profile-page .preferred-roles {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 9px;
+}
+body.profile-page .preferred-role {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  min-height: 34px;
+  font: 800 11px var(--fb);
+  letter-spacing: .06em;
+  color: var(--ink-dim);
+  background: rgba(255,255,255,.035);
+  border: 1px solid var(--bill-edge);
+  border-radius: 9px;
+  padding: 8px 11px;
+}
+body.profile-page button.preferred-role {
+  cursor: pointer;
+  transition: color .14s, border-color .14s, background .14s;
+}
+body.profile-page button.preferred-role:hover {
+  color: var(--parchment);
+  border-color: color-mix(in srgb, var(--role-color) 55%, var(--bill-edge));
+}
+body.profile-page .preferred-role.is-active {
+  color: var(--parchment);
+  border-color: color-mix(in srgb, var(--role-color) 62%, var(--bill-edge));
+  background: color-mix(in srgb, var(--role-color) 16%, transparent);
+}
+body.profile-page .preferred-role__mark {
+  width: 9px;
+  height: 9px;
+  flex: 0 0 9px;
+  border-radius: 2px;
+  background: var(--role-color);
+  transform: rotate(45deg);
+  box-shadow: 0 0 8px color-mix(in srgb, var(--role-color) 55%, transparent);
+}
+body.profile-page .preferred-role.is-readonly {
+  cursor: default;
+}
+body.profile-page .preferred-roles__empty {
+  font: 600 12px var(--fb);
+  color: var(--ink-faint);
+}
+
 /* ---------- Hero ---------- */
 body.profile-page .hero {
   display: grid; grid-template-columns: auto 1fr; gap: 20px;

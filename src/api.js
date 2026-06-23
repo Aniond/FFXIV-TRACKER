@@ -153,13 +153,13 @@ async function fetchFlags() {
 
 // POST a natural-language query to the Centurio assistant. Throws with a
 // .status on non-2xx so callers can distinguish 401/403/429/422.
-async function aiSearch(query, history = [], shoppingList = [], gatheringStats = null, craftingStats = null, specialDeliveries = null) {
+async function aiSearch(query, history = [], shoppingList = [], gatheringStats = null, craftingStats = null, specialDeliveries = null, preferredRoles = null) {
   const et = eorzeaMinuteOfDay()
   const etTime = `${Math.floor(et / 60)}:${String(et % 60).padStart(2, '0')}`
 
   const r = await apiFetch('/api/ai/search', {
     method: 'POST',
-    body: JSON.stringify({ query, history, etTime, shoppingList, gatheringStats, craftingStats, specialDeliveries }),
+    body: JSON.stringify({ query, history, etTime, shoppingList, gatheringStats, craftingStats, specialDeliveries, preferredRoles }),
   })
   const body = await r.json().catch(() => ({}))
   if (!r.ok) throw Object.assign(new Error(body.error || `Search failed (${r.status})`), { status: r.status })

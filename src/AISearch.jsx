@@ -1037,7 +1037,8 @@ export default function AISearch() {
       const gatheringStats = readState('ffxiv-gathering-stats', null)
       const craftingStats = readState('ffxiv-crafter-stats', null)
       const specialDeliveries = normalizeSpecialDeliveriesState(readState(SPECIAL_DELIVERIES_KEY, null))
-      const data = await aiSearch(text, chatHistory, currentListNames, gatheringStats, craftingStats, specialDeliveries)
+      const preferredRoles = readState('ffxiv-preferred-roles', null)
+      const data = await aiSearch(text, chatHistory, currentListNames, gatheringStats, craftingStats, specialDeliveries, preferredRoles)
       
       setResult(data)
       setResultQuery(text)
