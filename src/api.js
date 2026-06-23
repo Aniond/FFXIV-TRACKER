@@ -260,6 +260,15 @@ async function adminBanUser(id, banned) {
   return r.json()
 }
 
+async function adminUpdateUserServer(id, world, dc) {
+  const r = await adminFetch(`/users/${id}/server`, {
+    method: 'PATCH',
+    body: JSON.stringify({ world, dc }),
+  })
+  if (!r.ok) throw new Error('server update failed')
+  return r.json()
+}
+
 async function adminQueries() {
   const r = await adminFetch('/queries')
   if (!r.ok) throw Object.assign(new Error('admin fetch failed'), { status: r.status })
@@ -309,6 +318,6 @@ export {
   fetchJobs, saveJobs, saveCharacterLink, refreshJobsFromLodestone,
   fetchFlags, aiSearch, aiCraftGuide, fetchSavedAiResults, saveAiResult, deleteSavedAiResult,
   fetchRecipes, fetchPrices, fetchMarketWorlds,
-  adminStats, adminUsers, adminBanUser, adminQueries,
+  adminStats, adminUsers, adminBanUser, adminUpdateUserServer, adminQueries,
   adminSubmissions, adminUpdateSubmission, adminFlags, adminToggleFlag, adminApiUsage,
 }

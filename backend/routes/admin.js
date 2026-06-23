@@ -52,6 +52,7 @@ router.get('/api/admin/users', adminJWT, async (req, res) => {
     const result = await pool.query(`
       SELECT
         u.id, u.discord_id, u.username, u.avatar, u.created_at, u.banned,
+        u.world, u.dc,
         GREATEST(MAX(p.updated_at), MAX(aq.created_at)) AS last_active,
         COUNT(DISTINCT aq.id)::int AS query_count
       FROM users u
@@ -63,6 +64,23 @@ router.get('/api/admin/users', adminJWT, async (req, res) => {
     res.json(result.rows);
   } catch (err) {
     console.error('[admin/users]', err.message);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+// ── Admin: user market server / travel home ─────────────────────────────────
+router.patch('/api/admin/users/:id/server', adminJWT, async (req, res) => {
+  const world = String(req.body.world || '').trim() || null;
+  const dc = String(req.body.dc || '').trim() || null;
+  try {
+    const result = await pool.query(
+      'UPDATE users SET world = $2, dc = $3 WHERE id = $1 RETURNING id, username, world, dc',
+      [req.params.id, world, dc]
+    );
+    if (!result.rows[0]) return res.status(404).json({ error: 'User not found' });
+    res.json(result.rows[0]);
+  } catch (err) {
+    console.error('[admin/server]', err.message);
     res.status(500).json({ error: 'Server error' });
   }
 });

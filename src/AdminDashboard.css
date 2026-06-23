@@ -137,6 +137,36 @@
 .adm-table tr:hover td { background: var(--bill); }
 .adm-row-banned td { opacity: 0.55; }
 
+.adm-server-edit {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  min-width: 260px;
+}
+
+.adm-server-edit select {
+  width: 128px;
+  height: 30px;
+  color: var(--ink);
+  background: var(--board-2);
+  border: 1px solid var(--bill-edge);
+  border-radius: 6px;
+  padding: 0 8px;
+  font: 600 0.78rem var(--font-body);
+}
+
+.adm-server-edit select:focus {
+  outline: none;
+  border-color: var(--gold-dim);
+}
+
+.adm-server-edit span {
+  min-width: 58px;
+  color: var(--ink-faint);
+  font-size: 0.72rem;
+  white-space: nowrap;
+}
+
 /* User cell with avatar */
 .adm-user-cell {
   display: flex;

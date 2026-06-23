@@ -3,6 +3,7 @@ import './AdminDashboard.css'
 import { getToken, consumeUrlToken, API,
   adminStats, adminUsers, adminBanUser, adminQueries,
   adminSubmissions, adminUpdateSubmission, adminFlags, adminToggleFlag,
+  adminUpdateUserServer, fetchMarketWorlds,
 } from './api'
 
 // Claude Sonnet 4.6 pricing ($/1M tokens) — update when model changes
@@ -52,7 +53,29 @@ function StatsSection({ stats }) {
 }
 
 // ── USERS ────────────────────────────────────────────────────────────────────
-function UsersSection({ users, onBan }) {
+function UsersSection({ users, marketWorlds, onBan, onServer }) {
+  const [drafts, setDrafts] = useState({})
+  const [saving, setSaving] = useState({})
+  const worldToDc = new Map((marketWorlds?.dataCenters || []).flatMap((dc) => (
+    (dc.worlds || []).map((world) => [world.name, dc.name])
+  )))
+
+  async function saveServer(user) {
+    const world = drafts[user.id] ?? user.world ?? ''
+    const dc = world ? (worldToDc.get(world) || user.dc || '') : ''
+    setSaving((prev) => ({ ...prev, [user.id]: true }))
+    try {
+      await onServer(user.id, world, dc)
+      setDrafts((prev) => {
+        const next = { ...prev }
+        delete next[user.id]
+        return next
+      })
+    } finally {
+      setSaving((prev) => ({ ...prev, [user.id]: false }))
+    }
+  }
+
   if (!users) return <div className="adm-loading">Loading users…</div>
   return (
     <div className="adm-table-wrap">
@@ -61,6 +84,7 @@ function UsersSection({ users, onBan }) {
           <tr>
             <th>User</th>
             <th>Discord ID</th>
+            <th>Server</th>
             <th>Joined</th>
             <th>Last Active</th>
             <th>Queries</th>
@@ -78,6 +102,33 @@ function UsersSection({ users, onBan }) {
                 <span>{u.username}</span>
               </td>
               <td className="adm-mono">{u.discord_id}</td>
+              <td>
+                <div className="adm-server-edit">
+                  <select
+                    value={drafts[u.id] ?? u.world ?? ''}
+                    onChange={(e) => setDrafts((prev) => ({ ...prev, [u.id]: e.target.value }))}
+                    disabled={!marketWorlds?.dataCenters?.length || saving[u.id]}
+                  >
+                    <option value="">No server</option>
+                    {(marketWorlds?.dataCenters || []).map((dc) => (
+                      <optgroup key={dc.name} label={dc.name}>
+                        {(dc.worlds || []).map((world) => (
+                          <option key={world.id} value={world.name}>{world.name}</option>
+                        ))}
+                      </optgroup>
+                    ))}
+                  </select>
+                  <button
+                    type="button"
+                    className="adm-btn adm-btn-sm"
+                    onClick={() => saveServer(u)}
+                    disabled={saving[u.id] || (drafts[u.id] ?? u.world ?? '') === (u.world ?? '')}
+                  >
+                    {saving[u.id] ? 'Saving' : 'Save'}
+                  </button>
+                  <span>{(drafts[u.id] ?? u.world ?? '') ? (worldToDc.get(drafts[u.id] ?? u.world) || u.dc || '-') : '-'}</span>
+                </div>
+              </td>
               <td>{fmtDateShort(u.created_at)}</td>
               <td>{fmtDateShort(u.last_active)}</td>
               <td>{u.query_count}</td>
@@ -219,6 +270,7 @@ export default function AdminDashboard() {
   const [queries, setQueries]     = useState(null)
   const [submissions, setSubs]    = useState(null)
   const [flags, setFlags]         = useState(null)
+  const [marketWorlds, setMarketWorlds] = useState(null)
 
   // On mount: capture token from OAuth redirect URL, then verify admin access
   useEffect(() => {
@@ -253,6 +305,7 @@ export default function AdminDashboard() {
   useEffect(() => {
     if (authState !== 'ok') return
     if (tab === 'users'       && !users)       adminUsers()      .then(setUsers)      .catch(console.error)
+    if (tab === 'users'       && !marketWorlds) fetchMarketWorlds().then(setMarketWorlds).catch(console.error)
     if (tab === 'queries'     && !queries)     adminQueries()    .then(setQueries)    .catch(console.error)
     if (tab === 'submissions' && !submissions) adminSubmissions().then(setSubs)       .catch(console.error)
     if (tab === 'flags'       && !flags)       adminFlags()      .then(setFlags)      .catch(console.error)
@@ -261,6 +314,11 @@ export default function AdminDashboard() {
   const handleBan = useCallback(async (id, banned) => {
     const updated = await adminBanUser(id, banned)
     setUsers((prev) => prev.map((u) => u.id === id ? { ...u, banned: updated.banned } : u))
+  }, [])
+
+  const handleServer = useCallback(async (id, world, dc) => {
+    const updated = await adminUpdateUserServer(id, world, dc)
+    setUsers((prev) => prev.map((u) => u.id === id ? { ...u, world: updated.world, dc: updated.dc } : u))
   }, [])
 
   const handleSubmissionStatus = useCallback(async (id, status) => {
@@ -298,7 +356,7 @@ export default function AdminDashboard() {
 
       <main className="adm-content">
         {tab === 'stats'       && <StatsSection stats={stats} />}
-        {tab === 'users'       && <UsersSection users={users} onBan={handleBan} />}
+        {tab === 'users'       && <UsersSection users={users} marketWorlds={marketWorlds} onBan={handleBan} onServer={handleServer} />}
         {tab === 'queries'     && <QueryLogSection queries={queries} />}
         {tab === 'flags'       && <FlagsSection flags={flags} onToggle={handleFlagToggle} />}
         {tab === 'submissions' && <SubmissionsSection submissions={submissions} onUpdateStatus={handleSubmissionStatus} />}
