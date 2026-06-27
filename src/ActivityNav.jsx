@@ -134,6 +134,18 @@ const ACTIVITIES = [
           </svg>
         ),
       },
+      {
+        id: 'cosmic-exploration',
+        label: 'Cosmic',
+        href: '/crafting/cosmic-exploration',
+        soon: false,
+        icon: (p) => (
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" {...p}>
+            <path d="M12 3v4M12 17v4M3 12h4M17 12h4M5.6 5.6l2.4 2.4M16 16l2.4 2.4M18.4 5.6 16 8M8 16l-2.4 2.4"/>
+            <circle cx="12" cy="12" r="2.4"/>
+          </svg>
+        ),
+      },
     ],
   },
 ]

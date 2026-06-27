@@ -11,6 +11,7 @@ import AISearch from './AISearch'
 import ItemPage from './ItemPage'
 import CraftingGear from './CraftingGear'
 import SpecialDeliveries from './SpecialDeliveries'
+import CosmicExploration from './CosmicExploration'
 
 import SavedRecipes from './SavedRecipes'
 import Timers from './Timers'
@@ -25,6 +26,7 @@ function pageFor(path) {
   const itemMatch = path.match(/^\/item\/([^/]+)/)
   if (path === '/admin') return <AdminDashboard />
   if (itemMatch) return <ItemPage slug={itemMatch[1]} />
+  if (path === '/crafting/cosmic-exploration' || path === '/cosmic-exploration') return <CosmicExploration />
   if (path === '/crafting/gear') return <CraftingGear />
   if (path === '/crafting/special-deliveries') return <SpecialDeliveries />
   if (path === '/ai' || path.startsWith('/crafting')) return <AISearch />

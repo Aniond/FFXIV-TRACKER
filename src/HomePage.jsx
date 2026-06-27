@@ -165,6 +165,7 @@ export default function HomePage({ user }) {
     { label: 'Goldsmith', href: '/crafting/goldsmith', color: '#fcdb03', ico: 'gem' },
     { label: 'Leatherworker', href: '/crafting/leatherworker', color: '#a36729', ico: 'leather' },
     { label: 'Weaver', href: '/crafting/weaver', color: '#c146e6', ico: 'thread' },
+    { label: 'Cosmic', href: '/crafting/cosmic-exploration', color: '#48c6b6', ico: 'spark' },
   ]
 
   return (
