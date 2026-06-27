@@ -102,8 +102,8 @@ INSERT INTO feature_flags (key, enabled, description) VALUES
   ('ENABLE_SUBMISSIONS', false, 'Allow community hunt submissions')
 ON CONFLICT (key) DO NOTHING;
 
--- AI search cache (added by migrate-ai.js) — 60s identical-query cache for /api/ai/search.
--- AI usage logging reuses the ai_queries table above.
+-- AI search history (added by migrate-ai.js) stores recent generated responses
+-- for admin/debug visibility and user-facing saved result workflows.
 
 CREATE TABLE IF NOT EXISTS user_searches (
   id          SERIAL PRIMARY KEY,

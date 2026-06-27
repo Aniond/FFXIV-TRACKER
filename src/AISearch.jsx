@@ -1171,7 +1171,6 @@ export default function AISearch() {
                   <h2>{resultQuery || q}</h2>
                 </div>
                 <div className="ai-outbox__actions">
-                  {result.cached && <span className="ai-cached">Cached</span>}
                   <button
                     type="button"
                     className="ai-outbox__btn"

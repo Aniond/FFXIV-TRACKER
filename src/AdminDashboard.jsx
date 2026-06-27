@@ -167,7 +167,6 @@ function QueryLogSection({ queries }) {
             <th>Query</th>
             <th>In</th>
             <th>Out</th>
-            <th>Cached</th>
           </tr>
         </thead>
         <tbody>
@@ -178,7 +177,6 @@ function QueryLogSection({ queries }) {
               <td className="adm-query-text">{q.query_text}</td>
               <td className="adm-mono">{q.tokens_in.toLocaleString()}</td>
               <td className="adm-mono">{q.tokens_out.toLocaleString()}</td>
-              <td>{q.cached ? <span className="adm-badge adm-badge-ok">Yes</span> : <span className="adm-badge adm-badge-no">No</span>}</td>
             </tr>
           ))}
         </tbody>

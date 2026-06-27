@@ -40,6 +40,7 @@ const CAT_META = {
   mining: { word: 'Mining', color: '#d4a84a' },
   botany: { word: 'Botany', color: '#54b98a' },
   fishing: { word: 'Fishing', color: '#5ec0b0' },
+  item: { word: 'Item', color: '#c9a35b' },
   recipe: { word: 'Recipe', color: '#e0a24a' },
   ingredient: { word: 'Ingredient', color: '#b07ce0' },
 }

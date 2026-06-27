@@ -119,11 +119,22 @@ async function main() {
    (EW/DT endgame) catalogs, so cooking-page deep-links resolve. Node coords &
    windows come from the recipes DB (Teamcraft); zones/levels from Garland Tools. */
 
-export const EXTRA_BOTANY_NODES = ${JSON.stringify([...botany.values()], null, 2)}
+import { MANUAL_EXTRA_BOTANY_NODES, MANUAL_EXTRA_MINING_NODES, MANUAL_EXTRA_FISHING_SPOTS } from './manualCrosslinkNodes.js'
 
-export const EXTRA_MINING_NODES = ${JSON.stringify([...mining.values()], null, 2)}
+export const EXTRA_BOTANY_NODES = [
+  ...MANUAL_EXTRA_BOTANY_NODES,
+  ...${JSON.stringify([...botany.values()], null, 2)}
+]
 
-export const EXTRA_FISHING_SPOTS = ${JSON.stringify([...fishing.values()], null, 2)}
+export const EXTRA_MINING_NODES = [
+  ...MANUAL_EXTRA_MINING_NODES,
+  ...${JSON.stringify([...mining.values()], null, 2)}
+]
+
+export const EXTRA_FISHING_SPOTS = [
+  ...MANUAL_EXTRA_FISHING_SPOTS,
+  ...${JSON.stringify([...fishing.values()], null, 2)}
+]
 
 // Short badge labels for node/spot cards — extras span all expansions.
 export const EXP_SHORT = {

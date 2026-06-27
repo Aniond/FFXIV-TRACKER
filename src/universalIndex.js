@@ -15,6 +15,7 @@ import { MINING_NODES } from './miningData.js'
 import { BOTANY_NODES } from './botanyData.js'
 import { FISHING_SPOTS } from './fishingData.js'
 import { BAIT_TACKLE } from './baitTackleData.js'
+import { CRAFTING_GEAR } from './craftingGearData.js'
 import { API, fetchRecipes } from './api.js'
 import { itemPath } from './itemCatalog.js'
 
@@ -89,7 +90,7 @@ function matchScore(label, query) {
   return null
 }
 
-function staticEntries() {
+export function staticEntries() {
   const out = []
   const seen = new Set()
   const add = (label, sub, cat, href) => {
@@ -115,6 +116,12 @@ function staticEntries() {
     const scrip = bait.scrip ? `${bait.scrip.npc}, ${bait.scrip.zone}` : null
     add(bait.name, `Bait & tackle - ${vendor || scrip || 'Market Board'}`, 'fishing', itemPath(bait.name))
   }
+  for (const gear of CRAFTING_GEAR) {
+    const vendor = gear.vendor ? `${gear.vendor.npc}, ${gear.vendor.zone}` : null
+    const scrip = gear.scrip ? `${gear.scrip.npc}, ${gear.scrip.zone}` : null
+    const source = vendor || scrip || 'Market Board'
+    add(gear.name, `${gear.slot || 'Crafting gear'} - Lv ${gear.level} - ${source}`, 'item', itemPath(gear.name))
+  }
   return out
 }
 
@@ -136,27 +143,33 @@ async function liveEntries() {
   } catch { /* offline — static entries still work */ }
   // Recipes + their ingredients (browser-cached via Cache-Control).
   try {
-    const recipes = await fetchRecipes({ job: 'CUL', expansion: 'Dawntrail' })
-    const seenIng = new Set()
-    for (const rec of recipes) {
-      out.push({
-        label: rec.name,
-        sub: `Recipe · CUL · iLv ${rec.item_level}`,
-        cat: 'recipe',
-        href: `/crafting/cooking?recipe=${encodeURIComponent(rec.name)}`,
-      })
-      for (const ing of rec.ingredients || []) {
-        if (seenIng.has(norm(ing.name))) continue
-        seenIng.add(norm(ing.name))
-        out.push({
-          label: ing.name,
-          sub: 'Ingredient · recipes that use it',
-          cat: 'ingredient',
-          href: itemPath(ing.name),
-        })
-      }
-    }
+    const recipes = await fetchRecipes({ job: null, expansion: null, includeSubcraft: true })
+    out.push(...recipeEntries(recipes))
   } catch { /* ignore */ }
+  return out
+}
+
+export function recipeEntries(recipes) {
+  const out = []
+  const seenIng = new Set()
+  for (const rec of recipes || []) {
+    out.push({
+      label: rec.name,
+      sub: `Recipe - ${rec.job || 'CUL'} - iLv ${rec.item_level}`,
+      cat: 'recipe',
+      href: `/crafting/cooking?recipe=${encodeURIComponent(rec.name)}`,
+    })
+    for (const ing of rec.ingredients || []) {
+      if (seenIng.has(norm(ing.name))) continue
+      seenIng.add(norm(ing.name))
+      out.push({
+        label: ing.name,
+        sub: 'Ingredient - recipes that use it',
+        cat: 'ingredient',
+        href: itemPath(ing.name),
+      })
+    }
+  }
   return out
 }
 
@@ -187,7 +200,7 @@ export function searchIndex(entries, query, limit = 8) {
   }
   // On equal text-match quality: "where to find it" (gathering/hunt) beats
   // "what uses it" (ingredient/recipe), then shorter labels first.
-  const CAT_PRIO = { hunt: 0, mining: 0, botany: 0, fishing: 0, recipe: 1, ingredient: 2 }
+  const CAT_PRIO = { hunt: 0, mining: 0, botany: 0, fishing: 0, item: 1, recipe: 2, ingredient: 3 }
   scored.sort((a, b) => a[0] - b[0]
     || (CAT_PRIO[a[1].cat] ?? 3) - (CAT_PRIO[b[1].cat] ?? 3)
     || a[1].label.length - b[1].label.length)

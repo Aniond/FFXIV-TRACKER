@@ -12,9 +12,8 @@
  *   - Rate limited to 20 queries / hour / user.
  *
  * Cost control:
- *   - The large, static game-data context lives in a cached system block
- *     (Anthropic prompt caching) so repeat calls are cheap.
- *   - Identical queries are served from the user_searches table for 60s.
+ *   - The large, static game-data context is kept stable so provider-side
+ *     prompt caching can reduce repeat-call cost.
  *   - Every call (admin included) is logged to the ai_usage view, which writes
  *     through to ai_queries — the table the /admin dashboard reads.
  */
@@ -25,14 +24,12 @@ const { GoogleGenerativeAI, SchemaType } = require('@google/generative-ai');
 const pool = require('../db');
 const { fetchPricesForIds, DEFAULT_DC } = require('../routes/prices');
 const { authenticate, isFlagEnabled } = require('../middleware');
-const { buildGatheringLevelRecommendation } = require('./gatheringRecommendations');
 
 const router = express.Router();
 
 const MODEL = 'gemini-2.5-flash';
 const MAX_TOKENS = 4096; // headroom for broad queries (e.g. "all unspoiled nodes")
 const RATE_LIMIT = 20; // queries per hour per user
-const CACHE_SECONDS = 60; // identical-query cache window
 const FLAG = 'ENABLE_AI_PUBLIC';
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
@@ -55,31 +52,6 @@ try {
   FOOD_BUFFS = JSON.parse(fs.readFileSync(path.join(__dirname, 'foodBuffs.json'), 'utf8'));
 } catch (err) {
   console.error('[ai/search] foodBuffs.json missing - run scripts/scrape-food-buffs.js:', err.message);
-}
-
-let FISHING_BAITS = { spots: {} };
-try {
-  FISHING_BAITS = JSON.parse(fs.readFileSync(path.join(__dirname, 'fishingBaits.json'), 'utf8'));
-} catch (err) {
-  console.error('[ai/search] fishingBaits.json missing - run scripts/scrape-fishing-baits.js:', err.message);
-}
-
-let BAIT_TACKLE = [];
-try {
-  const baitSource = fs.readFileSync(path.join(__dirname, '..', '..', 'src', 'baitTackleData.js'), 'utf8');
-  const match = baitSource.match(/export const BAIT_TACKLE = (\[.*\])\s*$/s);
-  BAIT_TACKLE = match ? JSON.parse(match[1]) : [];
-} catch (err) {
-  console.error('[ai/search] baitTackleData.js missing - run scripts/scrape-bait.js:', err.message);
-}
-
-let CRAFTING_GEAR = [];
-try {
-  const gearSource = fs.readFileSync(path.join(__dirname, '..', '..', 'src', 'craftingGearData.js'), 'utf8');
-  const match = gearSource.match(/export const CRAFTING_GEAR = (\[.*\])\s*$/s);
-  CRAFTING_GEAR = match ? JSON.parse(match[1]) : [];
-} catch (err) {
-  console.error('[ai/search] craftingGearData.js missing - run scripts/scrape-crafting-gear.js:', err.message);
 }
 
 const compactRecipes = (rows) => rows.map((r) => ({
@@ -174,7 +146,7 @@ let SYSTEM_PROMPT = buildSystemPrompt(RECIPES);
 // Load the live recipe catalog from Postgres and rebuild the prompt when it
 // differs. Runs at boot and hourly — admin recipe edits and reseeds reach the
 // AI within the hour without a redeploy, and identical data keeps the exact
-// same prompt bytes (so the Anthropic prompt cache is unaffected).
+// same prompt bytes for provider-side prompt caching.
 let lastRecipesJson = JSON.stringify(RECIPES);
 async function refreshRecipesFromDb() {
   try {
@@ -239,359 +211,6 @@ const RESPONSE_SCHEMA = {
 
 // ── Auth: JWT required, then flag/admin gate ────────────────────────────────
 const normalize = (q) => q.trim().replace(/\s+/g, ' ').toLowerCase();
-const slugifyItem = (name) => normalize(name)
-  .replace(/[''`]/g, '')
-  .replace(/[^a-z0-9]+/g, '-')
-  .replace(/^-+|-+$/g, '');
-
-function baitMatch(query) {
-  const q = normalize(query);
-  if (!q) return null;
-  return BAIT_TACKLE.find((bait) => q.includes(normalize(bait.name))) || null;
-}
-
-function baitSourceDetail(row) {
-  const parts = [];
-  if (row.vendor) {
-    parts.push(`Vendor: ${row.vendor.npc} in ${row.vendor.zone} (${row.vendor.coords}) - ${row.vendor.price} gil`);
-  }
-  if (row.scrip) {
-    parts.push(`Scrip Exchange: ${row.scrip.npc} in ${row.scrip.zone} (${row.scrip.coords}) - ${row.scrip.price} ${row.scrip.currency}`);
-  }
-  parts.push('Market Board: check current listings if you want to buy from other players.');
-  return parts.join(' - ');
-}
-
-function baitResult(row) {
-  return {
-    name: row.name,
-    category: row.scrip ? 'scrip' : 'item',
-    zone: row.vendor?.zone || row.scrip?.zone || '',
-    coords: row.vendor?.coords || row.scrip?.coords || '',
-    timed: false,
-    window: '',
-    detail: baitSourceDetail(row),
-    source_url: `/item/${slugifyItem(row.name)}`,
-  };
-}
-
-function buildBaitAnswer(query) {
-  const row = baitMatch(query);
-  if (!row) return null;
-  const primary = row.vendor
-    ? `buy it from ${row.vendor.npc} in ${row.vendor.zone} at ${row.vendor.coords} for ${row.vendor.price} gil`
-    : row.scrip
-      ? `get it from ${row.scrip.npc} in ${row.scrip.zone} at ${row.scrip.coords} for ${row.scrip.price} ${row.scrip.currency}`
-      : 'check the Market Board';
-  return {
-    type: 'fishing',
-    summary: `${row.name} is bait/tackle. You can ${primary}. Open the item page for Market Board details.`,
-    results: [baitResult(row)],
-    tips: ['Use the item page to compare vendor, scrip, and Market Board options before buying.'],
-  };
-}
-
-function extractRequestedLevel(query) {
-  const match = String(query || '').match(/\b(?:level|lvl|lv)\s*(\d{1,3})\b/i);
-  return match ? Number(match[1]) : null;
-}
-
-function recipeItemLevelRange(level) {
-  if (!Number.isFinite(level)) return null;
-  if (level >= 91 && level <= 100) {
-    const floor = 650 + ((level - 91) * 5);
-    return [floor, Math.min(690, floor + 15)];
-  }
-  if (level >= 81 && level <= 90) {
-    const floor = 515 + ((level - 81) * 5);
-    return [floor, Math.min(560, floor + 15)];
-  }
-  return [Math.max(1, level - 2), level + 5];
-}
-
-const ITEM_QUERY_TERMS = [
-  { label: 'fishing rod', pattern: /\b(?:fishing\s+)?ro(?:d|de)s?\b/i, recipe: /fishing rod|rod/i, gear: /rod/i, prefer: /fishing rod/i },
-  { label: 'saw', pattern: /\bsaws?\b/i, recipe: /saw/i, gear: /saw/i },
-  { label: 'hammer', pattern: /\bhammers?\b/i, recipe: /hammer/i, gear: /hammer/i },
-  { label: 'knife', pattern: /\bknives?\b|\bknife\b/i, recipe: /knife/i, gear: /knife/i },
-  { label: 'needle', pattern: /\bneedles?\b/i, recipe: /needle/i, gear: /needle/i },
-  { label: 'alembic', pattern: /\balembics?\b/i, recipe: /alembic/i, gear: /alembic/i },
-  { label: 'frypan', pattern: /\bfry\s*pans?\b|\bfrypans?\b|\bskillets?\b/i, recipe: /frypan|skillet/i, gear: /frypan|skillet/i },
-  { label: 'mallet', pattern: /\bmallets?\b/i, recipe: /mallet/i, gear: /mallet/i },
-  { label: 'crafting gear', pattern: /\b(?:crafting\s+)?(?:gear|tool|tools|main hand|off hand|armor|accessor(?:y|ies))\b/i, recipe: /./i, gear: /./i },
-];
-
-function requestedItemTerm(query) {
-  return ITEM_QUERY_TERMS.find((term) => term.pattern.test(query)) || null;
-}
-
-function recipeDetail(recipe) {
-  const ingredients = (recipe.ingredients || [])
-    .slice(0, 6)
-    .map((ing) => `${ing.name} x${ing.amount || 1}`)
-    .join(', ');
-  return [
-    recipe.job ? `Crafted by ${recipe.job}` : 'Crafted',
-    recipe.itemLevel ? `iLvl ${recipe.itemLevel}` : null,
-    ingredients ? `Ingredients: ${ingredients}` : null,
-    'Market Board: check listings if you want to buy it instead.',
-  ].filter(Boolean).join(' - ');
-}
-
-function recipeResult(recipe) {
-  return {
-    name: recipe.name,
-    category: 'recipe',
-    zone: '',
-    coords: '',
-    timed: false,
-    window: '',
-    detail: recipeDetail(recipe),
-    source_url: `/crafting/cooking?recipe=${encodeURIComponent(recipe.name)}`,
-  };
-}
-
-function gearDetail(gear) {
-  const parts = [
-    `${gear.slot || 'Gear'} - Lv ${gear.level}`,
-    gear.jobs?.length ? `Jobs: ${gear.jobs.join(', ')}` : null,
-  ];
-  if (gear.stats) {
-    const stats = Object.entries(gear.stats)
-      .filter(([, value]) => Number(value) > 0)
-      .map(([key, value]) => `${key} +${value}`)
-      .join(', ');
-    if (stats) parts.push(`Stats: ${stats}`);
-  }
-  if (gear.vendor) parts.push(`Vendor: ${gear.vendor.npc} in ${gear.vendor.zone} (${gear.vendor.coords}) - ${gear.vendor.price} gil`);
-  if (gear.scrip) parts.push(`Scrip Exchange: ${gear.scrip.npc} in ${gear.scrip.zone} (${gear.scrip.coords}) - ${gear.scrip.price} ${gear.scrip.currency}`);
-  parts.push('Market Board: check current listings if tradeable.');
-  return parts.filter(Boolean).join(' - ');
-}
-
-function gearResult(gear) {
-  return {
-    name: gear.name,
-    category: gear.scrip ? 'scrip' : 'item',
-    zone: gear.vendor?.zone || gear.scrip?.zone || '',
-    coords: gear.vendor?.coords || gear.scrip?.coords || '',
-    timed: false,
-    window: '',
-    detail: gearDetail(gear),
-    source_url: `/item/${slugifyItem(gear.name)}`,
-  };
-}
-
-function gatherResult(item, node, category) {
-  return {
-    name: item.name,
-    category,
-    zone: node.zone || '',
-    coords: node.coords || '',
-    timed: !!node.window,
-    window: node.time || '',
-    detail: [
-      node.name ? `Node: ${node.name}` : null,
-      node.level ? `Lv ${node.level}` : null,
-      item.tag,
-      item.note,
-    ].filter(Boolean).join(' - '),
-    source_url: `/gathering/${category}?highlight=${encodeURIComponent(item.name).replace(/%20/g, '+')}`,
-  };
-}
-
-function exactGatheringMatch(queryNorm) {
-  const nodeGroups = [
-    ['mining', GAME_DATA.mining || []],
-    ['botany', GAME_DATA.botany || []],
-    ['fishing', GAME_DATA.fishing || []],
-  ];
-  const matches = [];
-  for (const [category, nodes] of nodeGroups) {
-    for (const node of nodes) {
-      const items = category === 'fishing' ? (node.fish || []) : (node.items || []);
-      for (const item of items) {
-        const name = normalize(item.name || '');
-        if (name.length > 3 && queryNorm.includes(name)) matches.push(gatherResult(item, node, category));
-      }
-    }
-  }
-  return matches.sort((a, b) => b.name.length - a.name.length)[0] || null;
-}
-
-function exactRecipeMatch(queryNorm) {
-  return RECIPES
-    .filter((recipe) => {
-      const name = normalize(recipe.name || '');
-      return name.length > 3 && queryNorm.includes(name);
-    })
-    .sort((a, b) => b.name.length - a.name.length)[0] || null;
-}
-
-function exactGearMatch(queryNorm) {
-  return CRAFTING_GEAR
-    .filter((gear) => {
-      const name = normalize(gear.name || '');
-      return name.length > 3 && queryNorm.includes(name);
-    })
-    .sort((a, b) => b.name.length - a.name.length)[0] || null;
-}
-
-function buildExactItemAnswer(query) {
-  const queryNorm = normalize(query).replace(/\brode\b/g, 'rod');
-  const gear = exactGearMatch(queryNorm);
-  if (gear) {
-    return {
-      type: 'mixed',
-      summary: `${gear.name} is ${gear.slot || 'gear'} for level ${gear.level}. Open the item page for source and Market Board details.`,
-      results: [gearResult(gear)],
-      tips: ['Compare vendor or scrip cost against the Market Board before buying.'],
-    };
-  }
-  const gathered = exactGatheringMatch(queryNorm);
-  if (gathered) {
-    return {
-      type: gathered.category,
-      summary: `${gathered.name} is available from ${gathered.zone || 'a mapped gathering source'}.`,
-      results: [gathered],
-      tips: [],
-    };
-  }
-  const recipe = exactRecipeMatch(queryNorm);
-  if (recipe) {
-    return {
-      type: 'recipe',
-      summary: `${recipe.name} is crafted by ${recipe.job || 'a crafter'}. Open the recipe or item links for ingredients and buying options.`,
-      results: [recipeResult(recipe)],
-      tips: ['If you do not want to craft it, check the item page for Market Board details.'],
-    };
-  }
-  return null;
-}
-
-function buildLevelToolAnswer(query) {
-  const level = extractRequestedLevel(query);
-  const term = requestedItemTerm(query);
-  if (!level || !term) return null;
-  const range = recipeItemLevelRange(level);
-  const q = normalize(query);
-  const wantsFishing = /\bfish(?:er|ing)?\b|\bfsh\b/.test(q) || /\brode\b/.test(q);
-  const recipeCandidates = RECIPES
-    .filter((recipe) => {
-      const itemLevel = Number(recipe.itemLevel);
-      if (!Number.isFinite(itemLevel) || itemLevel < range[0] || itemLevel > range[1]) return false;
-      if (!term.recipe.test(recipe.name || '')) return false;
-      if (term.label === 'crafting gear' && !/(saw|hammer|knife|needle|alembic|frypan|skillet|mallet)/i.test(recipe.name || '')) return false;
-      return true;
-    })
-    .sort((a, b) => {
-      const aPrefer = wantsFishing && term.prefer?.test(a.name || '') ? -1000 : 0;
-      const bPrefer = wantsFishing && term.prefer?.test(b.name || '') ? -1000 : 0;
-      return (Math.abs(a.itemLevel - range[0]) + aPrefer) - (Math.abs(b.itemLevel - range[0]) + bPrefer);
-    })
-    .slice(0, 5);
-
-  const gearCandidates = CRAFTING_GEAR
-    .filter((gear) => Math.abs(Number(gear.level) - level) <= 1 && term.gear.test(gear.name || gear.slot || ''))
-    .sort((a, b) => Math.abs(a.level - level) - Math.abs(b.level - level))
-    .slice(0, Math.max(0, 5 - recipeCandidates.length));
-
-  const results = [...recipeCandidates.map(recipeResult), ...gearCandidates.map(gearResult)];
-  if (!results.length) return null;
-  return {
-    type: 'mixed',
-    summary: `For level ${level} ${term.label}, start with ${results.slice(0, 2).map((r) => r.name).join(' or ')}. Crafted items show recipe links; purchasable gear shows vendor, scrip, and Market Board options.`,
-    results,
-    tips: ['Open any item page for a full source breakdown and Market Board link.'],
-  };
-}
-
-function itemSearchNeedle(query) {
-  return normalize(query)
-    .replace(/\brode\b/g, 'rod')
-    .replace(/\b(?:level|lvl|lv)\s*\d{1,3}\b/g, ' ')
-    .replace(/\b(?:where|what|which|how|can|could|would|should|do|does|i|me|my|you|the|a|an|is|are|to|for|from|with|of|at|in|on|it|item|page|source|sources|location|find|get|buy|purchase|craft|make|market|board|need|know)\b/g, ' ')
-    .replace(/\s+/g, ' ')
-    .trim();
-}
-
-function editDistance(a, b, max = 3) {
-  if (Math.abs(a.length - b.length) > max) return max + 1;
-  const prev = Array.from({ length: b.length + 1 }, (_, i) => i);
-  for (let i = 1; i <= a.length; i += 1) {
-    let last = prev[0];
-    prev[0] = i;
-    let best = prev[0];
-    for (let j = 1; j <= b.length; j += 1) {
-      const old = prev[j];
-      prev[j] = a[i - 1] === b[j - 1]
-        ? last
-        : Math.min(last + 1, prev[j] + 1, prev[j - 1] + 1);
-      last = old;
-      if (prev[j] < best) best = prev[j];
-    }
-    if (best > max) return max + 1;
-  }
-  return prev[b.length];
-}
-
-function itemMatchScore(needle, name) {
-  const target = normalize(name);
-  if (!needle || !target) return 0;
-  if (target === needle) return 1000;
-  if (target.includes(needle)) return 900 - Math.max(0, target.length - needle.length);
-  if (needle.includes(target)) return 850 - Math.max(0, needle.length - target.length);
-  const tokens = needle.split(/\s+/).filter((t) => t.length > 1);
-  if (tokens.length && tokens.every((token) => target.includes(token))) return 760 - target.length;
-  const dist = editDistance(needle, target, needle.length > 18 ? 4 : 3);
-  if (dist <= 4) return 700 - (dist * 60) - Math.abs(target.length - needle.length);
-  return 0;
-}
-
-function allLocalItemCandidates() {
-  const candidates = [];
-  for (const bait of BAIT_TACKLE) candidates.push({ name: bait.name, result: () => baitResult(bait), type: 'fishing' });
-  for (const gear of CRAFTING_GEAR) candidates.push({ name: gear.name, result: () => gearResult(gear), type: 'mixed' });
-  for (const recipe of RECIPES) candidates.push({ name: recipe.name, result: () => recipeResult(recipe), type: 'recipe' });
-  for (const [category, nodes] of [['mining', GAME_DATA.mining || []], ['botany', GAME_DATA.botany || []], ['fishing', GAME_DATA.fishing || []]]) {
-    for (const node of nodes) {
-      const items = category === 'fishing' ? (node.fish || []) : (node.items || []);
-      for (const item of items) candidates.push({ name: item.name, result: () => gatherResult(item, node, category), type: category });
-    }
-  }
-  return candidates;
-}
-
-function buildFuzzyItemAnswer(query) {
-  const needle = itemSearchNeedle(query);
-  if (needle.length < 3) return null;
-  const matches = allLocalItemCandidates()
-    .map((candidate) => ({ ...candidate, score: itemMatchScore(needle, candidate.name) }))
-    .filter((candidate) => candidate.score >= 520)
-    .sort((a, b) => b.score - a.score || a.name.localeCompare(b.name));
-  if (!matches.length) return null;
-
-  const seen = new Set();
-  const results = [];
-  for (const match of matches) {
-    const key = normalize(match.name);
-    if (seen.has(key)) continue;
-    seen.add(key);
-    results.push(match.result());
-    if (results.length >= 5) break;
-  }
-  const exactish = results[0]?.name || needle;
-  return {
-    type: results.length > 1 ? 'mixed' : (matches[0]?.type || 'mixed'),
-    summary: `I found ${exactish} in the local catalog. Open the linked item/result for source, recipe, vendor, scrip, and Market Board details.`,
-    results,
-    tips: ['This result came from the local site catalog, so it did not need an external item lookup.'],
-  };
-}
-
-function buildItemLookupAnswer(query) {
-  return buildExactItemAnswer(query) || buildLevelToolAnswer(query) || buildFuzzyItemAnswer(query);
-}
 
 function cleanGatheringStats(value) {
   if (!value || typeof value !== 'object') return null;
@@ -709,8 +328,8 @@ async function logAiUsage({ userId, queryText, tokensIn = 0, tokensOut = 0, cach
 
 // ── ingredient_overrides: authoritative ingredient source/location ──────────
 // These manual rows take precedence over the baked Teamcraft classification.
-// Injected into the (uncached) player turn so the model honours them without a
-// backend restart. Cached in-process for 60s to avoid a DB hit per request.
+// Injected into the player turn so the model honours them without a backend
+// restart. Cached in-process for 60s to avoid a DB hit per request.
 let OVERRIDES_CACHE = { at: 0, rows: [] };
 async function getOverrides() {
   if (OVERRIDES_CACHE.rows.length && Date.now() - OVERRIDES_CACHE.at < 60000) return OVERRIDES_CACHE.rows;
@@ -727,8 +346,7 @@ async function getOverrides() {
 // the matching gathering log, pre-filtered to highlight the item/node by name
 // (e.g. /gathering/botany?highlight=Palm+Syrup). Hunt results point at the board
 // pre-focused on the mark (/hunts?hunt=Forgall — /hunts always renders the board).
-// Applied to both fresh and cached responses so older cache rows also gain the
-// field. Idempotent.
+// Idempotent so saved or freshly generated responses can be enriched safely.
 const GATHER_CATEGORIES = new Set(['mining', 'botany', 'fishing']);
 function withSourceUrls(answer) {
   if (answer && Array.isArray(answer.results)) {
@@ -919,66 +537,12 @@ router.post('/', authenticate, async (req, res) => {
 
     const queryNorm = normalize(query);
 
-    // Authoritative ingredient overrides — fetched up front so both the cached
-    // and fresh paths can enforce them deterministically (BUG 1).
+    // Authoritative ingredient overrides are fetched up front so fresh AI
+    // responses can be enforced deterministically (BUG 1).
     const overrides = await getOverrides();
 
-    const baitAnswer = buildBaitAnswer(query);
-    if (baitAnswer) {
-      await Promise.all([
-        logAiUsage({ userId: req.user.id, queryText: query }),
-        pool.query(
-          'INSERT INTO user_searches (user_id, query_norm, response) VALUES ($1, $2, $3)',
-          [req.user.id, queryNorm, JSON.stringify(baitAnswer)]
-        ),
-      ]);
-      return res.json({ ...baitAnswer, cached: false });
-    }
-
-    const itemLookupAnswer = buildItemLookupAnswer(query);
-    if (itemLookupAnswer) {
-      await Promise.all([
-        logAiUsage({ userId: req.user.id, queryText: query }),
-        pool.query(
-          'INSERT INTO user_searches (user_id, query_norm, response) VALUES ($1, $2, $3)',
-          [req.user.id, queryNorm, JSON.stringify(itemLookupAnswer)]
-        ),
-      ]);
-      return res.json({ ...itemLookupAnswer, cached: false });
-    }
-
-    const gatheringRecommendation = buildGatheringLevelRecommendation(query, GAME_DATA, FOOD_BUFFS, FISHING_BAITS, gatheringStats);
-    if (gatheringRecommendation) {
-      withSourceUrls(gatheringRecommendation);
-      await Promise.all([
-        logAiUsage({ userId: req.user.id, queryText: query }),
-        pool.query(
-          'INSERT INTO user_searches (user_id, query_norm, response) VALUES ($1, $2, $3)',
-          [req.user.id, queryNorm, JSON.stringify(gatheringRecommendation)]
-        ),
-      ]);
-      return res.json({ ...gatheringRecommendation, cached: false });
-    }
-
-    // 60s identical-query cache (skipped if this is a follow-up in a conversation)
-    const isFollowUp = Array.isArray(history) && history.length > 0;
-    if (!isFollowUp) {
-      const cached = await pool.query(
-        `SELECT response FROM user_searches
-         WHERE query_norm = $1 AND created_at > NOW() - ($2 || ' seconds')::interval
-         ORDER BY created_at DESC LIMIT 1`,
-        [queryNorm, String(CACHE_SECONDS)]
-      );
-      if (cached.rows[0]) {
-        await logAiUsage({ userId: req.user.id, queryText: query, cached: true });
-        // Re-apply enforcement in case the row was cached before these fixes.
-        const answer = withSourceUrls(sanitizeAnswer(applyOverrides(cached.rows[0].response, overrides)));
-        return res.json({ ...answer, cached: true });
-      }
-    }
-
-    // Live hunt data goes in the (uncached) user turn so the big static
-    // gathering context stays a stable, cache-hittable prefix.
+    // Live hunt data goes in the user turn so the big static gathering context
+    // stays a stable provider-cache-friendly prefix.
     const hunts = await pool.query(
       'SELECT name, rank, type, zone, area, coords, coords_note AS note, reward FROM hunts ORDER BY id'
     );
@@ -1015,6 +579,7 @@ router.post('/', authenticate, async (req, res) => {
       `<<<QUERY\n${query}\nQUERY>>>`;
 
     const contents = [];
+    const isFollowUp = Array.isArray(history) && history.length > 0;
     if (isFollowUp) {
       // Keep up to 4 previous turns to save tokens
       for (const h of history.slice(-4)) {
@@ -1117,7 +682,7 @@ router.post('/', authenticate, async (req, res) => {
       ),
     ]);
 
-    res.json({ ...answer, cached: false });
+    res.json(answer);
   } catch (err) {
     if (err.status) {
       console.error('[ai/search] Gemini API error', err.status, err.message);

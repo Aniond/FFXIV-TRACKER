@@ -3,7 +3,10 @@
    (EW/DT endgame) catalogs, so cooking-page deep-links resolve. Node coords &
    windows come from the recipes DB (Teamcraft); zones/levels from Garland Tools. */
 
+import { MANUAL_EXTRA_BOTANY_NODES, MANUAL_EXTRA_MINING_NODES, MANUAL_EXTRA_FISHING_SPOTS } from './manualCrosslinkNodes.js'
+
 export const EXTRA_BOTANY_NODES = [
+  ...MANUAL_EXTRA_BOTANY_NODES,
   {
     "id": "xl-b-856",
     "name": "Lethe",
@@ -872,6 +875,7 @@ export const EXTRA_BOTANY_NODES = [
 ]
 
 export const EXTRA_MINING_NODES = [
+  ...MANUAL_EXTRA_MINING_NODES,
   {
     "id": "xl-m-287",
     "name": "The Smoldering Wastes",
@@ -922,6 +926,7 @@ export const EXTRA_MINING_NODES = [
 ]
 
 export const EXTRA_FISHING_SPOTS = [
+  ...MANUAL_EXTRA_FISHING_SPOTS,
   {
     "id": "xl-f-51",
     "name": "South Bloodshore",

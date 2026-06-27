@@ -107,7 +107,7 @@ router.get('/api/admin/queries', adminJWT, async (req, res) => {
   try {
     const result = await pool.query(`
       SELECT aq.id, aq.user_id, u.username, aq.query_text,
-             aq.tokens_in, aq.tokens_out, aq.cached, aq.created_at
+             aq.tokens_in, aq.tokens_out, aq.created_at
       FROM ai_queries aq
       LEFT JOIN users u ON u.id = aq.user_id
       ORDER BY aq.created_at DESC
