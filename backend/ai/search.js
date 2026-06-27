@@ -24,6 +24,7 @@ const { GoogleGenerativeAI, SchemaType } = require('@google/generative-ai');
 const pool = require('../db');
 const { fetchPricesForIds, DEFAULT_DC } = require('../routes/prices');
 const { authenticate, isFlagEnabled } = require('../middleware');
+const { craftingGearContextForQuery } = require('./craftingGearContext');
 
 const router = express.Router();
 
@@ -85,7 +86,7 @@ try {
 const buildSystemPrompt = (recipes) =>
   `You are an FFXIV companion assistant for ffxivlog.com called Centurio.\n` +
   `You have access to a database of hunt marks, fishing spots, mining nodes,\n` +
-  `botany nodes, and crafting recipes across all jobs for the Dawntrail\n` +
+  `botany nodes, crafting recipes, and crafting gear sources across all jobs for the Dawntrail\n` +
   `and Endwalker expansions.\n` +
   `Answer the player's query using only the provided database context.\n` +
   `Be concise and helpful. Format responses clearly.\n` +
@@ -94,7 +95,7 @@ const buildSystemPrompt = (recipes) =>
   `Return JSON with: { type, summary, results[], tips[] }\n\n` +
   `Field guidance:\n` +
   `- type: dominant category of the answer — hunt / fishing / mining / botany / ` +
-  `recipe / mixed (results span categories) / none (nothing matched).\n` +
+  `recipe / item / scrip / mixed (results span categories) / none (nothing matched).\n` +
   `- summary: a short, natural-language answer to the player.\n` +
   `- results[]: one entry per matching mark / spot / node / ingredient. Set category, ` +
   `zone, and coords (verbatim from the data, e.g. "X:21.4, Y:9.2"; empty string if none). ` +
@@ -116,6 +117,15 @@ const buildSystemPrompt = (recipes) =>
   `- INGREDIENT SOURCE OVERRIDES: the player turn may include an "AUTHORITATIVE INGREDIENT ` +
   `SOURCE OVERRIDES" list. Any ingredient named there MUST use that source, zone, and coords, ` +
   `overriding every other classification in this prompt (it is the authoritative source).\n\n` +
+  `CRAFTING GEAR SOURCES:\n` +
+  `- The player turn may include "RELEVANT CRAFTING GEAR SOURCES" as JSON. Use it for questions ` +
+  `about buying, obtaining, or comparing crafter gear, crafting tools, armor, or accessories.\n` +
+  `- If a gear row has vendor, answer with the merchant NPC, zone/town, coordinates, and gil price. ` +
+  `Use category "item" and include the row's source_url.\n` +
+  `- If a gear row has scrip, answer with the Scrip Exchange NPC, zone/town, coordinates, price, ` +
+  `and scrip currency. Use category "scrip" and include the row's source_url.\n` +
+  `- Market Board is only a fallback when no vendor or scrip source is present for that item. ` +
+  `Do not say direct vendor data is unavailable when vendor or scrip fields exist.\n\n` +
   `COST & EFFORT ANALYSIS (When asked for recipe recommendations):\n` +
   `- If the player asks for a suggestion based on "cost" or "easiest to make", analyze the ingredients for each candidate recipe.\n` +
   `- "Cost" includes currency (Scrips/Bicolor Gemstones), time/effort (timed nodes), and Gil (Market Board prices).\n` +
@@ -171,7 +181,7 @@ setInterval(refreshRecipesFromDb, 60 * 60 * 1000).unref();
 const RESPONSE_SCHEMA = {
   type: SchemaType.OBJECT,
   properties: {
-    type: { type: SchemaType.STRING, enum: ['hunt', 'fishing', 'mining', 'botany', 'recipe', 'mixed', 'none'] },
+    type: { type: SchemaType.STRING, enum: ['hunt', 'fishing', 'mining', 'botany', 'recipe', 'item', 'scrip', 'mixed', 'none'] },
     summary: { type: SchemaType.STRING },
     results: {
       type: SchemaType.ARRAY,
@@ -186,6 +196,7 @@ const RESPONSE_SCHEMA = {
           auto_pin: { type: SchemaType.BOOLEAN, description: 'true to automatically pin this node to the user dashboard timers' },
           window: { type: SchemaType.STRING, description: 'Eorzea time window for timed nodes, e.g. "ET 0:00-6:00"; "" otherwise' },
           detail: { type: SchemaType.STRING, description: 'Level, rank, reward, bait, weather, yield items, or other useful note' },
+          source_url: { type: SchemaType.STRING, description: 'Local ffxivlog.com path for the matching source or item page; "" if none' },
         },
         required: ['name', 'category', 'zone', 'coords', 'timed', 'window', 'detail'],
       },
@@ -546,6 +557,10 @@ router.post('/', authenticate, async (req, res) => {
     const hunts = await pool.query(
       'SELECT name, rank, type, zone, area, coords, coords_note AS note, reward FROM hunts ORDER BY id'
     );
+    const craftingGearContext = craftingGearContextForQuery(query);
+    const craftingGearText = craftingGearContext.length
+      ? `RELEVANT CRAFTING GEAR SOURCES as JSON:\n${JSON.stringify(craftingGearContext)}\n\n`
+      : '';
 
     // Authoritative ingredient overrides — also surfaced to the model as a hint
     // (the deterministic applyOverrides pass below is what actually enforces them).
@@ -564,6 +579,7 @@ router.post('/', authenticate, async (req, res) => {
     // items present in the real table — fabricated ones would stand).
     const userContent =
       `HUNTS DATABASE as JSON:\n${JSON.stringify(hunts.rows)}\n\n` +
+      craftingGearText +
       overridesText +
       `CURRENT EORZEA TIME: ${etTime}\n\n` +
       `PLAYER GATHERING STATS for food recommendations: ${gatheringStats ? JSON.stringify(gatheringStats) : 'Unknown'}\n\n` +
